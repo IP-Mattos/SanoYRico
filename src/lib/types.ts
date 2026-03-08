@@ -37,3 +37,36 @@ export interface MovimientoStock {
   motivo: string | null
   fecha: string
 }
+
+export type EstadoPedido = 'pendiente' | 'confirmado' | 'entregado' | 'cancelado'
+
+export interface PedidoItem {
+  id?: string
+  producto_id: string | null
+  producto_nombre: string
+  producto_emoji: string | null
+  cantidad: number
+  precio_unitario: number
+  subtotal: number
+}
+
+export interface Pedido {
+  id: string
+  numero: number
+  nombre: string
+  telefono: string
+  direccion: string
+  notas: string | null
+  estado: EstadoPedido
+  total: number
+  created_at: string
+  items?: PedidoItem[]
+}
+
+export interface CartItem {
+  producto_id: string
+  nombre: string
+  emoji: string | null
+  precio: number
+  cantidad: number
+}

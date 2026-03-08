@@ -3,57 +3,86 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { type Venta } from '@/lib/types'
-import { Loader2, Search, Trash2, TrendingUp, DollarSign, ShoppingBag, Filter } from 'lucide-react'
+import { Loader2, Search, ChevronDown, ChevronUp, TrendingUp, DollarSign, ShoppingBag, Users } from 'lucide-react'
 
 type Periodo = 'hoy' | '7d' | '30d' | 'todo'
 
+interface Item {
+  emoji: string
+  nombre: string
+  cantidad: number
+  subtotal: number
+  precio: number
+}
+
+interface Pedido {
+  id: string
+  nombre: string
+  numero: number
+  telefono: string
+  created_at: string
+  items: string | Item[]
+  direccion: string
+  notas?: string
+  total: number
+  estado: string
+}
+
 export default function VentasPage() {
-  const [ventas, setVentas] = useState<Venta[]>([])
+  const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [loading, setLoading] = useState(true)
-  const [periodo, setPeriodo] = useState<Periodo>('7d')
+  const [periodo, setPeriodo] = useState<Periodo>('30d')
   const [busqueda, setBusqueda] = useState('')
-  const [totales, setTotales] = useState({ ingresos: 0, ganancias: 0, cantidad: 0 })
+  const [expandido, setExpandido] = useState<string | null>(null)
+  const [totales, setTotales] = useState({
+    ingresos: 0,
+    pedidos: 0,
+    clientes: 0,
+    promedio: 0
+  })
   const supabase = createClient()
 
-  const cargar = async () => {
-    setLoading(true)
+  useEffect(() => {
+    const cargar = async () => {
+      setLoading(true)
 
-    let query = supabase.from('ventas').select('*').order('fecha', { ascending: false })
+      let query = supabase
+        .from('pedidos_detalle')
+        .select('*')
+        .eq('estado', 'entregado')
+        .order('created_at', { ascending: false })
 
-    // Filtro por período
-    if (periodo !== 'todo') {
-      const desde = new Date()
-      if (periodo === 'hoy') desde.setHours(0, 0, 0, 0)
-      if (periodo === '7d') desde.setDate(desde.getDate() - 7)
-      if (periodo === '30d') desde.setDate(desde.getDate() - 30)
-      query = query.gte('fecha', desde.toISOString())
+      if (periodo !== 'todo') {
+        const desde = new Date()
+        if (periodo === 'hoy') desde.setHours(0, 0, 0, 0)
+        if (periodo === '7d') desde.setDate(desde.getDate() - 7)
+        if (periodo === '30d') desde.setDate(desde.getDate() - 30)
+        query = query.gte('created_at', desde.toISOString())
+      }
+
+      const { data } = await query
+      const resultado = data ?? []
+      setPedidos(resultado)
+
+      const ingresos = resultado.reduce((a: number, p: Pedido) => a + p.total, 0)
+      const clientes = new Set(resultado.map((p: Pedido) => p.telefono)).size
+
+      setTotales({
+        ingresos,
+        pedidos: resultado.length,
+        clientes,
+        promedio: resultado.length > 0 ? ingresos / resultado.length : 0
+      })
+
+      setLoading(false)
     }
 
-    const { data } = await query
-    const resultado = data ?? []
-    setVentas(resultado)
-
-    setTotales({
-      ingresos: resultado.reduce((a, v) => a + v.total, 0),
-      ganancias: resultado.reduce((a, v) => a + v.ganancia, 0),
-      cantidad: resultado.length
-    })
-
-    setLoading(false)
-  }
-
-  useEffect(() => {
     cargar()
   }, [periodo])
 
-  const eliminar = async (id: string) => {
-    if (!confirm('¿Eliminar esta venta? El stock no se revertirá automáticamente.')) return
-    await supabase.from('ventas').delete().eq('id', id)
-    await cargar()
-  }
-
-  const filtradas = ventas.filter((v) => v.producto_nombre.toLowerCase().includes(busqueda.toLowerCase()))
+  const filtrados = pedidos.filter(
+    (p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || p.telefono.includes(busqueda)
+  )
 
   const periodos: { value: Periodo; label: string }[] = [
     { value: 'hoy', label: 'Hoy' },
@@ -66,8 +95,8 @@ export default function VentasPage() {
     <div className='space-y-6'>
       {/* Header */}
       <div>
-        <h2 className='text-2xl font-bold text-[#3d2b1f]'>Historial de ventas</h2>
-        <p className='text-[#8a7060] text-sm mt-1'>{ventas.length} ventas en el período seleccionado</p>
+        <h2 className='text-2xl font-bold text-[#3d2b1f]'>Ventas</h2>
+        <p className='text-[#8a7060] text-sm mt-1'>Pedidos entregados agrupados por cliente</p>
       </div>
 
       {/* Período */}
@@ -87,29 +116,35 @@ export default function VentasPage() {
         ))}
       </div>
 
-      {/* Cards resumen */}
-      <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
-        <div className='bg-white rounded-2xl p-5 border border-[#f0e6d3]'>
-          <div className='w-9 h-9 rounded-xl flex items-center justify-center mb-3 bg-blue-50 text-blue-600'>
-            <ShoppingBag className='h-4 w-4' />
-          </div>
-          <div className='text-2xl font-bold text-[#3d2b1f]'>{totales.cantidad}</div>
-          <div className='text-xs text-[#8a7060] mt-0.5'>Ventas totales</div>
-        </div>
-        <div className='bg-white rounded-2xl p-5 border border-[#f0e6d3]'>
-          <div className='w-9 h-9 rounded-xl flex items-center justify-center mb-3 bg-green-50 text-green-600'>
-            <DollarSign className='h-4 w-4' />
-          </div>
-          <div className='text-2xl font-bold text-[#3d2b1f]'>${totales.ingresos.toFixed(0)}</div>
-          <div className='text-xs text-[#8a7060] mt-0.5'>Ingresos totales</div>
-        </div>
-        <div className='bg-white rounded-2xl p-5 border border-[#f0e6d3]'>
-          <div className='w-9 h-9 rounded-xl flex items-center justify-center mb-3 bg-[#fef3d0] text-[#c47c2b]'>
-            <TrendingUp className='h-4 w-4' />
-          </div>
-          <div className='text-2xl font-bold text-[#3d2b1f]'>${totales.ganancias.toFixed(0)}</div>
-          <div className='text-xs text-[#8a7060] mt-0.5'>Ganancias totales</div>
-        </div>
+      {/* Cards */}
+      <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
+        {[
+          {
+            label: 'Ingresos',
+            value: `$${totales.ingresos.toFixed(0)}`,
+            icon: DollarSign,
+            color: 'bg-green-50 text-green-600'
+          },
+          { label: 'Pedidos', value: totales.pedidos, icon: ShoppingBag, color: 'bg-blue-50 text-blue-600' },
+          { label: 'Clientes únicos', value: totales.clientes, icon: Users, color: 'bg-purple-50 text-purple-600' },
+          {
+            label: 'Ticket promedio',
+            value: `$${totales.promedio.toFixed(0)}`,
+            icon: TrendingUp,
+            color: 'bg-[#fef3d0] text-[#c47c2b]'
+          }
+        ].map((c) => {
+          const Icon = c.icon
+          return (
+            <div key={c.label} className='bg-white rounded-2xl p-5 border border-[#f0e6d3]'>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.color}`}>
+                <Icon className='h-4 w-4' />
+              </div>
+              <div className='text-2xl font-bold text-[#3d2b1f]'>{c.value}</div>
+              <div className='text-xs text-[#8a7060] mt-0.5'>{c.label}</div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Buscador */}
@@ -118,82 +153,114 @@ export default function VentasPage() {
         <input
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          placeholder='Buscar por producto...'
+          placeholder='Buscar por nombre o teléfono...'
           className='w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#f0e6d3] text-sm text-[#3d2b1f] focus:outline-none focus:ring-2 focus:ring-[#c47c2b] bg-white'
         />
       </div>
 
-      {/* Tabla */}
+      {/* Lista */}
       {loading ? (
         <div className='flex justify-center py-20'>
           <Loader2 className='h-6 w-6 animate-spin text-[#c47c2b]' />
         </div>
+      ) : filtrados.length === 0 ? (
+        <div className='bg-white rounded-2xl border border-[#f0e6d3] p-12 text-center text-[#8a7060] text-sm'>
+          {busqueda ? 'No hay ventas que coincidan con la búsqueda' : 'No hay ventas entregadas en este período'}
+        </div>
       ) : (
-        <div className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
-          <table className='w-full'>
-            <thead>
-              <tr className='border-b border-[#f0e6d3] bg-[#faf6ef]'>
-                <th className='text-left px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider'>
-                  Producto
-                </th>
-                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider'>
-                  Cant.
-                </th>
-                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden sm:table-cell'>
-                  Precio unit.
-                </th>
-                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider'>
-                  Total
-                </th>
-                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden md:table-cell'>
-                  Ganancia
-                </th>
-                <th className='text-left px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden lg:table-cell'>
-                  Fecha
-                </th>
-                <th className='px-5 py-3'></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtradas.map((v) => (
-                <tr key={v.id} className='border-b border-[#f0e6d3] last:border-0 hover:bg-[#faf6ef] transition-colors'>
-                  <td className='px-5 py-3 text-sm font-medium text-[#3d2b1f]'>{v.producto_nombre}</td>
-                  <td className='px-5 py-3 text-right text-sm text-[#3d2b1f]'>{v.cantidad}</td>
-                  <td className='px-5 py-3 text-right text-sm text-[#8a7060] hidden sm:table-cell'>
-                    ${v.precio_unitario}
-                  </td>
-                  <td className='px-5 py-3 text-right text-sm font-semibold text-[#3d2b1f]'>${v.total.toFixed(0)}</td>
-                  <td className='px-5 py-3 text-right hidden md:table-cell'>
-                    <span className='text-sm font-medium text-[#4a6741]'>${v.ganancia.toFixed(0)}</span>
-                  </td>
-                  <td className='px-5 py-3 text-sm text-[#8a7060] hidden lg:table-cell'>
-                    {new Date(v.fecha).toLocaleDateString('es-UY', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </td>
-                  <td className='px-5 py-3'>
-                    <button
-                      onClick={() => eliminar(v.id)}
-                      className='p-1.5 text-[#8a7060] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors'
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filtradas.length === 0 && (
-                <tr>
-                  <td colSpan={7} className='px-5 py-12 text-center text-[#8a7060] text-sm'>
-                    {busqueda ? 'No hay ventas que coincidan con la búsqueda' : 'No hay ventas en este período'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className='space-y-3'>
+          {filtrados.map((pedido) => {
+            const items = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])
+            const abierto = expandido === pedido.id
+
+            return (
+              <div key={pedido.id} className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
+                {/* Fila principal */}
+                <div
+                  className='flex items-center gap-4 p-4 cursor-pointer hover:bg-[#faf6ef] transition-colors'
+                  onClick={() => setExpandido(abierto ? null : pedido.id)}
+                >
+                  {/* Avatar */}
+                  <div className='w-10 h-10 bg-[#f0e6d3] rounded-xl flex items-center justify-center flex-shrink-0 text-lg'>
+                    👤
+                  </div>
+
+                  {/* Info */}
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex items-center gap-2'>
+                      <span className='text-sm font-semibold text-[#3d2b1f]'>{pedido.nombre}</span>
+                      <span className='text-xs text-[#8a7060] bg-[#f0e6d3] px-2 py-0.5 rounded-full'>
+                        #{pedido.numero}
+                      </span>
+                    </div>
+                    <div className='flex items-center gap-3 mt-0.5 flex-wrap'>
+                      <span className='text-xs text-[#8a7060]'>{pedido.telefono}</span>
+                      <span className='text-xs text-[#8a7060]'>
+                        {new Date(pedido.created_at).toLocaleDateString('es-UY', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                      <span className='text-xs text-[#8a7060]'>
+                        {items.length} producto{items.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Total y chevron */}
+                  <div className='flex items-center gap-3 flex-shrink-0'>
+                    <span className='text-lg font-bold text-[#c47c2b]' style={{ fontFamily: 'Georgia, serif' }}>
+                      ${pedido.total}
+                    </span>
+                    {abierto ? (
+                      <ChevronUp className='h-4 w-4 text-[#8a7060]' />
+                    ) : (
+                      <ChevronDown className='h-4 w-4 text-[#8a7060]' />
+                    )}
+                  </div>
+                </div>
+
+                {/* Detalle */}
+                {abierto && (
+                  <div className='border-t border-[#f0e6d3] p-4 space-y-3'>
+                    {/* Dirección */}
+                    <div className='text-xs text-[#8a7060]'>
+                      📍 {pedido.direccion}
+                      {pedido.notas && <span className='ml-3'>📝 {pedido.notas}</span>}
+                    </div>
+
+                    {/* Productos */}
+                    <div className='bg-[#faf6ef] rounded-xl p-3 space-y-2'>
+                      {items.map((item: Item, i: number) => (
+                        <div key={i} className='flex items-center justify-between'>
+                          <div className='flex items-center gap-2'>
+                            <span className='text-base'>{item.emoji}</span>
+                            <span className='text-sm text-[#3d2b1f]'>{item.nombre}</span>
+                            <span className='text-xs text-[#8a7060] bg-white px-2 py-0.5 rounded-full border border-[#f0e6d3]'>
+                              x{item.cantidad}
+                            </span>
+                          </div>
+                          <div className='text-right'>
+                            <span className='text-sm font-medium text-[#3d2b1f]'>${item.subtotal}</span>
+                            <span className='text-xs text-[#8a7060] ml-1'>(${item.precio} c/u)</span>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Total */}
+                      <div className='flex justify-between items-center pt-2 border-t border-[#f0e6d3]'>
+                        <span className='text-sm font-bold text-[#3d2b1f]'>Total del pedido</span>
+                        <span className='text-base font-bold text-[#c47c2b]'>${pedido.total}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

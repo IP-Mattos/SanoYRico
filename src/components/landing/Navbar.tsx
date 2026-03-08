@@ -1,8 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { ShoppingBag } from 'lucide-react'
+import { useCart } from '@/context/CartContext'
 
 export function Navbar() {
+  const { cantidad, setIsOpen } = useCart()
+
   return (
     <>
       <input type='checkbox' id='menu-toggle' className='hidden peer' />
@@ -34,21 +38,37 @@ export function Navbar() {
               </Link>
             </li>
             <li>
-              <Link
-                href='#productos'
-                className='bg-[#3d2b1f] text-[#faf6ef] text-sm font-medium px-4 py-2 rounded-full hover:bg-[#c47c2b] transition-colors'
+              <button
+                onClick={() => setIsOpen(true)}
+                className='relative bg-[#3d2b1f] text-[#faf6ef] text-sm font-medium px-4 py-2 rounded-full hover:bg-[#c47c2b] transition-colors flex items-center gap-2'
               >
-                Comprar ahora
-              </Link>
+                <ShoppingBag className='h-4 w-4' />
+                Carrito
+                {cantidad > 0 && (
+                  <span className='absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#c47c2b] text-white text-xs rounded-full flex items-center justify-center font-bold'>
+                    {cantidad}
+                  </span>
+                )}
+              </button>
             </li>
           </ul>
 
-          {/* Hamburger */}
-          <label htmlFor='menu-toggle' className='lg:hidden flex flex-col gap-1.5 cursor-pointer p-1'>
-            <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
-            <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
-            <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
-          </label>
+          {/* Mobile: carrito + hamburger */}
+          <div className='flex items-center gap-3 lg:hidden'>
+            <button onClick={() => setIsOpen(true)} className='relative p-2 text-[#3d2b1f]'>
+              <ShoppingBag className='h-5 w-5' />
+              {cantidad > 0 && (
+                <span className='absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#c47c2b] text-white text-xs rounded-full flex items-center justify-center font-bold'>
+                  {cantidad}
+                </span>
+              )}
+            </button>
+            <label htmlFor='menu-toggle' className='flex flex-col gap-1.5 cursor-pointer p-1'>
+              <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
+              <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
+              <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
+            </label>
+          </div>
         </div>
       </nav>
 
@@ -71,12 +91,12 @@ export function Navbar() {
           <Link href='/dashboard' className='py-3 text-[#8a7060] font-medium border-b border-[#f0e6d3]'>
             Panel admin
           </Link>
-          <Link
-            href='#productos'
+          <button
+            onClick={() => setIsOpen(true)}
             className='my-3 text-center bg-[#3d2b1f] text-white py-2.5 rounded-xl font-medium text-sm'
           >
-            Comprar ahora →
-          </Link>
+            Ver carrito {cantidad > 0 && `(${cantidad})`}
+          </button>
         </div>
       </div>
     </>

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { type Producto } from '@/lib/types'
+import { useCart } from '@/context/CartContext'
 import { Loader2 } from 'lucide-react'
 
 type Tab = 'barrita' | 'mix' | 'alfajor'
@@ -24,6 +25,7 @@ const BG: Record<string, string> = {
 const DEFAULT_BG = 'from-[#f0e6d3] to-[#fef3d0]'
 
 function ProductCard({ p }: { p: Producto }) {
+  const { agregar } = useCart()
   const bg = BG[p.emoji ?? ''] ?? DEFAULT_BG
 
   return (
@@ -53,6 +55,14 @@ function ProductCard({ p }: { p: Producto }) {
             ${p.precio} <span className='text-xs text-[#8a7060] font-normal'>/unidad</span>
           </span>
           <button
+            onClick={() =>
+              agregar({
+                producto_id: p.id,
+                nombre: p.nombre,
+                emoji: p.emoji ?? '',
+                precio: p.precio
+              })
+            }
             disabled={p.stock === 0}
             className='w-8 h-8 bg-[#3d2b1f] text-white rounded-full text-lg hover:bg-[#c47c2b] transition-colors flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed'
           >
@@ -65,6 +75,8 @@ function ProductCard({ p }: { p: Producto }) {
 }
 
 function AlfajorCard({ p }: { p: Producto }) {
+  const { agregar } = useCart()
+
   return (
     <div className='flex justify-center'>
       <div className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden w-full max-w-sm hover:shadow-lg transition-all'>
@@ -93,6 +105,14 @@ function AlfajorCard({ p }: { p: Producto }) {
               ${p.precio} <span className='text-sm text-[#8a7060] font-normal'>/unidad</span>
             </span>
             <button
+              onClick={() =>
+                agregar({
+                  producto_id: p.id,
+                  nombre: p.nombre,
+                  emoji: p.emoji ?? '',
+                  precio: p.precio
+                })
+              }
               disabled={p.stock === 0}
               className='bg-[#3d2b1f] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
             >
