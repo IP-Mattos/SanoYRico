@@ -31,6 +31,14 @@ export function Navbar() {
             ))}
             <li>
               <Link
+                href='/pedido'
+                className='text-[#8a7060] text-sm font-medium uppercase tracking-wider hover:text-[#3d2b1f] transition-colors'
+              >
+                Mi pedido
+              </Link>
+            </li>
+            <li>
+              <Link
                 href='/dashboard'
                 className='text-[#8a7060] text-sm font-medium uppercase tracking-wider hover:text-[#3d2b1f] transition-colors'
               >
@@ -88,6 +96,9 @@ export function Navbar() {
               {item}
             </Link>
           ))}
+          <Link href='/pedido' className='py-3 text-[#3d2b1f] font-medium border-b border-[#f0e6d3]'>
+            Mi pedido
+          </Link>
           <Link href='/dashboard' className='py-3 text-[#8a7060] font-medium border-b border-[#f0e6d3]'>
             Panel admin
           </Link>

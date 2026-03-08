@@ -278,12 +278,20 @@ export function Cart() {
             <p className='text-[#8a7060] text-sm mb-2'>
               Tu pedido <span className='font-bold text-[#c47c2b]'>#{numeroPedido}</span> fue confirmado.
             </p>
-            <p className='text-[#8a7060] text-sm mb-8'>
+            <p className='text-[#8a7060] text-sm mb-6'>
               Te contactaremos al teléfono que dejaste para coordinar la entrega.
             </p>
+
+            <a
+              href={`/pedido?q=${numeroPedido}`}
+              target='_blank'
+              className='w-full text-center bg-[#f0e6d3] text-[#3d2b1f] px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] hover:text-white transition-colors mb-2 block'
+            >
+              Ver estado de mi pedido →
+            </a>
             <button
               onClick={cerrar}
-              className='bg-[#3d2b1f] text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors'
+              className='w-full bg-[#3d2b1f] text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors'
             >
               Seguir comprando
             </button>
