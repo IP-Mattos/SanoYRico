@@ -1,4 +1,6 @@
 // src/app/page.tsx
+export const dynamic = 'force-dynamic'
+
 import { CartProvider } from '@/context/CartContext'
 import { Navbar } from '@/components/landing/Navbar'
 import { Hero } from '@/components/landing/Hero'
