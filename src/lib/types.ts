@@ -11,6 +11,7 @@ export interface Producto {
   stock: number
   stock_minimo: number
   emoji: string | null
+  imagen_url: string | null
   badge: string | null
   activo: boolean
   created_at: string
@@ -50,6 +51,8 @@ export interface PedidoItem {
   subtotal: number
 }
 
+export type MetodoPago = 'transferencia' | 'deposito' | 'mercadopago'
+
 export interface Pedido {
   id: string
   numero: number
@@ -57,6 +60,7 @@ export interface Pedido {
   telefono: string
   direccion: string
   notas: string | null
+  metodo_pago: MetodoPago | null
   estado: EstadoPedido
   total: number
   created_at: string

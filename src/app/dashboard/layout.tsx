@@ -15,7 +15,8 @@ import {
   X,
   Cookie,
   ClipboardList,
-  ShoppingCart
+  ShoppingCart,
+  PencilRuler
 } from 'lucide-react'
 
 const navItems = [
@@ -24,7 +25,8 @@ const navItems = [
   { href: '/dashboard/stock', label: 'Stock', icon: Warehouse },
   { href: '/dashboard/ganancias', label: 'Ganancias', icon: TrendingUp },
   { href: '/dashboard/ventas', label: 'Ventas', icon: ClipboardList },
-  { href: '/dashboard/pedidos', label: 'Pedidos', icon: ShoppingCart }
+  { href: '/dashboard/pedidos', label: 'Pedidos', icon: ShoppingCart },
+  { href: '/dashboard/contenido', label: 'Contenido', icon: PencilRuler }
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -35,9 +37,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setEmail(data.user.email ?? '')
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (error || !data.user) {
+        router.push('/login')
+        return
+      }
+      setEmail(data.user.email ?? '')
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+        router.push('/login')
+      }
+    })
+
+    return () => subscription.unsubscribe()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSignOut = async () => {
@@ -132,7 +147,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Página */}
-        <main className='flex-1 p-6 overflow-y-auto'>{children}</main>
+        <main className='flex-1 p-4 sm:p-6 overflow-y-auto'>
+          <div className='max-w-5xl mx-auto'>{children}</div>
+        </main>
       </div>
     </div>
   )

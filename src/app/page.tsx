@@ -8,19 +8,22 @@ import { Beneficios } from '@/components/landing/Beneficios'
 import { Testimonios } from '@/components/landing/Testimonios'
 import { Footer } from '@/components/landing/Footer'
 import { Cart } from '@/components/landing/Cart'
+import { getSiteConfig } from '@/lib/site-config'
 
-export default function Home() {
+export default async function Home() {
+  const config = await getSiteConfig()
+
   return (
     <CartProvider>
       <main>
         <Navbar />
-        <Cart />
-        <Hero />
-        <Marquee />
+        <Cart telefono={config.general.telefono} pagos={config.pagos} />
+        <Hero config={config.hero} />
+        <Marquee items={config.marquee.items} />
         <Productos />
-        <Beneficios />
-        <Testimonios />
-        <Footer />
+        <Beneficios items={config.beneficios} />
+        <Testimonios items={config.testimonios} />
+        <Footer config={config.footer} />
       </main>
     </CartProvider>
   )

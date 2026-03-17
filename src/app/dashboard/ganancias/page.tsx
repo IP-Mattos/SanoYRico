@@ -16,9 +16,21 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts'
-import { TrendingUp, DollarSign, ShoppingBag, Package, Loader2, Plus, X, AlertCircle } from 'lucide-react'
+import {
+  TrendingUp,
+  DollarSign,
+  ShoppingBag,
+  Package,
+  Loader2,
+  Plus,
+  X,
+  AlertCircle,
+  Globe,
+  PenLine
+} from 'lucide-react'
 
 type Periodo = '7d' | '30d' | '90d'
+type TabType = 'pagina' | 'manual'
 
 interface DatoGrafico {
   dia: string
@@ -43,6 +55,21 @@ interface Producto {
   activo?: boolean
 }
 
+interface ItemPedido {
+  emoji: string
+  nombre: string
+  cantidad: number
+  subtotal: number
+  precio: number
+}
+
+interface PedidoDetalle {
+  id: string
+  created_at: string
+  total: number
+  items: string | ItemPedido[]
+}
+
 const EMPTY_VENTA = {
   producto_id: '',
   cantidad: 1,
@@ -51,6 +78,7 @@ const EMPTY_VENTA = {
 }
 
 export default function GananciasPage() {
+  const [tab, setTab] = useState<TabType>('pagina')
   const [periodo, setPeriodo] = useState<Periodo>('7d')
   const [datos, setDatos] = useState<DatoGrafico[]>([])
   const [ranking, setRanking] = useState<ProductoVendido[]>([])
@@ -63,7 +91,89 @@ export default function GananciasPage() {
   const [error, setError] = useState('')
   const supabase = createClient()
 
-  const cargar = async () => {
+  const cargarDePagina = async () => {
+    setLoading(true)
+    const dias = periodo === '7d' ? 7 : periodo === '30d' ? 30 : 90
+    const desde = new Date()
+    desde.setDate(desde.getDate() - dias)
+
+    const [pedidosRes, prodRes] = await Promise.all([
+      supabase
+        .from('pedidos_detalle')
+        .select('*')
+        .eq('estado', 'entregado')
+        .gte('created_at', desde.toISOString())
+        .order('created_at'),
+      supabase.from('productos').select('id, nombre, precio, costo, emoji').eq('activo', true).order('nombre')
+    ])
+
+    const prodList: Producto[] = prodRes.data ?? []
+    setProductos(prodList)
+
+    // Mapa nombre → costo para calcular ganancia por item
+    const costoMap: Record<string, number> = {}
+    prodList.forEach((p) => { costoMap[p.nombre.toLowerCase()] = p.costo })
+
+    const pedidos: PedidoDetalle[] = pedidosRes.data ?? []
+
+    // Agrupar por día
+    const porDia: Record<string, DatoGrafico> = {}
+    for (let i = dias - 1; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().split('T')[0]
+      porDia[key] = {
+        dia: d.toLocaleDateString('es-UY', { day: '2-digit', month: '2-digit' }),
+        ingresos: 0,
+        ganancias: 0,
+        ventas: 0
+      }
+    }
+
+    const agrupado: Record<string, ProductoVendido> = {}
+    let totalIngresos = 0
+    let totalGanancias = 0
+
+    pedidos.forEach((pedido) => {
+      const key = pedido.created_at.split('T')[0]
+      const items: ItemPedido[] =
+        typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])
+
+      let gananciadePedido = 0
+      items.forEach((item) => {
+        const costo = costoMap[item.nombre.toLowerCase()] ?? 0
+        const ganancia = (item.precio - costo) * item.cantidad
+        gananciadePedido += ganancia
+
+        if (!agrupado[item.nombre]) {
+          agrupado[item.nombre] = { nombre: item.nombre, unidades: 0, ingresos: 0, ganancia: 0 }
+        }
+        agrupado[item.nombre].unidades += item.cantidad
+        agrupado[item.nombre].ingresos += item.subtotal
+        agrupado[item.nombre].ganancia += ganancia
+      })
+
+      if (porDia[key]) {
+        porDia[key].ingresos += pedido.total
+        porDia[key].ganancias += gananciadePedido
+        porDia[key].ventas += 1
+      }
+      totalIngresos += pedido.total
+      totalGanancias += gananciadePedido
+    })
+
+    setDatos(Object.values(porDia))
+    setRanking(Object.values(agrupado).sort((a, b) => b.ingresos - a.ingresos))
+    setTotales({
+      ingresos: totalIngresos,
+      ganancias: totalGanancias,
+      ventas: pedidos.length,
+      margen: totalIngresos > 0 ? Math.round((totalGanancias / totalIngresos) * 100) : 0
+    })
+    setLoading(false)
+  }
+
+  const cargarManual = async () => {
     setLoading(true)
     const dias = periodo === '7d' ? 7 : periodo === '30d' ? 30 : 90
     const desde = new Date()
@@ -77,7 +187,6 @@ export default function GananciasPage() {
     const ventas: Venta[] = ventasRes.data ?? []
     setProductos(prodRes.data ?? [])
 
-    // Agrupar por día
     const porDia: Record<string, DatoGrafico> = {}
     for (let i = dias - 1; i >= 0; i--) {
       const d = new Date()
@@ -100,7 +209,6 @@ export default function GananciasPage() {
     })
     setDatos(Object.values(porDia))
 
-    // Totales
     const ingresos = ventas.reduce((a, v) => a + v.total, 0)
     const ganancias = ventas.reduce((a, v) => a + v.ganancia, 0)
     setTotales({
@@ -110,7 +218,6 @@ export default function GananciasPage() {
       margen: ingresos > 0 ? Math.round((ganancias / ingresos) * 100) : 0
     })
 
-    // Ranking productos
     const agrupado: Record<string, ProductoVendido> = {}
     ventas.forEach((v) => {
       if (!agrupado[v.producto_nombre]) {
@@ -121,16 +228,14 @@ export default function GananciasPage() {
       agrupado[v.producto_nombre].ganancia += v.ganancia
     })
     setRanking(Object.values(agrupado).sort((a, b) => b.ingresos - a.ingresos))
-
     setLoading(false)
   }
 
   useEffect(() => {
-    const loadData = async () => {
-      await cargar()
-    }
-    loadData()
-  }, [periodo])
+    if (tab === 'pagina') cargarDePagina()
+    else cargarManual()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [periodo, tab])
 
   const seleccionarProducto = (id: string) => {
     const p = productos.find((p) => p.id === id)
@@ -139,14 +244,8 @@ export default function GananciasPage() {
   }
 
   const registrarVenta = async () => {
-    if (!form.producto_id) {
-      setError('Seleccioná un producto')
-      return
-    }
-    if (form.cantidad <= 0) {
-      setError('La cantidad debe ser mayor a 0')
-      return
-    }
+    if (!form.producto_id) { setError('Seleccioná un producto'); return }
+    if (form.cantidad <= 0) { setError('La cantidad debe ser mayor a 0'); return }
     setGuardando(true)
     setError('')
 
@@ -164,41 +263,20 @@ export default function GananciasPage() {
       ganancia
     })
 
-    if (error) {
-      setError(error.message)
-      setGuardando(false)
-      return
-    }
+    if (error) { setError(error.message); setGuardando(false); return }
 
-    await cargar()
+    await cargarManual()
     setGuardando(false)
     setModalOpen(false)
     setForm(EMPTY_VENTA)
   }
 
   const cards = [
-    {
-      label: 'Ingresos',
-      value: `$${totales.ingresos.toFixed(0)}`,
-      icon: DollarSign,
-      color: 'bg-green-50 text-green-600'
-    },
-    {
-      label: 'Ganancias',
-      value: `$${totales.ganancias.toFixed(0)}`,
-      icon: TrendingUp,
-      color: 'bg-[#fef3d0] text-[#c47c2b]'
-    },
+    { label: 'Ingresos', value: `$${totales.ingresos.toFixed(0)}`, icon: DollarSign, color: 'bg-green-50 text-green-600' },
+    { label: 'Ganancias', value: `$${totales.ganancias.toFixed(0)}`, icon: TrendingUp, color: 'bg-[#fef3d0] text-[#c47c2b]' },
     { label: 'Ventas', value: totales.ventas, icon: ShoppingBag, color: 'bg-blue-50 text-blue-600' },
     { label: 'Margen', value: `${totales.margen}%`, icon: Package, color: 'bg-purple-50 text-purple-600' }
   ]
-
-  if (loading)
-    return (
-      <div className='flex justify-center py-20'>
-        <Loader2 className='h-6 w-6 animate-spin text-[#c47c2b]' />
-      </div>
-    )
 
   return (
     <div className='space-y-6'>
@@ -208,28 +286,46 @@ export default function GananciasPage() {
           <h2 className='text-2xl font-bold text-[#3d2b1f]'>Ganancias</h2>
           <p className='text-[#8a7060] text-sm mt-1'>Resumen financiero del período</p>
         </div>
+        {tab === 'manual' && (
+          <button
+            onClick={() => { setForm(EMPTY_VENTA); setError(''); setModalOpen(true) }}
+            className='flex items-center gap-2 bg-[#3d2b1f] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors'
+          >
+            <Plus className='h-4 w-4' />
+            Registrar venta
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className='flex gap-2 p-1 bg-[#f0e6d3] rounded-xl w-fit'>
         <button
-          onClick={() => {
-            setForm(EMPTY_VENTA)
-            setError('')
-            setModalOpen(true)
-          }}
-          className='flex items-center gap-2 bg-[#3d2b1f] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors'
+          onClick={() => setTab('pagina')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            tab === 'pagina' ? 'bg-white text-[#3d2b1f] shadow-sm' : 'text-[#8a7060] hover:text-[#3d2b1f]'
+          }`}
         >
-          <Plus className='h-4 w-4' />
-          Registrar venta
+          <Globe className='h-4 w-4' />
+          Generadas por la página
+        </button>
+        <button
+          onClick={() => setTab('manual')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            tab === 'manual' ? 'bg-white text-[#3d2b1f] shadow-sm' : 'text-[#8a7060] hover:text-[#3d2b1f]'
+          }`}
+        >
+          <PenLine className='h-4 w-4' />
+          Ingresadas manualmente
         </button>
       </div>
 
       {/* Período */}
       <div className='flex gap-2'>
-        {(
-          [
-            { value: '7d', label: 'Últimos 7 días' },
-            { value: '30d', label: 'Últimos 30 días' },
-            { value: '90d', label: 'Últimos 90 días' }
-          ] as const
-        ).map((p) => (
+        {([
+          { value: '7d', label: 'Últimos 7 días' },
+          { value: '30d', label: 'Últimos 30 días' },
+          { value: '90d', label: 'Últimos 90 días' }
+        ] as const).map((p) => (
           <button
             key={p.value}
             onClick={() => setPeriodo(p.value)}
@@ -244,92 +340,106 @@ export default function GananciasPage() {
         ))}
       </div>
 
-      {/* Cards */}
-      <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
-        {cards.map((c) => {
-          const Icon = c.icon
-          return (
-            <div key={c.label} className='bg-white rounded-2xl p-5 border border-[#f0e6d3]'>
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.color}`}>
-                <Icon className='h-4 w-4' />
-              </div>
-              <div className='text-2xl font-bold text-[#3d2b1f]'>{c.value}</div>
-              <div className='text-xs text-[#8a7060] mt-0.5'>{c.label}</div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Gráfico ingresos vs ganancias */}
-      <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
-        <h3 className='font-semibold text-[#3d2b1f] mb-5'>Ingresos vs Ganancias</h3>
-        <ResponsiveContainer width='100%' height={260}>
-          <LineChart data={datos} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray='3 3' stroke='#f0e6d3' />
-            <XAxis dataKey='dia' tick={{ fontSize: 11, fill: '#8a7060' }} />
-            <YAxis tick={{ fontSize: 11, fill: '#8a7060' }} />
-            <Tooltip
-              contentStyle={{ borderRadius: '12px', border: '1px solid #f0e6d3', fontSize: '12px' }}
-              formatter={(v) => (typeof v === 'number' ? `$${v.toFixed(0)}` : v)}
-            />
-            <Legend wrapperStyle={{ fontSize: '12px' }} />
-            <Line type='monotone' dataKey='ingresos' name='Ingresos' stroke='#4a6741' strokeWidth={2} dot={false} />
-            <Line type='monotone' dataKey='ganancias' name='Ganancias' stroke='#c47c2b' strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Gráfico ventas por día */}
-      <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
-        <h3 className='font-semibold text-[#3d2b1f] mb-5'>Ventas por día</h3>
-        <ResponsiveContainer width='100%' height={200}>
-          <BarChart data={datos} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray='3 3' stroke='#f0e6d3' />
-            <XAxis dataKey='dia' tick={{ fontSize: 11, fill: '#8a7060' }} />
-            <YAxis tick={{ fontSize: 11, fill: '#8a7060' }} allowDecimals={false} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #f0e6d3', fontSize: '12px' }} />
-            <Bar dataKey='ventas' name='Ventas' fill='#3d2b1f' radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Ranking productos */}
-      {ranking.length > 0 && (
-        <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
-          <h3 className='font-semibold text-[#3d2b1f] mb-4'>Productos más vendidos</h3>
-          <div className='space-y-3'>
-            {ranking.map((p, i) => (
-              <div key={p.nombre} className='flex items-center gap-4'>
-                <span className='w-6 text-sm font-bold text-[#8a7060]'>#{i + 1}</span>
-                <div className='flex-1 min-w-0'>
-                  <div className='flex justify-between mb-1'>
-                    <span className='text-sm font-medium text-[#3d2b1f] truncate'>{p.nombre}</span>
-                    <span className='text-sm font-bold text-[#3d2b1f] ml-2'>${p.ingresos.toFixed(0)}</span>
+      {loading ? (
+        <div className='flex justify-center py-20'>
+          <Loader2 className='h-6 w-6 animate-spin text-[#c47c2b]' />
+        </div>
+      ) : (
+        <>
+          {/* Cards */}
+          <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
+            {cards.map((c) => {
+              const Icon = c.icon
+              return (
+                <div key={c.label} className='bg-white rounded-2xl p-5 border border-[#f0e6d3]'>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.color}`}>
+                    <Icon className='h-4 w-4' />
                   </div>
-                  <div className='h-1.5 bg-[#f0e6d3] rounded-full overflow-hidden'>
-                    <div
-                      className='h-full bg-[#c47c2b] rounded-full'
-                      style={{ width: `${(p.ingresos / ranking[0].ingresos) * 100}%` }}
-                    />
-                  </div>
-                  <div className='flex justify-between mt-1'>
-                    <span className='text-xs text-[#8a7060]'>{p.unidades} unidades</span>
-                    <span className='text-xs text-[#4a6741]'>ganancia: ${p.ganancia.toFixed(0)}</span>
-                  </div>
+                  <div className='text-2xl font-bold text-[#3d2b1f]'>{c.value}</div>
+                  <div className='text-xs text-[#8a7060] mt-0.5'>{c.label}</div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
-        </div>
+
+          {tab === 'pagina' && totales.ganancias > 0 && totales.ingresos > 0 && (
+            <p className='text-xs text-[#8a7060] bg-[#faf6ef] px-4 py-2 rounded-xl border border-[#f0e6d3]'>
+              💡 Las ganancias se calculan usando el costo actual de cada producto. Si los costos cambiaron, el valor puede ser aproximado.
+            </p>
+          )}
+
+          {/* Gráfico ingresos vs ganancias */}
+          <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
+            <h3 className='font-semibold text-[#3d2b1f] mb-5'>Ingresos vs Ganancias</h3>
+            <ResponsiveContainer width='100%' height={260}>
+              <LineChart data={datos} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray='3 3' stroke='#f0e6d3' />
+                <XAxis dataKey='dia' tick={{ fontSize: 11, fill: '#8a7060' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#8a7060' }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #f0e6d3', fontSize: '12px' }}
+                  formatter={(v) => (typeof v === 'number' ? `$${v.toFixed(0)}` : v)}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Line type='monotone' dataKey='ingresos' name='Ingresos' stroke='#4a6741' strokeWidth={2} dot={false} />
+                <Line type='monotone' dataKey='ganancias' name='Ganancias' stroke='#c47c2b' strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Gráfico ventas por día */}
+          <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
+            <h3 className='font-semibold text-[#3d2b1f] mb-5'>Ventas por día</h3>
+            <ResponsiveContainer width='100%' height={200}>
+              <BarChart data={datos} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray='3 3' stroke='#f0e6d3' />
+                <XAxis dataKey='dia' tick={{ fontSize: 11, fill: '#8a7060' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#8a7060' }} allowDecimals={false} />
+                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #f0e6d3', fontSize: '12px' }} />
+                <Bar dataKey='ventas' name='Ventas' fill='#3d2b1f' radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Ranking productos */}
+          {ranking.length > 0 ? (
+            <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
+              <h3 className='font-semibold text-[#3d2b1f] mb-4'>Productos más vendidos</h3>
+              <div className='space-y-3'>
+                {ranking.map((p, i) => (
+                  <div key={p.nombre} className='flex items-center gap-4'>
+                    <span className='w-6 text-sm font-bold text-[#8a7060]'>#{i + 1}</span>
+                    <div className='flex-1 min-w-0'>
+                      <div className='flex justify-between mb-1'>
+                        <span className='text-sm font-medium text-[#3d2b1f] truncate'>{p.nombre}</span>
+                        <span className='text-sm font-bold text-[#3d2b1f] ml-2'>${p.ingresos.toFixed(0)}</span>
+                      </div>
+                      <div className='h-1.5 bg-[#f0e6d3] rounded-full overflow-hidden'>
+                        <div
+                          className='h-full bg-[#c47c2b] rounded-full'
+                          style={{ width: `${(p.ingresos / ranking[0].ingresos) * 100}%` }}
+                        />
+                      </div>
+                      <div className='flex justify-between mt-1'>
+                        <span className='text-xs text-[#8a7060]'>{p.unidades} unidades</span>
+                        <span className='text-xs text-[#4a6741]'>ganancia: ${p.ganancia.toFixed(0)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className='bg-white rounded-2xl border border-[#f0e6d3] p-12 text-center text-[#8a7060] text-sm'>
+              {tab === 'pagina'
+                ? 'No hay pedidos entregados en este período.'
+                : 'No hay ventas registradas en este período. Registrá tu primera venta con el botón de arriba.'}
+            </div>
+          )}
+        </>
       )}
 
-      {ranking.length === 0 && (
-        <div className='bg-white rounded-2xl border border-[#f0e6d3] p-12 text-center text-[#8a7060] text-sm'>
-          No hay ventas registradas en este período. Registrá tu primera venta con el botón de arriba.
-        </div>
-      )}
-
-      {/* Modal registrar venta */}
+      {/* Modal registrar venta manual */}
       {modalOpen && (
         <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4'>
           <div className='bg-white rounded-2xl w-full max-w-md shadow-xl'>
@@ -341,7 +451,6 @@ export default function GananciasPage() {
             </div>
 
             <div className='p-6 space-y-4'>
-              {/* Producto */}
               <div>
                 <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Producto *</label>
                 <select
@@ -358,7 +467,6 @@ export default function GananciasPage() {
                 </select>
               </div>
 
-              {/* Cantidad */}
               <div>
                 <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Cantidad *</label>
                 <input
@@ -370,7 +478,6 @@ export default function GananciasPage() {
                 />
               </div>
 
-              {/* Precio y costo */}
               <div className='grid grid-cols-2 gap-3'>
                 <div>
                   <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Precio unitario</label>
@@ -392,7 +499,6 @@ export default function GananciasPage() {
                 </div>
               </div>
 
-              {/* Preview total */}
               {form.producto_id && form.cantidad > 0 && (
                 <div className='bg-[#faf6ef] rounded-xl p-4 grid grid-cols-2 gap-3 text-center'>
                   <div>
@@ -410,15 +516,13 @@ export default function GananciasPage() {
                 </div>
               )}
 
-              {/* Error */}
               {error && (
                 <div className='flex items-center gap-2 text-sm text-red-500 bg-red-50 px-4 py-2.5 rounded-xl'>
-                  <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                  <AlertCircle className='h-4 w-4 shrink-0' />
                   {error}
                 </div>
               )}
 
-              {/* Botones */}
               <div className='flex gap-3 pt-2'>
                 <button
                   onClick={() => setModalOpen(false)}

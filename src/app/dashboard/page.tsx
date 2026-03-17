@@ -53,6 +53,7 @@ export default function DashboardPage() {
     }
 
     cargarDatos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (loading)
@@ -93,7 +94,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards */}
-      <div className='grid grid-cols-2 lg:grid-cols-5 gap-4'>
+      <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4'>
         {cards.map((card) => {
           const Icon = card.icon
           return (

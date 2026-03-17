@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { type CartItem } from '@/lib/types'
 
 interface CartContextType {
@@ -16,10 +16,28 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | null>(null)
+const STORAGE_KEY = 'sano-carrito'
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const montado = useRef(false)
+
+  // Cargar desde localStorage tras el mount (evita hydration mismatch)
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem(STORAGE_KEY)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (guardado) setItems(JSON.parse(guardado))
+    } catch {}
+    montado.current = true
+  }, [])
+
+  // Persistir en localStorage cuando cambian los items (solo tras el mount)
+  useEffect(() => {
+    if (!montado.current) return
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+  }, [items])
 
   const agregar = useCallback((item: Omit<CartItem, 'cantidad'>) => {
     setItems((prev) => {
@@ -29,7 +47,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { ...item, cantidad: 1 }]
     })
-    setIsOpen(true)
+    // El carrito ya no se abre automáticamente al agregar
   }, [])
 
   const quitar = useCallback((producto_id: string) => {
@@ -50,19 +68,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const cantidad = items.reduce((a, i) => a + i.cantidad, 0)
 
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        agregar,
-        quitar,
-        cambiarCantidad,
-        vaciar,
-        total,
-        cantidad,
-        isOpen,
-        setIsOpen
-      }}
-    >
+    <CartContext.Provider value={{ items, agregar, quitar, cambiarCantidad, vaciar, total, cantidad, isOpen, setIsOpen }}>
       {children}
     </CartContext.Provider>
   )

@@ -1,29 +1,37 @@
 import Link from 'next/link'
+import { type HeroConfig, DEFAULT_CONFIG } from '@/lib/site-config'
 
-export function Hero() {
+const TAG_POSITIONS = [
+  'top-[20%] left-[5%]',
+  'top-[15%] right-[8%]',
+  'bottom-[25%] left-[8%]',
+  'bottom-[20%] right-[5%]'
+]
+const TAG_DELAYS = ['0s', '0.5s', '1s', '0.3s']
+
+export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) {
   return (
     <section className='min-h-screen grid lg:grid-cols-2 pt-16'>
       {/* Izquierda */}
-      <div className='flex flex-col justify-center px-6 lg:px-16 py-16'>
-        <div className='inline-flex items-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#c47c2b] text-xs font-medium tracking-widest uppercase px-4 py-2 rounded-full w-fit mb-8 animate-fadeup'>
-          ✦ 100% Natural · Sin conservantes
+      <div className='flex flex-col justify-center px-6 sm:px-10 lg:px-16 py-16 max-w-2xl mx-auto w-full lg:max-w-none lg:mx-0'>
+        <div className='inline-flex items-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#c47c2b] text-xs font-medium tracking-widest uppercase px-4 py-2 rounded-full w-fit mb-6 animate-fadeup'>
+          {config.badge}
         </div>
 
         <h1
-          className='text-5xl lg:text-7xl font-black text-[#3d2b1f] leading-tight mb-6'
-          style={{ fontFamily: 'Georgia, serif', animationDelay: '0.1s' }}
+          className='text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-[#3d2b1f] leading-tight mb-5'
+          style={{ fontFamily: 'Georgia, serif' }}
         >
-          Energía <em className='text-[#c47c2b]'>real</em>
+          {config.titulo} <em className='text-[#c47c2b]'>{config.tituloDestacado}</em>
           <br />
-          para tu día
+          {config.tituloCierre}
         </h1>
 
-        <p className='text-lg text-[#8a7060] leading-relaxed max-w-md mb-8 font-light'>
-          Barras de cereal y snacks saludables hechos con ingredientes naturales. Sin azúcar refinada, sin rellenos
-          artificiales.
+        <p className='text-base sm:text-lg text-[#8a7060] leading-relaxed max-w-md mb-8 font-light'>
+          {config.subtitulo}
         </p>
 
-        <div className='flex gap-3 flex-wrap mb-12'>
+        <div className='flex gap-3 flex-wrap mb-10'>
           <Link
             href='#productos'
             className='bg-[#3d2b1f] text-[#faf6ef] px-6 py-3 rounded-full text-sm font-medium hover:bg-[#c47c2b] transition-colors'
@@ -39,15 +47,11 @@ export function Hero() {
         </div>
 
         {/* Stats */}
-        <div className='flex gap-8 pt-6 border-t border-[#3d2b1f]/10'>
-          {[
-            { num: '18+', label: 'Variedades' },
-            { num: '2.4k', label: 'Clientes felices' },
-            { num: '0g', label: 'Azúcar refinada' }
-          ].map((s) => (
+        <div className='flex flex-wrap gap-6 sm:gap-8 pt-6 border-t border-[#3d2b1f]/10'>
+          {config.stats.map((s) => (
             <div key={s.label}>
-              <div className='text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'Georgia, serif' }}>
-                {s.num}
+              <div className='text-xl sm:text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'Georgia, serif' }}>
+                {s.valor}
               </div>
               <div className='text-xs text-[#8a7060] uppercase tracking-wider mt-0.5'>{s.label}</div>
             </div>
@@ -55,27 +59,21 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Derecha */}
+      {/* Derecha — solo desktop */}
       <div className='hidden lg:flex relative bg-[#f0e6d3] items-center justify-center overflow-hidden'>
         <div className='absolute w-96 h-96 rounded-full bg-[#c47c2b]/10 blur-3xl' />
 
-        {/* Tags flotantes */}
-        {[
-          { text: '🌾 Avena integral', pos: 'top-[20%] left-[5%]', delay: '0s' },
-          { text: '🍯 Miel pura', pos: 'top-[15%] right-[8%]', delay: '0.5s' },
-          { text: '💚 Sin gluten', pos: 'bottom-[25%] left-[8%]', delay: '1s' },
-          { text: '⚡ Alto en proteína', pos: 'bottom-[20%] right-[5%]', delay: '0.3s' }
-        ].map((t) => (
+        {config.tags.slice(0, 4).map((t, i) => (
           <div
-            key={t.text}
-            className={`absolute ${t.pos} bg-white rounded-full px-4 py-2 text-sm font-medium text-[#3d2b1f] shadow-md animate-float`}
-            style={{ animationDelay: t.delay }}
+            key={i}
+            className={`absolute ${TAG_POSITIONS[i]} bg-white rounded-full px-4 py-2 text-sm font-medium text-[#3d2b1f] shadow-md animate-float`}
+            style={{ animationDelay: TAG_DELAYS[i] }}
           >
-            {t.text}
+            {t.emoji} {t.texto}
           </div>
         ))}
 
-        <div className='text-[11rem] animate-float z-10 filter drop-shadow-xl'>🌾</div>
+        <div className='text-[10rem] xl:text-[11rem] animate-float z-10 filter drop-shadow-xl'>🌾</div>
       </div>
     </section>
   )

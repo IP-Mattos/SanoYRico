@@ -1,10 +1,10 @@
 // src/app/dashboard/productos/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { type Producto, type Categoria } from '@/lib/types'
-import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle, Sparkles, Trash } from 'lucide-react'
 
 const CATEGORIAS: { value: Categoria; label: string }[] = [
   { value: 'barrita', label: '🍫 Barrita' },
@@ -21,6 +21,7 @@ const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
   stock: 0,
   stock_minimo: 5,
   emoji: '🌾',
+  imagen_url: null,
   badge: '',
   activo: true
 }
@@ -34,6 +35,9 @@ export default function ProductosPage() {
   const [form, setForm] = useState(EMPTY)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
+  const [procesandoIA, setProcesandoIA] = useState(false)
+  const [errorIA, setErrorIA] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   const cargar = async () => {
@@ -43,15 +47,15 @@ export default function ProductosPage() {
   }
 
   useEffect(() => {
-    ;(async () => {
-      await cargar()
-    })()
+    ;(async () => { await cargar() })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const abrirCrear = () => {
     setEditando(null)
     setForm(EMPTY)
     setError('')
+    setErrorIA('')
     setModalOpen(true)
   }
 
@@ -66,43 +70,42 @@ export default function ProductosPage() {
       stock: p.stock,
       stock_minimo: p.stock_minimo,
       emoji: p.emoji ?? '',
+      imagen_url: p.imagen_url ?? null,
       badge: p.badge ?? '',
       activo: p.activo
     })
     setError('')
+    setErrorIA('')
     setModalOpen(true)
   }
 
-  const guardar = async () => {
-    if (!form.nombre.trim()) {
-      setError('El nombre es obligatorio')
-      return
+  const procesarImagen = async (file: File) => {
+    setProcesandoIA(true)
+    setErrorIA('')
+    const fd = new FormData()
+    fd.append('imagen', file)
+    const res = await fetch('/api/remove-bg', { method: 'POST', body: fd })
+    const json = await res.json()
+    if (!res.ok) {
+      setErrorIA(json.error ?? 'Error procesando imagen')
+    } else {
+      setForm((f) => ({ ...f, imagen_url: json.url }))
     }
-    if (form.precio <= 0) {
-      setError('El precio debe ser mayor a 0')
-      return
-    }
+    setProcesandoIA(false)
+  }
 
+  const guardar = async () => {
+    if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return }
+    if (form.precio <= 0) { setError('El precio debe ser mayor a 0'); return }
     setGuardando(true)
     setError('')
 
     if (editando) {
-      const { error } = await supabase
-        .from('productos')
-        .update({ ...form })
-        .eq('id', editando.id)
-      if (error) {
-        setError(error.message)
-        setGuardando(false)
-        return
-      }
+      const { error } = await supabase.from('productos').update({ ...form }).eq('id', editando.id)
+      if (error) { setError(error.message); setGuardando(false); return }
     } else {
       const { error } = await supabase.from('productos').insert({ ...form })
-      if (error) {
-        setError(error.message)
-        setGuardando(false)
-        return
-      }
+      if (error) { setError(error.message); setGuardando(false); return }
     }
 
     await cargar()
@@ -137,21 +140,19 @@ export default function ProductosPage() {
 
       {/* Filtros */}
       <div className='flex gap-2 flex-wrap'>
-        {[{ value: 'todos', label: 'Todos' }, ...CATEGORIAS.map((c) => ({ value: c.value, label: c.label }))].map(
-          (f) => (
-            <button
-              key={f.value}
-              onClick={() => setFiltro(f.value as 'todos' | Categoria)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                filtro === f.value
-                  ? 'bg-[#3d2b1f] text-white'
-                  : 'bg-white text-[#8a7060] border border-[#f0e6d3] hover:border-[#c47c2b]'
-              }`}
-            >
-              {f.label}
-            </button>
-          )
-        )}
+        {[{ value: 'todos', label: 'Todos' }, ...CATEGORIAS.map((c) => ({ value: c.value, label: c.label }))].map((f) => (
+          <button
+            key={f.value}
+            onClick={() => setFiltro(f.value as 'todos' | Categoria)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              filtro === f.value
+                ? 'bg-[#3d2b1f] text-white'
+                : 'bg-white text-[#8a7060] border border-[#f0e6d3] hover:border-[#c47c2b]'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {/* Tabla */}
@@ -164,24 +165,12 @@ export default function ProductosPage() {
           <table className='w-full'>
             <thead>
               <tr className='border-b border-[#f0e6d3] bg-[#faf6ef]'>
-                <th className='text-left px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider'>
-                  Producto
-                </th>
-                <th className='text-left px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden md:table-cell'>
-                  Categoría
-                </th>
-                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider'>
-                  Precio
-                </th>
-                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden sm:table-cell'>
-                  Costo
-                </th>
-                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden sm:table-cell'>
-                  Stock
-                </th>
-                <th className='text-center px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden md:table-cell'>
-                  Estado
-                </th>
+                <th className='text-left px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider'>Producto</th>
+                <th className='text-left px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden md:table-cell'>Categoría</th>
+                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider'>Precio</th>
+                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden sm:table-cell'>Costo</th>
+                <th className='text-right px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden sm:table-cell'>Stock</th>
+                <th className='text-center px-5 py-3 text-xs font-semibold text-[#8a7060] uppercase tracking-wider hidden md:table-cell'>Estado</th>
                 <th className='px-5 py-3'></th>
               </tr>
             </thead>
@@ -190,13 +179,15 @@ export default function ProductosPage() {
                 <tr key={p.id} className='border-b border-[#f0e6d3] last:border-0 hover:bg-[#faf6ef] transition-colors'>
                   <td className='px-5 py-3'>
                     <div className='flex items-center gap-3'>
-                      <span className='text-xl'>{p.emoji}</span>
+                      {p.imagen_url ? (
+                        <img src={p.imagen_url} alt={p.nombre} className='w-9 h-9 object-contain' />
+                      ) : (
+                        <span className='text-xl w-9 text-center'>{p.emoji}</span>
+                      )}
                       <div>
                         <div className='text-sm font-medium text-[#3d2b1f]'>{p.nombre}</div>
                         {p.badge && (
-                          <span className='text-xs bg-[#fef3d0] text-[#c47c2b] px-2 py-0.5 rounded-full'>
-                            {p.badge}
-                          </span>
+                          <span className='text-xs bg-[#fef3d0] text-[#c47c2b] px-2 py-0.5 rounded-full'>{p.badge}</span>
                         )}
                       </div>
                     </div>
@@ -207,34 +198,22 @@ export default function ProductosPage() {
                   <td className='px-5 py-3 text-right text-sm font-semibold text-[#3d2b1f]'>${p.precio}</td>
                   <td className='px-5 py-3 text-right text-sm text-[#8a7060] hidden sm:table-cell'>${p.costo}</td>
                   <td className='px-5 py-3 text-right hidden sm:table-cell'>
-                    <span
-                      className={`text-sm font-medium ${p.stock <= p.stock_minimo ? 'text-red-500' : 'text-[#3d2b1f]'}`}
-                    >
+                    <span className={`text-sm font-medium ${p.stock <= p.stock_minimo ? 'text-red-500' : 'text-[#3d2b1f]'}`}>
                       {p.stock}
                     </span>
                   </td>
                   <td className='px-5 py-3 text-center hidden md:table-cell'>
-                    <span
-                      className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${
-                        p.activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
-                      }`}
-                    >
+                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${p.activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
                       {p.activo ? <Check className='h-3 w-3' /> : <X className='h-3 w-3' />}
                       {p.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td className='px-5 py-3'>
                     <div className='flex items-center gap-2 justify-end'>
-                      <button
-                        onClick={() => abrirEditar(p)}
-                        className='p-1.5 text-[#8a7060] hover:text-[#c47c2b] hover:bg-[#fef3d0] rounded-lg transition-colors'
-                      >
+                      <button onClick={() => abrirEditar(p)} className='p-1.5 text-[#8a7060] hover:text-[#c47c2b] hover:bg-[#fef3d0] rounded-lg transition-colors'>
                         <Pencil className='h-4 w-4' />
                       </button>
-                      <button
-                        onClick={() => eliminar(p.id)}
-                        className='p-1.5 text-[#8a7060] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors'
-                      >
+                      <button onClick={() => eliminar(p.id)} className='p-1.5 text-[#8a7060] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors'>
                         <Trash2 className='h-4 w-4' />
                       </button>
                     </div>
@@ -265,25 +244,97 @@ export default function ProductosPage() {
             </div>
 
             <div className='p-6 space-y-4'>
-              {/* Nombre y emoji */}
-              <div className='flex gap-3'>
-                <div className='w-20'>
-                  <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Emoji</label>
-                  <input
-                    value={form.emoji ?? ''}
-                    onChange={(e) => setForm((f) => ({ ...f, emoji: e.target.value }))}
-                    className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-center text-lg focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
-                  />
+
+              {/* Ícono unificado */}
+              <div>
+                <label className='block text-xs font-medium text-[#3d2b1f] mb-2'>Ícono del producto</label>
+                <div className='flex gap-3 items-start'>
+
+                  {/* Preview */}
+                  <div className='w-20 h-20 rounded-2xl bg-[#faf6ef] border border-[#f0e6d3] flex items-center justify-center shrink-0 overflow-hidden'>
+                    {form.imagen_url
+                      ? <img src={form.imagen_url} alt='preview' className='w-16 h-16 object-contain' />
+                      : <span className='text-4xl'>{form.emoji || '🌾'}</span>
+                    }
+                  </div>
+
+                  {/* Controles */}
+                  <div className='flex-1 space-y-2'>
+                    {/* Tabs emoji / imagen */}
+                    <div className='flex rounded-xl overflow-hidden border border-[#f0e6d3] text-xs font-medium'>
+                      <button
+                        type='button'
+                        onClick={() => setForm((f) => ({ ...f, imagen_url: null }))}
+                        className={`flex-1 py-2 transition-colors ${!form.imagen_url ? 'bg-[#3d2b1f] text-white' : 'text-[#8a7060] hover:bg-[#faf6ef]'}`}
+                      >
+                        Emoji
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => !procesandoIA && fileRef.current?.click()}
+                        className={`flex-1 py-2 flex items-center justify-center gap-1 transition-colors ${form.imagen_url ? 'bg-[#3d2b1f] text-white' : 'text-[#8a7060] hover:bg-[#faf6ef]'}`}
+                      >
+                        <Sparkles className='h-3 w-3' /> Imagen IA
+                      </button>
+                    </div>
+
+                    {/* Input según modo */}
+                    {form.imagen_url ? (
+                      <div className='flex items-center gap-2 px-3 py-2 bg-green-50 rounded-xl'>
+                        <Check className='h-3.5 w-3.5 text-green-600 shrink-0' />
+                        <span className='text-xs text-green-700 flex-1'>Imagen procesada</span>
+                        <button
+                          type='button'
+                          onClick={() => setForm((f) => ({ ...f, imagen_url: null }))}
+                          className='text-[#8a7060] hover:text-red-500 transition-colors'
+                        >
+                          <Trash className='h-3.5 w-3.5' />
+                        </button>
+                      </div>
+                    ) : procesandoIA ? (
+                      <div className='flex items-center gap-2 px-3 py-2 bg-[#fef3d0] rounded-xl'>
+                        <Loader2 className='h-3.5 w-3.5 animate-spin text-[#c47c2b]' />
+                        <span className='text-xs text-[#c47c2b]'>Convirtiendo a emoji y quitando fondo...</span>
+                      </div>
+                    ) : (
+                      <input
+                        value={form.emoji ?? ''}
+                        onChange={(e) => setForm((f) => ({ ...f, emoji: e.target.value }))}
+                        placeholder='Pegá un emoji'
+                        className='w-full px-3 py-2 rounded-xl border border-[#f0e6d3] text-center text-xl focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                      />
+                    )}
+
+                    {errorIA && (
+                      <p className='text-xs text-red-500 flex items-center gap-1'>
+                        <AlertCircle className='h-3 w-3' /> {errorIA}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className='flex-1'>
-                  <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Nombre *</label>
-                  <input
-                    value={form.nombre}
-                    onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-                    placeholder='Ej: Miel & Avena'
-                    className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
-                  />
-                </div>
+
+                <input
+                  ref={fileRef}
+                  type='file'
+                  accept='image/jpeg,image/png,image/webp'
+                  className='hidden'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) procesarImagen(file)
+                    e.target.value = ''
+                  }}
+                />
+              </div>
+
+              {/* Nombre */}
+              <div>
+                <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Nombre *</label>
+                <input
+                  value={form.nombre}
+                  onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
+                  placeholder='Ej: Miel & Avena'
+                  className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                />
               </div>
 
               {/* Descripción */}
@@ -307,9 +358,7 @@ export default function ProductosPage() {
                     className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b] bg-white'
                   >
                     {CATEGORIAS.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
+                      <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
                   </select>
                 </div>

@@ -18,6 +18,7 @@ import {
   ShoppingCart,
   X,
   Send,
+  CreditCard,
   type LucideIcon
 } from 'lucide-react'
 
@@ -251,6 +252,17 @@ export default function PedidosPage() {
                           <p className='text-sm font-medium text-[#3d2b1f]'>{pedido.direccion}</p>
                         </div>
                       </div>
+                      {pedido.metodo_pago && (
+                        <div className='flex items-start gap-2'>
+                          <CreditCard className='h-4 w-4 text-[#8a7060] mt-0.5 flex-shrink-0' />
+                          <div>
+                            <p className='text-xs text-[#8a7060]'>Método de pago</p>
+                            <p className='text-sm font-medium text-[#3d2b1f] capitalize'>
+                              {{ transferencia: '🏦 Transferencia', deposito: '🏧 Depósito', mercadopago: '💳 Mercado Pago' }[pedido.metodo_pago] ?? pedido.metodo_pago}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       {pedido.notas && (
                         <div className='flex items-start gap-2'>
                           <FileText className='h-4 w-4 text-[#8a7060] mt-0.5 flex-shrink-0' />
