@@ -36,6 +36,7 @@ export default function ProductosPage() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [procesandoIA, setProcesandoIA] = useState(false)
+  const [pasoIA, setPasoIA] = useState<'emoji' | 'fondo' | null>(null)
   const [errorIA, setErrorIA] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
@@ -81,17 +82,21 @@ export default function ProductosPage() {
 
   const procesarImagen = async (file: File) => {
     setProcesandoIA(true)
+    setPasoIA('emoji')
     setErrorIA('')
+    const timer = setTimeout(() => setPasoIA('fondo'), 15000)
     const fd = new FormData()
     fd.append('imagen', file)
     const res = await fetch('/api/remove-bg', { method: 'POST', body: fd })
     const json = await res.json()
+    clearTimeout(timer)
     if (!res.ok) {
       setErrorIA(json.error ?? 'Error procesando imagen')
     } else {
       setForm((f) => ({ ...f, imagen_url: json.url }))
     }
     setProcesandoIA(false)
+    setPasoIA(null)
   }
 
   const guardar = async () => {
@@ -238,7 +243,7 @@ export default function ProductosPage() {
           <div className='bg-white rounded-2xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto'>
             <div className='flex items-center justify-between p-6 border-b border-[#f0e6d3]'>
               <h3 className='text-lg font-bold text-[#3d2b1f]'>{editando ? 'Editar producto' : 'Nuevo producto'}</h3>
-              <button onClick={() => setModalOpen(false)} className='text-[#8a7060] hover:text-[#3d2b1f]'>
+              <button onClick={() => !procesandoIA && setModalOpen(false)} disabled={procesandoIA} className='text-[#8a7060] hover:text-[#3d2b1f] disabled:opacity-30'>
                 <X className='h-5 w-5' />
               </button>
             </div>
@@ -292,9 +297,23 @@ export default function ProductosPage() {
                         </button>
                       </div>
                     ) : procesandoIA ? (
-                      <div className='flex items-center gap-2 px-3 py-2 bg-[#fef3d0] rounded-xl'>
-                        <Loader2 className='h-3.5 w-3.5 animate-spin text-[#c47c2b]' />
-                        <span className='text-xs text-[#c47c2b]'>Convirtiendo a emoji y quitando fondo...</span>
+                      <div className='px-3 py-2.5 bg-[#fef3d0] rounded-xl space-y-1.5'>
+                        <div className='flex items-center gap-2'>
+                          {pasoIA === 'emoji'
+                            ? <Loader2 className='h-3.5 w-3.5 animate-spin text-[#c47c2b] shrink-0' />
+                            : <Check className='h-3.5 w-3.5 text-green-500 shrink-0' />}
+                          <span className={`text-xs ${pasoIA === 'emoji' ? 'text-[#c47c2b] font-medium' : 'text-green-600'}`}>
+                            Generando emoji
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          {pasoIA === 'fondo'
+                            ? <Loader2 className='h-3.5 w-3.5 animate-spin text-[#c47c2b] shrink-0' />
+                            : <div className='h-3.5 w-3.5 rounded-full border border-[#c47c2b]/30 shrink-0' />}
+                          <span className={`text-xs ${pasoIA === 'fondo' ? 'text-[#c47c2b] font-medium' : 'text-[#c47c2b]/50'}`}>
+                            Quitando fondo
+                          </span>
+                        </div>
                       </div>
                     ) : (
                       <input
@@ -443,13 +462,14 @@ export default function ProductosPage() {
               <div className='flex gap-3 pt-2'>
                 <button
                   onClick={() => setModalOpen(false)}
-                  className='flex-1 px-4 py-2.5 rounded-xl border border-[#f0e6d3] text-sm text-[#8a7060] hover:bg-[#faf6ef] transition-colors'
+                  disabled={procesandoIA}
+                  className='flex-1 px-4 py-2.5 rounded-xl border border-[#f0e6d3] text-sm text-[#8a7060] hover:bg-[#faf6ef] transition-colors disabled:opacity-30'
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={guardar}
-                  disabled={guardando}
+                  disabled={guardando || procesandoIA}
                   className='flex-1 flex items-center justify-center gap-2 bg-[#3d2b1f] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-60'
                 >
                   {guardando && <Loader2 className='h-4 w-4 animate-spin' />}

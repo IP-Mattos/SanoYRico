@@ -225,7 +225,7 @@ export default function ContenidoPage() {
 
   const guardar = async (clave: TabId, valor: unknown) => {
     setSaving((p) => ({ ...p, [clave]: true }))
-    await supabase.from('configuracion').upsert({ clave, valor })
+    await supabase.from('configuracion').upsert({ clave, valor }, { onConflict: 'clave' })
     setSaving((p) => ({ ...p, [clave]: false }))
     setSaved((p) => ({ ...p, [clave]: true }))
     setTimeout(() => setSaved((p) => ({ ...p, [clave]: false })), 2500)
