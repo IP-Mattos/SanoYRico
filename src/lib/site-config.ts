@@ -134,7 +134,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     const merged: SiteConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG))
     rows.forEach(({ clave, valor }) => {
       if (clave in merged) {
-        ;(merged as Record<string, unknown>)[clave] = valor
+        ;(merged as unknown as Record<string, unknown>)[clave] = valor
       }
     })
     return merged
