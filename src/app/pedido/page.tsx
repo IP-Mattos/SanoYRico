@@ -1,7 +1,7 @@
 // src/app/pedido/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
   Loader2,
@@ -87,6 +87,22 @@ export default function SeguimientoPage() {
   const [intentos, setIntentos] = useState(0)
   const supabase = createClient()
 
+  // Realtime: actualizar estado cuando cambia en DB
+  useEffect(() => {
+    if (!pedido) return
+    const channel = supabase
+      .channel(`pedido-${pedido.numero}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `numero=eq.${pedido.numero}` },
+        (payload) => {
+          setPedido((prev) => prev ? { ...prev, estado: payload.new.estado } : prev)
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [pedido?.numero])
+
   const buscar = async () => {
     const q = busqueda.trim()
     if (!q) return
@@ -162,14 +178,14 @@ export default function SeguimientoPage() {
           {/* Opciones de búsqueda */}
           <div className='grid grid-cols-2 gap-2 mb-4'>
             <div className='flex items-center gap-2 bg-[#faf6ef] rounded-xl px-3 py-2'>
-              <Hash className='h-4 w-4 text-[#c47c2b] flex-shrink-0' />
+              <Hash className='h-4 w-4 text-[#c47c2b] shrink-0' />
               <div>
                 <p className='text-xs font-medium text-[#3d2b1f]'>Nro. de pedido</p>
                 <p className='text-xs text-[#8a7060]'>Ej: 42</p>
               </div>
             </div>
             <div className='flex items-center gap-2 bg-[#faf6ef] rounded-xl px-3 py-2'>
-              <Phone className='h-4 w-4 text-[#c47c2b] flex-shrink-0' />
+              <Phone className='h-4 w-4 text-[#c47c2b] shrink-0' />
               <div>
                 <p className='text-xs font-medium text-[#3d2b1f]'>Tu teléfono</p>
                 <p className='text-xs text-[#8a7060]'>Ej: 091 199 299</p>
@@ -293,7 +309,7 @@ export default function SeguimientoPage() {
             <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
               <p className='text-xs font-semibold text-[#8a7060] uppercase tracking-wider mb-3'>Dónde lo entregamos</p>
               <div className='flex items-start gap-3'>
-                <div className='w-8 h-8 bg-[#fef3d0] rounded-xl flex items-center justify-center flex-shrink-0'>
+                <div className='w-8 h-8 bg-[#fef3d0] rounded-xl flex items-center justify-center shrink-0'>
                   <MapPin className='h-4 w-4 text-[#c47c2b]' />
                 </div>
                 <div>

@@ -18,6 +18,7 @@ import {
   ShoppingCart,
   PencilRuler
 } from 'lucide-react'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const navItems = [
   { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
@@ -32,9 +33,27 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [email, setEmail] = useState('')
+  const [pedidosPendientes, setPedidosPendientes] = useState(0)
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
+
+  useEffect(() => {
+    const cargarPendientes = async () => {
+      const { count } = await supabase
+        .from('pedidos')
+        .select('*', { count: 'exact', head: true })
+        .eq('estado', 'pendiente')
+      setPedidosPendientes(count ?? 0)
+    }
+    cargarPendientes()
+    const channel = supabase
+      .channel('layout-pedidos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, cargarPendientes)
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -96,6 +115,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const badge = item.href === '/dashboard/pedidos' && pedidosPendientes > 0 ? pedidosPendientes : null
             return (
               <Link
                 key={item.href}
@@ -107,7 +127,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 `}
               >
                 <Icon className='h-4 w-4' />
-                {item.label}
+                <span className='flex-1'>{item.label}</span>
+                {badge && (
+                  <span className='bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-5 text-center'>
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -148,7 +173,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Página */}
         <main className='flex-1 p-4 sm:p-6 overflow-y-auto'>
-          <div className='max-w-5xl mx-auto'>{children}</div>
+          <div className='max-w-5xl mx-auto'>
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </div>
         </main>
       </div>
     </div>

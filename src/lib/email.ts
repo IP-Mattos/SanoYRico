@@ -25,6 +25,65 @@ function filas(items: ItemEmail[]) {
     .join('')
 }
 
+// Simple email validation
+function emailValido(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+export async function notificarClienteRecibo(pedido: {
+  email: string
+  numero: number
+  nombre: string
+  total: number
+  items: ItemEmail[]
+}) {
+  if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
+
+  await resend.emails.send({
+    from: FROM,
+    to: pedido.email,
+    subject: `📬 Recibimos tu pedido #${pedido.numero} — Sano y Rico`,
+    html: `
+      <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
+        <div style="background:#3d2b1f;padding:24px 32px;border-radius:16px 16px 0 0">
+          <h1 style="margin:0;color:#faf6ef;font-size:22px">
+            📬 Pedido <span style="color:#c47c2b">#${pedido.numero}</span> recibido
+          </h1>
+        </div>
+        <div style="background:#faf6ef;padding:24px 32px;border:1px solid #f0e6d3;border-top:none">
+          <p style="margin:0 0 16px">Hola <b>${pedido.nombre}</b>, recibimos tu pedido y lo estamos revisando 🌿</p>
+          <p style="margin:0 0 16px;color:#8a7060;font-size:14px">En breve te confirmamos y coordinamos la entrega.</p>
+
+          <table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;border:1px solid #f0e6d3">
+            <thead>
+              <tr style="background:#f0e6d3">
+                <th style="padding:8px 12px;text-align:left">Producto</th>
+                <th style="padding:8px 12px;text-align:center">Cant.</th>
+                <th style="padding:8px 12px;text-align:right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filas(pedido.items)}
+              <tr style="background:#fef3d0">
+                <td colspan="2" style="padding:10px 12px;font-weight:bold">Total</td>
+                <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#c47c2b;font-size:18px">$${pedido.total}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p style="margin:16px 0 0;font-size:13px;color:#8a7060">
+            Podés ver el estado de tu pedido en cualquier momento en
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sano-y-rico.vercel.app'}/pedido" style="color:#c47c2b">sano-y-rico.vercel.app/pedido</a>
+          </p>
+        </div>
+        <div style="background:#f0e6d3;padding:12px 32px;border-radius:0 0 16px 16px;text-align:center">
+          <p style="margin:0;font-size:12px;color:#8a7060">Sano y Rico · snacks naturales</p>
+        </div>
+      </div>
+    `
+  })
+}
+
 export async function notificarAdminNuevoPedido(pedido: {
   numero: number
   nombre: string
@@ -95,7 +154,7 @@ export async function notificarClienteEstado(pedido: {
   nombre: string
   estado: 'entregado' | 'cancelado'
 }) {
-  if (!process.env.RESEND_API_KEY) return
+  if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
 
   const config = {
     entregado: {
@@ -143,7 +202,7 @@ export async function notificarClienteConfirmacion(pedido: {
   total: number
   nroRastreo?: string
 }) {
-  if (!process.env.RESEND_API_KEY) return
+  if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
 
   await resend.emails.send({
     from: FROM,

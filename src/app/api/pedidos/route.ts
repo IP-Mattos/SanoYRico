@@ -1,7 +1,7 @@
 // src/app/api/pedidos/route.ts
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
-import { notificarAdminNuevoPedido } from '@/lib/email'
+import { notificarAdminNuevoPedido, notificarClienteRecibo } from '@/lib/email'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 interface ItemInput {
@@ -120,6 +120,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Error al guardar los productos' }, { status: 500 })
   }
 
+  const emailItems = items.map((i) => ({
+    emoji: i.producto_emoji,
+    nombre: i.producto_nombre,
+    cantidad: i.cantidad,
+    subtotal: i.subtotal
+  }))
+
+  // Recibo inmediato al cliente (fire-and-forget)
+  if (email) {
+    notificarClienteRecibo({ email, numero: pedido.numero, nombre, total, items: emailItems }).catch((e) =>
+      console.error('Email recibo error:', e)
+    )
+  }
+
   // Notificar al admin por email (fire-and-forget)
   notificarAdminNuevoPedido({
     numero: pedido.numero,
@@ -129,12 +143,7 @@ export async function POST(req: NextRequest) {
     notas,
     metodo_pago,
     total,
-    items: items.map((i) => ({
-      emoji: i.producto_emoji,
-      nombre: i.producto_nombre,
-      cantidad: i.cantidad,
-      subtotal: i.subtotal
-    }))
+    items: emailItems
   }).catch((e) => console.error('Email admin error:', e))
 
   return NextResponse.json({ id: pedido.id, numero: pedido.numero }, { status: 201 })
