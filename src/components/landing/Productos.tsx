@@ -148,7 +148,7 @@ export function Productos() {
       <div className='max-w-7xl mx-auto'>
         <p className='text-xs font-medium tracking-widest uppercase text-[#8a5a1a] mb-3'>Nuestros productos</p>
         <h2 className='text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2b1f] mb-3' style={{ fontFamily: 'Georgia, serif' }}>
-          Snacks que te
+          Snacks que te{' '}
           <br />
           hacen bien de verdad
         </h2>

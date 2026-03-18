@@ -67,6 +67,7 @@ export default function PedidosPage() {
     ;(async () => {
       await cargar()
     })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Pedir permiso de notificaciones al montar
@@ -100,6 +101,7 @@ export default function PedidosPage() {
     return () => {
       supabase.removeChannel(channel)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const cambiarEstado = async (id: string, estado: EstadoPedido, pedido?: Pedido) => {

@@ -6,7 +6,7 @@ export function Beneficios({ items = DEFAULT_CONFIG.beneficios }: { items?: Bene
       <div className='max-w-7xl mx-auto'>
         <p className='text-xs font-medium tracking-widest uppercase text-[#e8a832] mb-3'>Por qué elegirnos</p>
         <h2 className='text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-3' style={{ fontFamily: 'Georgia, serif' }}>
-          Todo lo bueno,
+          Todo lo bueno,{' '}
           <br />
           nada de lo malo
         </h2>

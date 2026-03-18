@@ -55,7 +55,7 @@ export function Navbar() {
 
           {/* Mobile: carrito + hamburger */}
           <div className='flex items-center gap-3 lg:hidden'>
-            <button onClick={() => setIsOpen(true)} className='relative p-2 text-[#3d2b1f]'>
+            <button onClick={() => setIsOpen(true)} aria-label='Ver carrito' className='relative p-2 text-[#3d2b1f]'>
               <ShoppingBag className='h-5 w-5' />
               {cantidad > 0 && (
                 <span className='absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#c47c2b] text-white text-xs rounded-full flex items-center justify-center font-bold'>

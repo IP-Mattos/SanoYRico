@@ -73,6 +73,7 @@ export default function StockPage() {
     ;(async () => {
       await cargar()
     })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const abrirModal = (p: Producto) => {

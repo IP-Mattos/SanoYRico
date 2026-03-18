@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
 import { type Producto, type Categoria } from '@/lib/types'
 import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle, Sparkles, Trash } from 'lucide-react'
@@ -185,7 +186,7 @@ export default function ProductosPage() {
                   <td className='px-5 py-3'>
                     <div className='flex items-center gap-3'>
                       {p.imagen_url ? (
-                        <img src={p.imagen_url} alt={p.nombre} className='w-9 h-9 object-contain' />
+                        <Image src={p.imagen_url} alt={p.nombre} width={36} height={36} className='object-contain' />
                       ) : (
                         <span className='text-xl w-9 text-center'>{p.emoji}</span>
                       )}
@@ -258,7 +259,7 @@ export default function ProductosPage() {
                   {/* Preview */}
                   <div className='w-20 h-20 rounded-2xl bg-[#faf6ef] border border-[#f0e6d3] flex items-center justify-center shrink-0 overflow-hidden'>
                     {form.imagen_url
-                      ? <img src={form.imagen_url} alt='preview' className='w-16 h-16 object-contain' />
+                      ? <Image src={form.imagen_url} alt='preview' width={64} height={64} className='object-contain' />
                       : <span className='text-4xl'>{form.emoji || '🌾'}</span>
                     }
                   </div>
@@ -453,7 +454,7 @@ export default function ProductosPage() {
               {/* Error */}
               {error && (
                 <div className='flex items-center gap-2 text-sm text-red-500 bg-red-50 px-4 py-2.5 rounded-xl'>
-                  <AlertCircle className='h-4 w-4 flex-shrink-0' />
+                  <AlertCircle className='h-4 w-4 shrink-0' />
                   {error}
                 </div>
               )}

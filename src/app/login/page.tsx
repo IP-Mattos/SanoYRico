@@ -43,6 +43,10 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (bloqueado) return
+    if (!email.trim() || !password.trim()) {
+      setError('Completá tu email y contraseña')
+      return
+    }
     setLoading(true)
     setError('')
 

@@ -110,6 +110,7 @@ export default function SeguimientoPage() {
       )
       .subscribe()
     return () => { supabase.removeChannel(channel) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pedido?.numero])
 
   const buscar = async () => {

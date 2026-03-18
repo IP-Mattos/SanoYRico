@@ -13,7 +13,7 @@ import {
   type FooterConfig,
   type PagosConfig
 } from '@/lib/site-config'
-import { Loader2, Save, Plus, Trash2, CheckCircle, Eye, Settings, Sparkles, AlignLeft, Star, FileText, MessageSquare, Megaphone, CreditCard } from 'lucide-react'
+import { Loader2, Save, Plus, Trash2, CheckCircle, Eye, Settings, Sparkles, Star, FileText, MessageSquare, Megaphone, CreditCard } from 'lucide-react'
 
 type TabId = 'general' | 'hero' | 'marquee' | 'beneficios' | 'testimonios' | 'footer' | 'pagos'
 

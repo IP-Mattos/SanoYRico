@@ -22,7 +22,7 @@ export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) 
           className='text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-[#3d2b1f] leading-tight mb-5'
           style={{ fontFamily: 'Georgia, serif' }}
         >
-          {config.titulo} <em className='text-[#c47c2b]'>{config.tituloDestacado}</em>
+          {config.titulo} <em className='text-[#c47c2b]'>{config.tituloDestacado}</em>{' '}
           <br />
           {config.tituloCierre}
         </h1>
