@@ -89,6 +89,52 @@ export async function notificarAdminNuevoPedido(pedido: {
   })
 }
 
+export async function notificarClienteEstado(pedido: {
+  email: string
+  numero: number
+  nombre: string
+  estado: 'entregado' | 'cancelado'
+}) {
+  if (!process.env.RESEND_API_KEY) return
+
+  const config = {
+    entregado: {
+      emoji: '📦',
+      titulo: 'Tu pedido fue entregado',
+      cuerpo: 'Tu pedido llegó. ¡Esperamos que lo disfrutes! 🌿',
+      color: '#4a6741'
+    },
+    cancelado: {
+      emoji: '❌',
+      titulo: 'Tu pedido fue cancelado',
+      cuerpo: 'Lamentamos informarte que tu pedido fue cancelado. Si tenés dudas, contactanos.',
+      color: '#c0392b'
+    }
+  }[pedido.estado]
+
+  await resend.emails.send({
+    from: FROM,
+    to: pedido.email,
+    subject: `${config.emoji} Pedido #${pedido.numero} — ${config.titulo}`,
+    html: `
+      <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
+        <div style="background:${config.color};padding:24px 32px;border-radius:16px 16px 0 0">
+          <h1 style="margin:0;color:#fff;font-size:22px">
+            ${config.emoji} Pedido <span style="opacity:0.85">#${pedido.numero}</span>
+          </h1>
+        </div>
+        <div style="background:#faf6ef;padding:24px 32px;border:1px solid #f0e6d3;border-top:none">
+          <p style="margin:0 0 8px">Hola <b>${pedido.nombre}</b>,</p>
+          <p style="margin:0;color:#5c4033">${config.cuerpo}</p>
+        </div>
+        <div style="background:#f0e6d3;padding:12px 32px;border-radius:0 0 16px 16px;text-align:center">
+          <p style="margin:0;font-size:12px;color:#8a7060">Sano y Rico · snacks naturales</p>
+        </div>
+      </div>
+    `
+  })
+}
+
 export async function notificarClienteConfirmacion(pedido: {
   email: string
   numero: number

@@ -107,6 +107,15 @@ export default function PedidosPage() {
     await supabase.from('pedidos').update({ estado }).eq('id', id)
     await cargar()
     setActualizando(null)
+
+    // Email al cliente para entregado/cancelado
+    if (estado === 'entregado' || estado === 'cancelado') {
+      fetch(`/api/pedidos/${id}/notificar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado })
+      }).catch(() => {})
+    }
   }
 
   const confirmarYNotificar = async () => {
@@ -123,26 +132,7 @@ export default function PedidosPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nroRastreo: nroRastreo.trim() || undefined })
-    }).catch(() => {}) // fire-and-forget
-
-    // Armar mensaje para el cliente
-    const items = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])
-
-    const resumen = items.map((i: PedidoItem) => `• ${i.emoji} ${i.nombre} x${i.cantidad} — $${i.subtotal}`).join('\n')
-
-    const mensaje =
-      `✅ *Tu pedido fue confirmado*\n\n` +
-      `Hola ${pedido.nombre}! Tu pedido *#${pedido.numero}* de Sano y Rico está en preparación 🌿\n\n` +
-      `*Resumen:*\n${resumen}\n\n` +
-      `💰 *Total: $${pedido.total}*\n` +
-      (nroRastreo.trim() ? `📦 *Número de rastreo:* ${nroRastreo.trim()}\n\n` : '\n') +
-      `Nos comunicamos pronto para coordinar la entrega. ¡Gracias por elegirnos! 🎉`
-
-    // Limpiar número del cliente
-    const numero = pedido.telefono.replace(/\D/g, '').replace(/^0/, '').replace(/^598/, '')
-    const whatsapp = `598${numero}`
-
-    window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(mensaje)}`, '_blank')
+    }).catch(() => {})
 
     setEnviando(false)
     setModalConfirmar(null)
@@ -396,17 +386,7 @@ export default function PedidosPage() {
                   className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
                 />
                 <p className='text-xs text-[#8a7060] mt-1'>
-                  Si lo completás, se incluye en el mensaje de WhatsApp al cliente.
-                </p>
-              </div>
-
-              {/* Preview del mensaje */}
-              <div className='bg-green-50 border border-green-100 rounded-xl p-3'>
-                <p className='text-xs font-medium text-green-700 mb-1.5'>Vista previa del mensaje</p>
-                <p className='text-xs text-green-800 leading-relaxed whitespace-pre-line'>
-                  {`✅ Tu pedido fue confirmado\n\nHola ${modalConfirmar.pedido.nombre}! Tu pedido #${modalConfirmar.pedido.numero} de Sano y Rico está en preparación 🌿`}
-                  {nroRastreo.trim() ? `\n\n📦 Número de rastreo: ${nroRastreo}` : ''}
-                  {`\n\nNos comunicamos pronto para coordinar la entrega. ¡Gracias! 🎉`}
+                  Si lo completás, se incluye en el email al cliente.
                 </p>
               </div>
 
@@ -423,7 +403,7 @@ export default function PedidosPage() {
                   className='flex-1 flex items-center justify-center gap-2 bg-[#3d2b1f] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-60'
                 >
                   {enviando ? <Loader2 className='h-4 w-4 animate-spin' /> : <Send className='h-4 w-4' />}
-                  Confirmar y notificar
+                  Confirmar y enviar email
                 </button>
               </div>
             </div>

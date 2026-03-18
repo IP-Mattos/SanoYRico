@@ -21,13 +21,7 @@ const FORM_INICIAL = {
   metodo_pago: '' as MetodoPago | ''
 }
 
-const ETIQUETAS: Record<MetodoPago, string> = {
-  transferencia: 'Transferencia bancaria',
-  deposito: 'Depósito bancario',
-  mercadopago: 'Mercado Pago'
-}
-
-export function Cart({ telefono = '59893644132', pagos }: { telefono?: string; pagos?: PagosConfig }) {
+export function Cart({ pagos }: { pagos?: PagosConfig }) {
   const { items, quitar, cambiarCantidad, vaciar, total, cantidad, isOpen, setIsOpen } = useCart()
   const [paso, setPaso] = useState<Paso>('carrito')
   const [guardando, setGuardando] = useState(false)
@@ -122,27 +116,8 @@ export function Cart({ telefono = '59893644132', pagos }: { telefono?: string; p
         window.location.href = init_point
         return
       }
-      // Si falla MP, continúa con el flujo normal de WhatsApp
+      // Si falla MP, continúa con el flujo normal
     }
-
-    // ── Flujo WhatsApp (transferencia / depósito / sin método) ───────────────
-    const resumenItems = items
-      .map((i) => `• ${i.emoji} ${i.nombre} x${i.cantidad} — $${i.precio * i.cantidad}`)
-      .join('\n')
-
-    const labelPago = form.metodo_pago ? ETIQUETAS[form.metodo_pago] : ''
-
-    const mensaje =
-      `🛍️ *Nuevo pedido #${pedido.numero}*\n\n` +
-      `👤 *Cliente:* ${form.nombre}\n` +
-      `📞 *Teléfono:* ${form.telefono}\n` +
-      `📍 *Dirección:* ${form.calle}, ${form.localidad}` +
-      `${form.notas ? `\n📝 *Notas:* ${form.notas}` : ''}` +
-      `${labelPago ? `\n💳 *Pago:* ${labelPago}` : ''}\n\n` +
-      `*Productos:*\n${resumenItems}\n\n` +
-      `💰 *Total: $${total}*`
-
-    window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`, '_blank')
 
     setNumeroPedido(pedido.numero)
     vaciar()
