@@ -34,17 +34,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [pedidosPendientes, setPedidosPendientes] = useState(0)
+  const [pedidosViejos, setPedidosViejos] = useState(0)
+  const [bannerVisto, setBannerVisto] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
 
   useEffect(() => {
     const cargarPendientes = async () => {
-      const { count } = await supabase
-        .from('pedidos')
-        .select('*', { count: 'exact', head: true })
-        .eq('estado', 'pendiente')
-      setPedidosPendientes(count ?? 0)
+      const hace2h = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+      const [{ count: total }, { count: viejos }] = await Promise.all([
+        supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
+        supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente').lt('created_at', hace2h)
+      ])
+      setPedidosPendientes(total ?? 0)
+      setPedidosViejos(viejos ?? 0)
+      if ((viejos ?? 0) > 0) setBannerVisto(false)
     }
     cargarPendientes()
     const channel = supabase
@@ -162,7 +167,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Contenido */}
       <div className='flex-1 flex flex-col min-w-0 h-screen'>
         {/* Topbar mobile */}
-        <header className='lg:hidden bg-white border-b border-[#f0e6d3] px-4 py-3 flex items-center gap-3 flex-shrink-0'>
+        <header className='lg:hidden bg-white border-b border-[#f0e6d3] px-4 py-3 flex items-center gap-3 shrink-0'>
           <button onClick={() => setSidebarOpen(true)} className='text-[#3d2b1f]'>
             <Menu className='h-5 w-5' />
           </button>
@@ -170,6 +175,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Sano y <span className='text-[#c47c2b] italic'>Rico</span>
           </h1>
         </header>
+
+        {/* Banner pedidos sin confirmar */}
+        {pedidosViejos > 0 && !bannerVisto && (
+          <div className='flex items-center justify-between gap-3 bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-3 shrink-0'>
+            <p className='text-sm text-amber-800 font-medium'>
+              ⏰ {pedidosViejos} pedido{pedidosViejos > 1 ? 's' : ''} pendiente{pedidosViejos > 1 ? 's' : ''} hace más de 2 horas sin confirmar
+            </p>
+            <button
+              onClick={() => setBannerVisto(true)}
+              className='text-amber-600 hover:text-amber-900 text-xs shrink-0 underline'
+            >
+              Cerrar
+            </button>
+          </div>
+        )}
 
         {/* Página */}
         <main className='flex-1 p-4 sm:p-6 overflow-y-auto'>

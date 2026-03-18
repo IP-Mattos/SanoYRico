@@ -222,17 +222,17 @@ export function Cart({ pagos, telefono }: { pagos?: PagosConfig; telefono?: stri
                 </div>
                 <button
                   onClick={() => setPaso('checkout')}
-                  disabled={cantidad < 10}
+                  disabled={total < 2000}
                   className='w-full bg-[#3d2b1f] text-white py-3 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   Continuar con el pedido →
                 </button>
-                {cantidad < 10 ? (
+                {total < 2000 ? (
                   <p className='text-xs text-[#c47c2b] text-center font-medium'>
-                    Mínimo 10 unidades — te faltan {10 - cantidad}
+                    Mínimo $2000 — te faltan ${2000 - total}
                   </p>
                 ) : (
-                  <p className='text-xs text-[#8a7060] text-center'>Envío gratis a partir de $600</p>
+                  <p className='text-xs text-[#8a7060] text-center'>Envío incluido en todos los pedidos</p>
                 )}
               </div>
             )}
