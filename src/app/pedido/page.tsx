@@ -140,7 +140,12 @@ export default function SeguimientoPage() {
           : 'No encontramos ningún pedido con ese dato.'
       )
     } else {
-      setPedido(data)
+      const { data: extra } = await supabase
+        .from('pedidos')
+        .select('metodo_pago')
+        .eq('id', data.id)
+        .single()
+      setPedido({ ...data, metodo_pago: extra?.metodo_pago ?? null })
     }
 
     setLoading(false)
