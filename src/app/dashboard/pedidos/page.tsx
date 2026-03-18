@@ -62,10 +62,33 @@ export default function PedidosPage() {
     })()
   }, [])
 
+  // Pedir permiso de notificaciones al montar
+  useEffect(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
+
   useEffect(() => {
     const channel = supabase
       .channel('pedidos_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => cargar())
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'pedidos' },
+        (payload) => {
+          cargar()
+          if (
+            payload.eventType === 'INSERT' &&
+            typeof Notification !== 'undefined' &&
+            Notification.permission === 'granted'
+          ) {
+            new Notification('🛒 Nuevo pedido recibido', {
+              body: `${payload.new.nombre ?? 'Cliente'} — $${payload.new.total ?? ''}`,
+              icon: '/favicon.ico'
+            })
+          }
+        }
+      )
       .subscribe()
     return () => {
       supabase.removeChannel(channel)
