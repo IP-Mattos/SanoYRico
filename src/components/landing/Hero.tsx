@@ -14,7 +14,7 @@ export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) 
     <section className='min-h-screen grid lg:grid-cols-2 pt-16'>
       {/* Izquierda */}
       <div className='flex flex-col justify-center px-6 sm:px-10 lg:px-16 py-16 max-w-2xl mx-auto w-full lg:max-w-none lg:mx-0'>
-        <div className='inline-flex items-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#c47c2b] text-xs font-medium tracking-widest uppercase px-4 py-2 rounded-full w-fit mb-6 animate-fadeup'>
+        <div className='inline-flex items-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#8a5a1a] text-xs font-medium tracking-widest uppercase px-4 py-2 rounded-full w-fit mb-6 animate-fadeup'>
           {config.badge}
         </div>
 
@@ -27,7 +27,7 @@ export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) 
           {config.tituloCierre}
         </h1>
 
-        <p className='text-base sm:text-lg text-[#8a7060] leading-relaxed max-w-md mb-8 font-light'>
+        <p className='text-base sm:text-lg text-[#5c4033] leading-relaxed max-w-md mb-8 font-light'>
           {config.subtitulo}
         </p>
 
@@ -53,7 +53,7 @@ export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) 
               <div className='text-xl sm:text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'Georgia, serif' }}>
                 {s.valor}
               </div>
-              <div className='text-xs text-[#8a7060] uppercase tracking-wider mt-0.5'>{s.label}</div>
+              <div className='text-xs text-[#5c4033] uppercase tracking-wider mt-0.5'>{s.label}</div>
             </div>
           ))}
         </div>

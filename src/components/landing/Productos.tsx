@@ -55,12 +55,13 @@ function ProductCard({ p }: { p: Producto }) {
         </h3>
         <p className='text-xs text-[#8a7060] leading-relaxed mb-3'>{p.descripcion}</p>
         <div className='flex items-center justify-between'>
-          <span className='text-lg font-bold text-[#c47c2b]' style={{ fontFamily: 'Georgia, serif' }}>
-            ${p.precio} <span className='text-xs text-[#8a7060] font-normal'>/unidad</span>
+          <span className='text-lg font-bold text-[#8a5a1a]' style={{ fontFamily: 'Georgia, serif' }}>
+            ${p.precio} <span className='text-xs text-[#5c4033] font-normal'>/unidad</span>
           </span>
           <button
             onClick={() => agregar({ producto_id: p.id, nombre: p.nombre, emoji: p.emoji ?? '', precio: p.precio })}
             disabled={p.stock === 0}
+            aria-label={`Agregar ${p.nombre} al carrito`}
             className='w-8 h-8 bg-[#3d2b1f] text-white rounded-full text-lg hover:bg-[#c47c2b] transition-colors flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed'
           >
             +
@@ -101,8 +102,8 @@ function AlfajorCard({ p }: { p: Producto }) {
           </h3>
           <p className='text-sm text-[#8a7060] leading-relaxed mb-4'>{p.descripcion}</p>
           <div className='flex items-center justify-between'>
-            <span className='text-2xl font-bold text-[#c47c2b]' style={{ fontFamily: 'Georgia, serif' }}>
-              ${p.precio} <span className='text-sm text-[#8a7060] font-normal'>/unidad</span>
+            <span className='text-2xl font-bold text-[#8a5a1a]' style={{ fontFamily: 'Georgia, serif' }}>
+              ${p.precio} <span className='text-sm text-[#5c4033] font-normal'>/unidad</span>
             </span>
             <button
               onClick={() => agregar({ producto_id: p.id, nombre: p.nombre, emoji: p.emoji ?? '', precio: p.precio })}
@@ -145,13 +146,13 @@ export function Productos() {
   return (
     <section id='productos' className='py-16 sm:py-24 px-6 sm:px-10 lg:px-16'>
       <div className='max-w-7xl mx-auto'>
-        <p className='text-xs font-medium tracking-widest uppercase text-[#c47c2b] mb-3'>Nuestros productos</p>
+        <p className='text-xs font-medium tracking-widest uppercase text-[#8a5a1a] mb-3'>Nuestros productos</p>
         <h2 className='text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2b1f] mb-3' style={{ fontFamily: 'Georgia, serif' }}>
           Snacks que te
           <br />
           hacen bien de verdad
         </h2>
-        <p className='text-[#8a7060] text-base sm:text-lg font-light mb-10 max-w-lg'>
+        <p className='text-[#5c4033] text-base sm:text-lg font-light mb-10 max-w-lg'>
           Barras, mixes y nuestro especial alfajor. Todo rico, todo sano.
         </p>
 
