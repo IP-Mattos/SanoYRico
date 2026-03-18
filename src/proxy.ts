@@ -81,6 +81,17 @@ export async function proxy(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // ── Rutas de API que requieren sesión de admin ────────────────────────────
+  const PROTECTED_APIS = ['/api/remove-bg', '/api/mp/create-preference']
+  if (PROTECTED_APIS.some((p) => pathname.startsWith(p))) {
+    if (!user) {
+      return new NextResponse(
+        JSON.stringify({ error: 'No autorizado' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+  }
+
   if (!user && pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
