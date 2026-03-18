@@ -21,6 +21,7 @@ import {
   CreditCard,
   Download,
   Search,
+  MessageCircle,
   type LucideIcon
 } from 'lucide-react'
 
@@ -510,6 +511,25 @@ export default function PedidosPage() {
                   Confirmar y enviar email
                 </button>
               </div>
+
+              {/* WhatsApp opcional */}
+              <button
+                onClick={() => {
+                  const p = modalConfirmar.pedido
+                  const tel = p.telefono.replace(/\D/g, '').replace(/^0/, '').replace(/^598/, '')
+                  const rastreo = nroRastreo.trim()
+                  const texto = encodeURIComponent(
+                    `Hola ${p.nombre}! Tu pedido #${p.numero} de Sano y Rico fue confirmado.` +
+                    (rastreo ? ` Número de rastreo: ${rastreo}.` : '') +
+                    ` Total: $${p.total}. ¡Gracias por elegirnos! 🌿`
+                  )
+                  window.open(`https://wa.me/598${tel}?text=${texto}`, '_blank')
+                }}
+                className='w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-green-200 text-sm text-green-700 hover:bg-green-50 transition-colors'
+              >
+                <MessageCircle className='h-4 w-4' />
+                Avisar por WhatsApp (opcional)
+              </button>
             </div>
           </div>
         </div>

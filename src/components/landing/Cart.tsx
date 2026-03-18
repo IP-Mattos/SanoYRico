@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useCart } from '@/context/CartContext'
-import { X, Plus, Minus, ShoppingBag, Loader2, CheckCircle } from 'lucide-react'
+import { X, Plus, Minus, ShoppingBag, Loader2, CheckCircle, MessageCircle } from 'lucide-react'
 import { PAISES } from '@/lib/localidades'
 import { type PagosConfig } from '@/lib/site-config'
 import { type MetodoPago } from '@/lib/types'
@@ -21,11 +21,12 @@ const FORM_INICIAL = {
   metodo_pago: '' as MetodoPago | ''
 }
 
-export function Cart({ pagos }: { pagos?: PagosConfig }) {
+export function Cart({ pagos, telefono }: { pagos?: PagosConfig; telefono?: string }) {
   const { items, quitar, cambiarCantidad, vaciar, total, cantidad, isOpen, setIsOpen } = useCart()
   const [paso, setPaso] = useState<Paso>('carrito')
   const [guardando, setGuardando] = useState(false)
   const [numeroPedido, setNumeroPedido] = useState<number | null>(null)
+  const [mpInitPoint, setMpInitPoint] = useState<string | null>(null)
   const [form, setForm] = useState(FORM_INICIAL)
   const [errores, setErrores] = useState<Record<string, string>>({})
 
@@ -113,7 +114,10 @@ export function Cart({ pagos }: { pagos?: PagosConfig }) {
       if (mpRes.ok) {
         const { init_point } = await mpRes.json()
         vaciar()
-        window.location.href = init_point
+        setNumeroPedido(pedido.numero)
+        setMpInitPoint(init_point)
+        setPaso('confirmado')
+        setGuardando(false)
         return
       }
       // Si falla MP, continúa con el flujo normal
@@ -131,6 +135,7 @@ export function Cart({ pagos }: { pagos?: PagosConfig }) {
       setPaso('carrito')
       setForm(FORM_INICIAL)
       setErrores({})
+      setMpInitPoint(null)
     }, 300)
   }
 
@@ -217,11 +222,18 @@ export function Cart({ pagos }: { pagos?: PagosConfig }) {
                 </div>
                 <button
                   onClick={() => setPaso('checkout')}
-                  className='w-full bg-[#3d2b1f] text-white py-3 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors'
+                  disabled={cantidad < 10}
+                  className='w-full bg-[#3d2b1f] text-white py-3 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   Continuar con el pedido →
                 </button>
-                <p className='text-xs text-[#8a7060] text-center'>Envío gratis a partir de $600</p>
+                {cantidad < 10 ? (
+                  <p className='text-xs text-[#c47c2b] text-center font-medium'>
+                    Mínimo 10 unidades — te faltan {10 - cantidad}
+                  </p>
+                ) : (
+                  <p className='text-xs text-[#8a7060] text-center'>Envío gratis a partir de $600</p>
+                )}
               </div>
             )}
           </>
@@ -420,13 +432,7 @@ export function Cart({ pagos }: { pagos?: PagosConfig }) {
                 className='w-full flex items-center justify-center gap-2 bg-[#3d2b1f] text-white py-3 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-60'
               >
                 {guardando && <Loader2 className='h-4 w-4 animate-spin' />}
-                {guardando
-                  ? form.metodo_pago === 'mercadopago'
-                    ? 'Redirigiendo...'
-                    : 'Confirmando...'
-                  : form.metodo_pago === 'mercadopago'
-                    ? '💳 Ir a pagar con Mercado Pago →'
-                    : 'Confirmar pedido'}
+                {guardando ? 'Confirmando...' : form.metodo_pago === 'mercadopago' ? '💳 Pagar con Mercado Pago' : 'Confirmar pedido'}
               </button>
               <button
                 onClick={() => setPaso('carrito')}
@@ -453,6 +459,29 @@ export function Cart({ pagos }: { pagos?: PagosConfig }) {
             <p className='text-[#8a7060] text-sm mb-6'>
               Te contactaremos al teléfono que dejaste para coordinar la entrega.
             </p>
+
+            {/* Botón Mercado Pago — se muestra en lugar del redirect automático */}
+            {mpInitPoint && (
+              <a
+                href={mpInitPoint}
+                className='w-full flex items-center justify-center gap-2 bg-[#009ee3] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#008bbf] transition-colors mb-1'
+              >
+                💳 Ir a pagar con Mercado Pago →
+              </a>
+            )}
+
+            {/* WhatsApp para coordinar pago manual */}
+            {telefono && (form.metodo_pago === 'transferencia' || form.metodo_pago === 'deposito') && (
+              <a
+                href={`https://wa.me/${telefono}?text=${encodeURIComponent(`Hola! Acabo de hacer el pedido #${numeroPedido} por $${total} y quiero coordinar el pago por ${form.metodo_pago}.`)}`}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='w-full flex items-center justify-center gap-2 bg-green-500 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-green-600 transition-colors mb-3'
+              >
+                <MessageCircle className='h-4 w-4' />
+                Coordinar pago por WhatsApp
+              </a>
+            )}
 
             <a
               href={`/pedido?q=${numeroPedido}`}

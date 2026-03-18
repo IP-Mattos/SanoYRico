@@ -38,14 +38,6 @@ export function Navbar() {
               </Link>
             </li>
             <li>
-              <Link
-                href='/dashboard'
-                className='text-[#8a7060] text-sm font-medium uppercase tracking-wider hover:text-[#3d2b1f] transition-colors'
-              >
-                Panel
-              </Link>
-            </li>
-            <li>
               <button
                 onClick={() => setIsOpen(true)}
                 className='relative bg-[#3d2b1f] text-[#faf6ef] text-sm font-medium px-4 py-2 rounded-full hover:bg-[#c47c2b] transition-colors flex items-center gap-2'
@@ -98,9 +90,6 @@ export function Navbar() {
           ))}
           <Link href='/pedido' className='py-3 text-[#3d2b1f] font-medium border-b border-[#f0e6d3]'>
             Mi pedido
-          </Link>
-          <Link href='/dashboard' className='py-3 text-[#8a7060] font-medium border-b border-[#f0e6d3]'>
-            Panel admin
           </Link>
           <button
             onClick={() => setIsOpen(true)}

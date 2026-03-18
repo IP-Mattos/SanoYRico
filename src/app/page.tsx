@@ -19,7 +19,7 @@ export default async function Home() {
     <CartProvider>
       <main>
         <Navbar />
-        <Cart pagos={config.pagos} />
+        <Cart pagos={config.pagos} telefono={config.general.telefono} />
         <Hero config={config.hero} />
         <Marquee items={config.marquee.items} />
         <Productos />
