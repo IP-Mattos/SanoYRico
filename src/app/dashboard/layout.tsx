@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const hace2h = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
       const [{ count: total }, { count: viejos }] = await Promise.all([
         supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente'),
-        supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente').lt('created_at', hace2h)
+        supabase.from('pedidos').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente').neq('metodo_pago', 'mercadopago').lt('created_at', hace2h)
       ])
       setPedidosPendientes(total ?? 0)
       setPedidosViejos(viejos ?? 0)

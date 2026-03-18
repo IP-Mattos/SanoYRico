@@ -29,6 +29,7 @@ interface PedidoItem {
 interface Pedido {
   numero: number
   estado: 'pendiente' | 'confirmado' | 'entregado' | 'cancelado'
+  metodo_pago?: string | null
   items: string | PedidoItem[]
   total: number
   nombre: string
@@ -45,6 +46,14 @@ const ESTADOS = {
     color: 'text-yellow-700 bg-yellow-50 border-yellow-200',
     bar: 'bg-yellow-400',
     desc: 'Recibimos tu pedido y lo estamos revisando. En breve te confirmamos.',
+    icon: Clock
+  },
+  en_pago: {
+    label: 'Procesando pago',
+    emoji: '💳',
+    color: 'text-blue-700 bg-blue-50 border-blue-200',
+    bar: 'bg-blue-300',
+    desc: 'Estamos esperando la confirmación del pago. Una vez acreditado, tu pedido quedará confirmado automáticamente.',
     icon: Clock
   },
   confirmado: {
@@ -137,7 +146,8 @@ export default function SeguimientoPage() {
     setLoading(false)
   }
 
-  const estado = pedido ? ESTADOS[pedido.estado as keyof typeof ESTADOS] : null
+  const estadoKey = pedido?.estado === 'pendiente' && pedido?.metodo_pago === 'mercadopago' ? 'en_pago' : pedido?.estado
+  const estado = estadoKey ? ESTADOS[estadoKey as keyof typeof ESTADOS] : null
   const pasoIdx = PASOS.findIndex((p) => p.key === pedido?.estado)
   const cancelado = pedido?.estado === 'cancelado'
   const items = pedido ? (typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])) : []

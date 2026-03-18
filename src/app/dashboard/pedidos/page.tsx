@@ -288,7 +288,10 @@ export default function PedidosPage() {
         <>
           <div className='space-y-3'>
             {paginados.map((pedido) => {
-              const estado = getEstado(pedido.estado)
+              const esMpPendiente = pedido.estado === 'pendiente' && pedido.metodo_pago === 'mercadopago'
+              const estado = esMpPendiente
+                ? { ...getEstado('pendiente'), label: 'En pago', color: 'bg-blue-50 text-blue-600 border-blue-200' }
+                : getEstado(pedido.estado)
               const Icon = estado.icon
               const abierto = expandido === pedido.id
               const items = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])
