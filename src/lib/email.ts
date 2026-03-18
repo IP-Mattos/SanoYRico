@@ -1,9 +1,8 @@
 // src/lib/email.ts
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-const FROM = process.env.EMAIL_FROM ?? 'Sano y Rico <onboarding@resend.dev>'
+const FROM = () => process.env.EMAIL_FROM ?? 'Sano y Rico <onboarding@resend.dev>'
+const getResend = () => new Resend(process.env.RESEND_API_KEY!)
 
 interface ItemEmail {
   emoji: string
@@ -39,8 +38,8 @@ export async function notificarClienteRecibo(pedido: {
 }) {
   if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
 
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: pedido.email,
     subject: `📬 Recibimos tu pedido #${pedido.numero} — Sano y Rico`,
     html: `
@@ -103,8 +102,8 @@ export async function notificarAdminNuevoPedido(pedido: {
     mercadopago: '💳 Mercado Pago'
   }
 
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: adminEmail,
     subject: `🛒 Nuevo pedido #${pedido.numero} — ${pedido.nombre}`,
     html: `
@@ -171,8 +170,8 @@ export async function notificarClienteEstado(pedido: {
     }
   }[pedido.estado]
 
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: pedido.email,
     subject: `${config.emoji} Pedido #${pedido.numero} — ${config.titulo}`,
     html: `
@@ -204,8 +203,8 @@ export async function notificarClienteConfirmacion(pedido: {
 }) {
   if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
 
-  await resend.emails.send({
-    from: FROM,
+  await getResend().emails.send({
+    from: FROM(),
     to: pedido.email,
     subject: `✅ Tu pedido #${pedido.numero} fue confirmado — Sano y Rico`,
     html: `
