@@ -462,15 +462,12 @@ export function Cart({ pagos, telefono }: { pagos?: PagosConfig; telefono?: stri
 
             {/* Botón Mercado Pago */}
             {mpInitPoint && (
-              <a
-                href={mpInitPoint}
-                target='_blank'
-                rel='noopener noreferrer'
-                onClick={cerrar}
+              <button
+                onClick={() => { window.location.href = mpInitPoint }}
                 className='w-full flex items-center justify-center gap-2 bg-[#009ee3] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#008bbf] transition-colors mb-1'
               >
                 💳 Ir a pagar con Mercado Pago →
-              </a>
+              </button>
             )}
 
             {/* WhatsApp para coordinar pago manual */}
