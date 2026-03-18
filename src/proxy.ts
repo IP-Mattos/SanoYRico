@@ -82,7 +82,8 @@ export async function proxy(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // ── Rutas de API que requieren sesión de admin ────────────────────────────
-  const PROTECTED_APIS = ['/api/remove-bg', '/api/mp/create-preference']
+  // /api/pedidos/ (with trailing slash) protects sub-routes only; root POST stays public
+  const PROTECTED_APIS = ['/api/remove-bg', '/api/mp/create-preference', '/api/pedidos/']
   if (PROTECTED_APIS.some((p) => pathname.startsWith(p))) {
     if (!user) {
       return new NextResponse(

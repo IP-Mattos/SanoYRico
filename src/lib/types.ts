@@ -58,6 +58,7 @@ export interface Pedido {
   numero: number
   nombre: string
   telefono: string
+  email?: string | null
   direccion: string
   notas: string | null
   metodo_pago: MetodoPago | null

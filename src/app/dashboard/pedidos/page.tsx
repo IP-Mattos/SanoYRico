@@ -118,6 +118,13 @@ export default function PedidosPage() {
     await supabase.from('pedidos').update({ estado: 'confirmado' }).eq('id', pedido.id)
     await cargar()
 
+    // Email de confirmación al cliente (si dejó email)
+    fetch(`/api/pedidos/${pedido.id}/confirmar-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nroRastreo: nroRastreo.trim() || undefined })
+    }).catch(() => {}) // fire-and-forget
+
     // Armar mensaje para el cliente
     const items = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])
 
@@ -223,7 +230,7 @@ export default function PedidosPage() {
                   className='flex items-center gap-4 p-4 cursor-pointer hover:bg-[#faf6ef] transition-colors'
                   onClick={() => setExpandido(abierto ? null : pedido.id)}
                 >
-                  <div className='w-10 h-10 bg-[#f0e6d3] rounded-xl flex items-center justify-center flex-shrink-0'>
+                  <div className='w-10 h-10 bg-[#f0e6d3] rounded-xl flex items-center justify-center shrink-0'>
                     <span className='text-sm font-bold text-[#3d2b1f]'>#{pedido.numero}</span>
                   </div>
                   <div className='flex-1 min-w-0'>
@@ -251,7 +258,7 @@ export default function PedidosPage() {
                       <span className='text-sm font-bold text-[#c47c2b]'>${pedido.total}</span>
                     </div>
                   </div>
-                  <div className='text-[#8a7060] flex-shrink-0'>
+                  <div className='text-[#8a7060] shrink-0'>
                     {abierto ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />}
                   </div>
                 </div>
@@ -262,14 +269,14 @@ export default function PedidosPage() {
                     {/* Info cliente */}
                     <div className='grid sm:grid-cols-3 gap-3'>
                       <div className='flex items-start gap-2'>
-                        <Phone className='h-4 w-4 text-[#8a7060] mt-0.5 flex-shrink-0' />
+                        <Phone className='h-4 w-4 text-[#8a7060] mt-0.5 shrink-0' />
                         <div>
                           <p className='text-xs text-[#8a7060]'>Teléfono</p>
                           <p className='text-sm font-medium text-[#3d2b1f]'>{pedido.telefono}</p>
                         </div>
                       </div>
                       <div className='flex items-start gap-2'>
-                        <MapPin className='h-4 w-4 text-[#8a7060] mt-0.5 flex-shrink-0' />
+                        <MapPin className='h-4 w-4 text-[#8a7060] mt-0.5 shrink-0' />
                         <div>
                           <p className='text-xs text-[#8a7060]'>Dirección</p>
                           <p className='text-sm font-medium text-[#3d2b1f]'>{pedido.direccion}</p>
@@ -277,7 +284,7 @@ export default function PedidosPage() {
                       </div>
                       {pedido.metodo_pago && (
                         <div className='flex items-start gap-2'>
-                          <CreditCard className='h-4 w-4 text-[#8a7060] mt-0.5 flex-shrink-0' />
+                          <CreditCard className='h-4 w-4 text-[#8a7060] mt-0.5 shrink-0' />
                           <div>
                             <p className='text-xs text-[#8a7060]'>Método de pago</p>
                             <p className='text-sm font-medium text-[#3d2b1f] capitalize'>
@@ -288,7 +295,7 @@ export default function PedidosPage() {
                       )}
                       {pedido.notas && (
                         <div className='flex items-start gap-2'>
-                          <FileText className='h-4 w-4 text-[#8a7060] mt-0.5 flex-shrink-0' />
+                          <FileText className='h-4 w-4 text-[#8a7060] mt-0.5 shrink-0' />
                           <div>
                             <p className='text-xs text-[#8a7060]'>Notas</p>
                             <p className='text-sm text-[#3d2b1f]'>{pedido.notas}</p>

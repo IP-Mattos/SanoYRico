@@ -1,6 +1,7 @@
 // src/app/api/pedidos/route.ts
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+import { notificarAdminNuevoPedido } from '@/lib/email'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 interface ItemInput {
@@ -14,6 +15,7 @@ interface ItemInput {
 interface PedidoInput {
   nombre: string
   telefono: string
+  email?: string
   localidad: string
   calle: string
   notas?: string
@@ -45,6 +47,7 @@ export async function POST(req: NextRequest) {
   // ── Validación de campos ──────────────────────────────────────────────────
   const nombre = clean(body.nombre, 100)
   const telefono = clean(body.telefono, 30)
+  const email = clean(body.email ?? '', 200) || null
   const localidad = clean(body.localidad, 100)
   const calle = clean(body.calle, 200)
   const notas = clean(body.notas ?? '', 500) || null
@@ -97,7 +100,7 @@ export async function POST(req: NextRequest) {
 
   const { data: pedido, error: errPedido } = await supabase
     .from('pedidos')
-    .insert({ nombre, telefono, direccion, notas, metodo_pago, total })
+    .insert({ nombre, telefono, email, direccion, notas, metodo_pago, total })
     .select('id, numero')
     .single()
 
@@ -116,6 +119,23 @@ export async function POST(req: NextRequest) {
     await supabase.from('pedidos').delete().eq('id', pedido.id)
     return NextResponse.json({ error: 'Error al guardar los productos' }, { status: 500 })
   }
+
+  // Notificar al admin por email (fire-and-forget)
+  notificarAdminNuevoPedido({
+    numero: pedido.numero,
+    nombre,
+    telefono,
+    direccion,
+    notas,
+    metodo_pago,
+    total,
+    items: items.map((i) => ({
+      emoji: i.producto_emoji,
+      nombre: i.producto_nombre,
+      cantidad: i.cantidad,
+      subtotal: i.subtotal
+    }))
+  }).catch((e) => console.error('Email admin error:', e))
 
   return NextResponse.json({ id: pedido.id, numero: pedido.numero }, { status: 201 })
 }

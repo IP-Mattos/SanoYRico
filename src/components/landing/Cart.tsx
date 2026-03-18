@@ -13,6 +13,7 @@ type Paso = 'carrito' | 'checkout' | 'confirmado'
 const FORM_INICIAL = {
   nombre: '',
   telefono: '',
+  email: '',
   pais: PAISES[0].codigo,
   localidad: '',
   calle: '',
@@ -72,6 +73,7 @@ export function Cart({ telefono = '59893644132', pagos }: { telefono?: string; p
       body: JSON.stringify({
         nombre: form.nombre,
         telefono: form.telefono,
+        email: form.email || undefined,
         localidad: form.localidad,
         calle: form.calle,
         notas: form.notas || undefined,
@@ -295,6 +297,20 @@ export function Cart({ telefono = '59893644132', pagos }: { telefono?: string; p
                   className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b] ${errores.telefono ? 'border-red-300 bg-red-50' : 'border-[#f0e6d3]'}`}
                 />
                 {errores.telefono && <p className='text-xs text-red-500 mt-1'>{errores.telefono}</p>}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>
+                  Email <span className='text-[#8a7060] font-normal'>(opcional — para recibir confirmación)</span>
+                </label>
+                <input
+                  type='email'
+                  value={form.email}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder='Ej: maria@gmail.com'
+                  className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                />
               </div>
 
               {/* País */}
