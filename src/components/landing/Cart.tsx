@@ -460,10 +460,13 @@ export function Cart({ pagos, telefono }: { pagos?: PagosConfig; telefono?: stri
               Te contactaremos al teléfono que dejaste para coordinar la entrega.
             </p>
 
-            {/* Botón Mercado Pago — se muestra en lugar del redirect automático */}
+            {/* Botón Mercado Pago */}
             {mpInitPoint && (
               <a
                 href={mpInitPoint}
+                target='_blank'
+                rel='noopener noreferrer'
+                onClick={cerrar}
                 className='w-full flex items-center justify-center gap-2 bg-[#009ee3] text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#008bbf] transition-colors mb-1'
               >
                 💳 Ir a pagar con Mercado Pago →
