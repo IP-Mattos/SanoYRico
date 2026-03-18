@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { ShoppingBag } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 
@@ -13,9 +14,9 @@ export function Navbar() {
       <nav className='fixed top-0 left-0 right-0 z-50 bg-[#faf6ef]/85 backdrop-blur-md border-b border-[#3d2b1f]/08'>
         <div className='max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-16'>
           {/* Logo */}
-          <div className='text-[#3d2b1f] text-2xl font-bold' style={{ fontFamily: 'Georgia, serif' }}>
-            Sano y <span className='text-[#c47c2b] italic'>Rico</span>
-          </div>
+          <Link href='/'>
+            <Image src='/logo.jpg' alt='Sano y Rico' width={120} height={48} className='object-contain h-10 w-auto' priority />
+          </Link>
 
           {/* Links desktop */}
           <ul className='hidden lg:flex items-center gap-8 list-none'>
