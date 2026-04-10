@@ -230,19 +230,40 @@ export default function CategoriasPage() {
 
               {/* Ícono */}
               <div>
-                <label className='block text-xs font-medium text-[#3d2b1f] mb-2'>Ícono (emoji) *</label>
-                <div className='flex items-center gap-3'>
+                <label className='block text-xs font-medium text-[#3d2b1f] mb-2'>Ícono *</label>
+                <div className='flex items-center gap-3 mb-3'>
                   <div className='w-14 h-14 rounded-2xl bg-[#fef3d0] flex items-center justify-center shrink-0 text-3xl'>
                     {form.icono || '📦'}
                   </div>
-                  <input
-                    value={form.icono}
-                    onChange={(e) => setForm((f) => ({ ...f, icono: e.target.value }))}
-                    placeholder='Pegá un emoji'
-                    className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-center text-2xl focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
-                  />
+                  <div className='flex-1'>
+                    <span className='text-sm text-[#3d2b1f] font-medium'>Seleccionado: {form.icono}</span>
+                    <p className='text-xs text-[#8a7060]'>Elegí un ícono de la lista o pegá uno custom abajo</p>
+                  </div>
                 </div>
-                <p className='text-xs text-[#8a7060] mt-1.5'>Pegá un emoji que represente la categoría. Ej: 🍫 🥜 🍪 🌾</p>
+                <div className='border border-[#f0e6d3] rounded-xl p-3 max-h-48 overflow-y-auto'>
+                  <div className='grid grid-cols-8 gap-1.5'>
+                    {['🍫','🥜','🍪','🌾','🥣','🧁','🍩','🎂','🍰','🥐','🍞','🥖','🥯','🍿','🧇','🥞','🍯','🫘','🥜','🌰','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍒','🍑','🥭','🍍','🥝','🥑','🥕','🌽','🥦','🥬','🥒','🫑','🍆','🧄','🧅','🥔','🍠','🫚','☕','🧉','🥛','🍵','🧃','🥤','🍶','🫗','🥡','🍱','🥗','🍲','🥫','🧂','🍖','🍗','🥩','🥚','🧈','🍕','🌮','🌯','🥙','🫔','🧆','🥘','🍜','🍝','🍛','🥟','🍤','🍣'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        type='button'
+                        onClick={() => setForm((f) => ({ ...f, icono: emoji }))}
+                        className={`w-full aspect-square rounded-lg text-xl flex items-center justify-center transition-colors ${
+                          form.icono === emoji
+                            ? 'bg-[#3d2b1f] ring-2 ring-[#c47c2b] scale-110'
+                            : 'hover:bg-[#fef3d0]'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  value={form.icono}
+                  onChange={(e) => setForm((f) => ({ ...f, icono: e.target.value }))}
+                  placeholder='O pegá un emoji custom'
+                  className='mt-2 w-full px-3 py-2 rounded-xl border border-[#f0e6d3] text-center text-xl focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                />
               </div>
 
               {/* Nombre */}
