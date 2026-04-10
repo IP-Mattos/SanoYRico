@@ -4,68 +4,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { type CategoriaDB } from '@/lib/types'
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Loader2,
-  X,
-  Check,
-  AlertCircle,
-  Package,
-  Wheat,
-  Cookie,
-  Apple,
-  Cherry,
-  Banana,
-  Cake,
-  Beef,
-  Egg,
-  Fish,
-  Salad,
-  Sandwich,
-  Pizza,
-  Coffee,
-  Milk,
-  IceCreamCone,
-  Croissant,
-  Popcorn,
-  Carrot,
-  Leaf,
-  Candy,
-  Grape,
-  CupSoda,
-  Nut
-} from 'lucide-react'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  wheat: Wheat,
-  cookie: Cookie,
-  candy: Candy,
-  nut: Nut,
-  apple: Apple,
-  cherry: Cherry,
-  banana: Banana,
-  grapes: Grape,
-  'cake-slice': Cake,
-  beef: Beef,
-  egg: Egg,
-  fish: Fish,
-  salad: Salad,
-  sandwich: Sandwich,
-  pizza: Pizza,
-  'cup-soda': CupSoda,
-  coffee: Coffee,
-  milk: Milk,
-  'ice-cream-cone': IceCreamCone,
-  croissant: Croissant,
-  popcorn: Popcorn,
-  carrot: Carrot,
-  leaf: Leaf,
-}
-
-const ICON_OPTIONS = Object.keys(ICON_MAP)
+import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle } from 'lucide-react'
 
 function slugify(text: string): string {
   return text
@@ -79,7 +18,7 @@ function slugify(text: string): string {
 const EMPTY_FORM = {
   nombre: '',
   slug: '',
-  icono: 'wheat',
+  icono: '📦',
   orden: 0,
   activo: true,
 }
@@ -150,6 +89,7 @@ export default function CategoriasPage() {
   const guardar = async () => {
     if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return }
     if (!form.slug.trim()) { setError('El slug es obligatorio'); return }
+    if (!form.icono.trim()) { setError('El ícono es obligatorio'); return }
     setGuardando(true)
     setError('')
 
@@ -218,49 +158,46 @@ export default function CategoriasPage() {
               </tr>
             </thead>
             <tbody>
-              {categorias.map((cat) => {
-                const Icon = ICON_MAP[cat.icono] ?? Package
-                return (
-                  <tr key={cat.id} className='border-b border-[#f0e6d3] last:border-0 hover:bg-[#faf6ef] transition-colors'>
-                    <td className='px-5 py-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='w-9 h-9 rounded-xl bg-[#fef3d0] flex items-center justify-center shrink-0'>
-                          <Icon className='h-5 w-5 text-[#c47c2b]' />
-                        </div>
-                        <span className='text-sm font-medium text-[#3d2b1f]'>{cat.nombre}</span>
+              {categorias.map((cat) => (
+                <tr key={cat.id} className='border-b border-[#f0e6d3] last:border-0 hover:bg-[#faf6ef] transition-colors'>
+                  <td className='px-5 py-3'>
+                    <div className='flex items-center gap-3'>
+                      <div className='w-9 h-9 rounded-xl bg-[#fef3d0] flex items-center justify-center shrink-0 text-xl'>
+                        {cat.icono}
                       </div>
-                    </td>
-                    <td className='px-5 py-3 hidden sm:table-cell'>
-                      <code className='text-xs text-[#8a7060] bg-[#faf6ef] px-2 py-1 rounded-lg'>{cat.slug}</code>
-                    </td>
-                    <td className='px-5 py-3 text-center hidden md:table-cell'>
-                      <span className='text-sm text-[#8a7060]'>{cat.orden}</span>
-                    </td>
-                    <td className='px-5 py-3 text-center hidden md:table-cell'>
-                      <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${cat.activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                        {cat.activo ? <Check className='h-3 w-3' /> : <X className='h-3 w-3' />}
-                        {cat.activo ? 'Activa' : 'Inactiva'}
-                      </span>
-                    </td>
-                    <td className='px-5 py-3'>
-                      <div className='flex items-center gap-2 justify-end'>
-                        <button
-                          onClick={() => abrirEditar(cat)}
-                          className='p-1.5 text-[#8a7060] hover:text-[#c47c2b] hover:bg-[#fef3d0] rounded-lg transition-colors'
-                        >
-                          <Pencil className='h-4 w-4' />
-                        </button>
-                        <button
-                          onClick={() => eliminar(cat.id)}
-                          className='p-1.5 text-[#8a7060] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors'
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+                      <span className='text-sm font-medium text-[#3d2b1f]'>{cat.nombre}</span>
+                    </div>
+                  </td>
+                  <td className='px-5 py-3 hidden sm:table-cell'>
+                    <code className='text-xs text-[#8a7060] bg-[#faf6ef] px-2 py-1 rounded-lg'>{cat.slug}</code>
+                  </td>
+                  <td className='px-5 py-3 text-center hidden md:table-cell'>
+                    <span className='text-sm text-[#8a7060]'>{cat.orden}</span>
+                  </td>
+                  <td className='px-5 py-3 text-center hidden md:table-cell'>
+                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${cat.activo ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                      {cat.activo ? <Check className='h-3 w-3' /> : <X className='h-3 w-3' />}
+                      {cat.activo ? 'Activa' : 'Inactiva'}
+                    </span>
+                  </td>
+                  <td className='px-5 py-3'>
+                    <div className='flex items-center gap-2 justify-end'>
+                      <button
+                        onClick={() => abrirEditar(cat)}
+                        className='p-1.5 text-[#8a7060] hover:text-[#c47c2b] hover:bg-[#fef3d0] rounded-lg transition-colors'
+                      >
+                        <Pencil className='h-4 w-4' />
+                      </button>
+                      <button
+                        onClick={() => eliminar(cat.id)}
+                        className='p-1.5 text-[#8a7060] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors'
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
               {categorias.length === 0 && (
                 <tr>
                   <td colSpan={5} className='px-5 py-12 text-center text-[#8a7060] text-sm'>
@@ -291,13 +228,30 @@ export default function CategoriasPage() {
 
             <div className='p-6 space-y-5'>
 
+              {/* Ícono */}
+              <div>
+                <label className='block text-xs font-medium text-[#3d2b1f] mb-2'>Ícono (emoji) *</label>
+                <div className='flex items-center gap-3'>
+                  <div className='w-14 h-14 rounded-2xl bg-[#fef3d0] flex items-center justify-center shrink-0 text-3xl'>
+                    {form.icono || '📦'}
+                  </div>
+                  <input
+                    value={form.icono}
+                    onChange={(e) => setForm((f) => ({ ...f, icono: e.target.value }))}
+                    placeholder='Pegá un emoji'
+                    className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-center text-2xl focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                  />
+                </div>
+                <p className='text-xs text-[#8a7060] mt-1.5'>Pegá un emoji que represente la categoría. Ej: 🍫 🥜 🍪 🌾</p>
+              </div>
+
               {/* Nombre */}
               <div>
                 <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Nombre *</label>
                 <input
                   value={form.nombre}
                   onChange={(e) => handleNombreChange(e.target.value)}
-                  placeholder='Ej: Barritas energéticas'
+                  placeholder='Ej: Granolas'
                   className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
                 />
               </div>
@@ -311,7 +265,7 @@ export default function CategoriasPage() {
                 <input
                   value={form.slug}
                   onChange={(e) => handleSlugChange(e.target.value)}
-                  placeholder='ej: barritas-energeticas'
+                  placeholder='ej: granolas'
                   className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
                 />
               </div>
@@ -325,49 +279,6 @@ export default function CategoriasPage() {
                   onChange={(e) => setForm((f) => ({ ...f, orden: Number(e.target.value) }))}
                   className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
                 />
-              </div>
-
-              {/* Selector de icono */}
-              <div>
-                <label className='block text-xs font-medium text-[#3d2b1f] mb-2'>Ícono</label>
-                <div className='border border-[#f0e6d3] rounded-xl p-3 max-h-52 overflow-y-auto'>
-                  <div className='grid grid-cols-6 gap-2'>
-                    {ICON_OPTIONS.map((key) => {
-                      const Icon = ICON_MAP[key]
-                      const selected = form.icono === key
-                      return (
-                        <button
-                          key={key}
-                          type='button'
-                          onClick={() => setForm((f) => ({ ...f, icono: key }))}
-                          title={key}
-                          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
-                            selected
-                              ? 'bg-[#3d2b1f] text-white'
-                              : 'hover:bg-[#fef3d0] text-[#8a7060] hover:text-[#c47c2b]'
-                          }`}
-                        >
-                          <Icon className='h-5 w-5' />
-                          <span className='text-[9px] leading-tight text-center truncate w-full'>{key}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-                {/* Preview del icono seleccionado */}
-                <div className='mt-2 flex items-center gap-2 text-xs text-[#8a7060]'>
-                  {(() => {
-                    const SelectedIcon = ICON_MAP[form.icono] ?? Package
-                    return (
-                      <>
-                        <div className='w-7 h-7 rounded-lg bg-[#fef3d0] flex items-center justify-center'>
-                          <SelectedIcon className='h-4 w-4 text-[#c47c2b]' />
-                        </div>
-                        <span>Seleccionado: <strong className='text-[#3d2b1f]'>{form.icono}</strong></span>
-                      </>
-                    )
-                  })()}
-                </div>
               </div>
 
               {/* Activo */}

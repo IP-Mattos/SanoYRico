@@ -6,33 +6,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
 import { type Producto, type CategoriaDB } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
-import { Loader2, Wheat, Cookie, Apple, Cherry, Banana, Grape, CakeSlice, Beef, Egg, Fish, Salad, Sandwich, Pizza, Coffee, Milk, IceCreamCone, Croissant, Popcorn, Carrot, Leaf, Package, Nut, Candy, CupSoda } from 'lucide-react'
-
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  wheat: Wheat,
-  cookie: Cookie,
-  nut: Nut,
-  candy: Candy,
-  apple: Apple,
-  cherry: Cherry,
-  banana: Banana,
-  grape: Grape,
-  'cake-slice': CakeSlice,
-  beef: Beef,
-  egg: Egg,
-  fish: Fish,
-  salad: Salad,
-  sandwich: Sandwich,
-  pizza: Pizza,
-  'cup-soda': CupSoda,
-  coffee: Coffee,
-  milk: Milk,
-  'ice-cream-cone': IceCreamCone,
-  croissant: Croissant,
-  popcorn: Popcorn,
-  carrot: Carrot,
-  leaf: Leaf
-}
+import { Loader2 } from 'lucide-react'
 
 const BG: Record<string, string> = {
   '🍯': 'from-amber-50 to-amber-100',
@@ -136,7 +110,6 @@ export function Productos() {
         {/* Tabs */}
         <div className='flex gap-2 flex-wrap mb-8'>
           {categorias.map((cat) => {
-            const Icon = ICON_MAP[cat.icono] ?? Package
             const count = productos.filter((p) => p.categoria === cat.slug).length
             return (
               <button
@@ -148,7 +121,7 @@ export function Productos() {
                     : 'bg-white text-[#8a7060] border border-[#f0e6d3] hover:border-[#c47c2b]'
                 }`}
               >
-                <Icon className='h-4 w-4' />
+                <span>{cat.icono}</span>
                 {cat.nombre}
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === cat.slug ? 'bg-white/20' : 'bg-[#f0e6d3]'}`}>
                   {count}
