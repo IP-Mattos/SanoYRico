@@ -13,6 +13,7 @@ import {
   type FooterConfig,
   type PagosConfig
 } from '@/lib/site-config'
+import { revalidateSiteConfig } from '@/app/actions/revalidate'
 import { Loader2, Save, Plus, Trash2, CheckCircle, Eye, Settings, Sparkles, Star, FileText, MessageSquare, Megaphone, CreditCard } from 'lucide-react'
 
 type TabId = 'general' | 'hero' | 'marquee' | 'beneficios' | 'testimonios' | 'footer' | 'pagos'
@@ -226,6 +227,7 @@ export default function ContenidoPage() {
   const guardar = async (clave: TabId, valor: unknown) => {
     setSaving((p) => ({ ...p, [clave]: true }))
     await supabase.from('configuracion').upsert({ clave, valor }, { onConflict: 'clave' })
+    await revalidateSiteConfig()
     setSaving((p) => ({ ...p, [clave]: false }))
     setSaved((p) => ({ ...p, [clave]: true }))
     setTimeout(() => setSaved((p) => ({ ...p, [clave]: false })), 2500)

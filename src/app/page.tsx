@@ -1,5 +1,5 @@
 // src/app/page.tsx
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 import { CartProvider } from '@/context/CartContext'
 import { Navbar } from '@/components/landing/Navbar'

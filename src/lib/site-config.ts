@@ -118,7 +118,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
   }
 }
 
-/** Fetch config from Supabase (server-side, no caching so changes apply immediately). */
+/** Fetch config from Supabase (server-side, revalidated by page-level ISR). */
 export async function getSiteConfig(): Promise<SiteConfig> {
   const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/configuracion?select=clave,valor`
   try {
@@ -127,7 +127,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`
       },
-      cache: 'no-store'
+      next: { tags: ['site-config'] }
     })
     if (!res.ok) return DEFAULT_CONFIG
     const rows: { clave: string; valor: unknown }[] = await res.json()
