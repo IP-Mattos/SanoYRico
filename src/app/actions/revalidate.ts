@@ -1,7 +1,7 @@
 'use server'
 
-import { updateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 export async function revalidateSiteConfig() {
-  updateTag('site-config')
+  revalidatePath('/')
 }

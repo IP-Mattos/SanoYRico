@@ -127,7 +127,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`
       },
-      next: { tags: ['site-config'] }
+      cache: 'no-store'
     })
     if (!res.ok) return DEFAULT_CONFIG
     const rows: { clave: string; valor: unknown }[] = await res.json()
