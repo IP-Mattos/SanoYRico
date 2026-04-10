@@ -4,11 +4,35 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
-import { type Producto } from '@/lib/types'
+import { type Producto, type CategoriaDB } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Wheat, Cookie, Apple, Cherry, Banana, Grape, CakeSlice, Beef, Egg, Fish, Salad, Sandwich, Pizza, Coffee, Milk, IceCreamCone, Croissant, Popcorn, Carrot, Leaf, Package, Nut, Candy, CupSoda } from 'lucide-react'
 
-type Tab = 'barrita' | 'mix' | 'alfajor'
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  wheat: Wheat,
+  cookie: Cookie,
+  nut: Nut,
+  candy: Candy,
+  apple: Apple,
+  cherry: Cherry,
+  banana: Banana,
+  grape: Grape,
+  'cake-slice': CakeSlice,
+  beef: Beef,
+  egg: Egg,
+  fish: Fish,
+  salad: Salad,
+  sandwich: Sandwich,
+  pizza: Pizza,
+  'cup-soda': CupSoda,
+  coffee: Coffee,
+  milk: Milk,
+  'ice-cream-cone': IceCreamCone,
+  croissant: Croissant,
+  popcorn: Popcorn,
+  carrot: Carrot,
+  leaf: Leaf
+}
 
 const BG: Record<string, string> = {
   '🍯': 'from-amber-50 to-amber-100',
@@ -72,74 +96,27 @@ function ProductCard({ p }: { p: Producto }) {
   )
 }
 
-function AlfajorCard({ p }: { p: Producto }) {
-  const { agregar } = useCart()
-
-  return (
-    <div className='flex justify-center'>
-      <div className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden w-full max-w-xs hover:shadow-lg transition-all'>
-        <div className='h-56 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center relative'>
-          {p.imagen_url
-            ? <Image src={p.imagen_url} alt={p.nombre} width={180} height={180} className='object-contain drop-shadow-md' />
-            : <span className='text-9xl'>{p.emoji}</span>
-          }
-          {p.badge && (
-            <span className='absolute top-3 right-3 bg-[#c47c2b] text-white text-xs font-medium px-2.5 py-1 rounded-full'>
-              {p.badge}
-            </span>
-          )}
-          {p.stock === 0 && (
-            <div className='absolute inset-0 bg-white/60 flex items-center justify-center'>
-              <span className='text-xs font-semibold text-[#8a7060] bg-white px-3 py-1 rounded-full border border-[#f0e6d3]'>
-                Sin stock
-              </span>
-            </div>
-          )}
-        </div>
-        <div className='p-6'>
-          <h3 className='text-2xl font-bold text-[#3d2b1f] mb-2' style={{ fontFamily: 'Georgia, serif' }}>
-            {p.nombre}
-          </h3>
-          <p className='text-sm text-[#8a7060] leading-relaxed mb-4'>{p.descripcion}</p>
-          <div className='flex items-center justify-between'>
-            <span className='text-2xl font-bold text-[#8a5a1a]' style={{ fontFamily: 'Georgia, serif' }}>
-              ${p.precio} <span className='text-sm text-[#5c4033] font-normal'>/unidad</span>
-            </span>
-            <button
-              onClick={() => agregar({ producto_id: p.id, nombre: p.nombre, emoji: p.emoji ?? '', precio: p.precio })}
-              disabled={p.stock === 0}
-              className='bg-[#3d2b1f] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
-            >
-              Agregar
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function Productos() {
-  const [tab, setTab] = useState<Tab>('barrita')
+  const [tab, setTab] = useState<string>('')
   const [productos, setProductos] = useState<Producto[]>([])
+  const [categorias, setCategorias] = useState<CategoriaDB[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     const cargar = async () => {
-      const { data } = await supabase.from('productos').select('*').eq('activo', true).order('nombre')
+      const [{ data }, { data: cats }] = await Promise.all([
+        supabase.from('productos').select('*').eq('activo', true).order('nombre'),
+        supabase.from('categorias').select('*').eq('activo', true).order('orden')
+      ])
       setProductos(data ?? [])
+      setCategorias(cats ?? [])
+      if (cats && cats.length > 0) setTab(cats[0].slug)
       setLoading(false)
     }
     cargar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const tabs: { value: Tab; label: string }[] = [
-    { value: 'barrita', label: '🍫 Barritas' },
-    { value: 'mix', label: '🥜 Mixes' },
-    { value: 'alfajor', label: '🍪 Alfajor' }
-  ]
 
   const filtrados = productos.filter((p) => p.categoria === tab)
 
@@ -158,20 +135,22 @@ export function Productos() {
 
         {/* Tabs */}
         <div className='flex gap-2 flex-wrap mb-8'>
-          {tabs.map((t) => {
-            const count = productos.filter((p) => p.categoria === t.value).length
+          {categorias.map((cat) => {
+            const Icon = ICON_MAP[cat.icono] ?? Package
+            const count = productos.filter((p) => p.categoria === cat.slug).length
             return (
               <button
-                key={t.value}
-                onClick={() => setTab(t.value)}
+                key={cat.slug}
+                onClick={() => setTab(cat.slug)}
                 className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                  tab === t.value
+                  tab === cat.slug
                     ? 'bg-[#3d2b1f] text-white'
                     : 'bg-white text-[#8a7060] border border-[#f0e6d3] hover:border-[#c47c2b]'
                 }`}
               >
-                {t.label}
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === t.value ? 'bg-white/20' : 'bg-[#f0e6d3]'}`}>
+                <Icon className='h-4 w-4' />
+                {cat.nombre}
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === cat.slug ? 'bg-white/20' : 'bg-[#f0e6d3]'}`}>
                   {count}
                 </span>
               </button>
@@ -187,12 +166,6 @@ export function Productos() {
         ) : filtrados.length === 0 ? (
           <div className='text-center py-20 text-[#8a7060] text-sm'>
             No hay productos disponibles en esta categoría
-          </div>
-        ) : tab === 'alfajor' ? (
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto'>
-            {filtrados.map((p) => (
-              <AlfajorCard key={p.id} p={p} />
-            ))}
           </div>
         ) : (
           <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4'>

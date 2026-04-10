@@ -16,13 +16,15 @@ import {
   Cookie,
   ClipboardList,
   ShoppingCart,
-  PencilRuler
+  PencilRuler,
+  Tags
 } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const navItems = [
   { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
   { href: '/dashboard/productos', label: 'Productos', icon: Package },
+  { href: '/dashboard/categorias', label: 'Categorías', icon: Tags },
   { href: '/dashboard/stock', label: 'Stock', icon: Warehouse },
   { href: '/dashboard/ganancias', label: 'Ganancias', icon: TrendingUp },
   { href: '/dashboard/ventas', label: 'Ventas', icon: ClipboardList },

@@ -1,5 +1,15 @@
 // src/lib/types.ts
-export type Categoria = 'barrita' | 'mix' | 'alfajor'
+export type Categoria = string
+
+export interface CategoriaDB {
+  id: string
+  nombre: string
+  slug: string
+  icono: string
+  orden: number
+  activo: boolean
+  created_at: string
+}
 
 export interface Producto {
   id: string

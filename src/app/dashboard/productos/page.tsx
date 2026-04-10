@@ -4,19 +4,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
-import { type Producto, type Categoria } from '@/lib/types'
+import { type Producto, type CategoriaDB } from '@/lib/types'
 import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle, Sparkles, Trash } from 'lucide-react'
-
-const CATEGORIAS: { value: Categoria; label: string }[] = [
-  { value: 'barrita', label: '🍫 Barrita' },
-  { value: 'mix', label: '🥜 Mix' },
-  { value: 'alfajor', label: '🍪 Alfajor' }
-]
 
 const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
   nombre: '',
   descripcion: '',
-  categoria: 'barrita',
+  categoria: '',
   precio: 0,
   costo: 0,
   stock: 0,
@@ -29,8 +23,9 @@ const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
 
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([])
+  const [categorias, setCategorias] = useState<CategoriaDB[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<Categoria | 'todos'>('todos')
+  const [filtro, setFiltro] = useState<string>('todos')
   const [modalOpen, setModalOpen] = useState(false)
   const [editando, setEditando] = useState<Producto | null>(null)
   const [form, setForm] = useState(EMPTY)
@@ -43,8 +38,13 @@ export default function ProductosPage() {
   const supabase = createClient()
 
   const cargar = async () => {
-    const { data } = await supabase.from('productos').select('*').order('categoria').order('nombre')
+    const [{ data }, { data: cats }] = await Promise.all([
+      supabase.from('productos').select('*').order('categoria').order('nombre'),
+      supabase.from('categorias').select('*').eq('activo', true).order('orden')
+    ])
     setProductos(data ?? [])
+    setCategorias(cats ?? [])
+    setForm((f) => ({ ...f, categoria: f.categoria === '' && cats && cats.length > 0 ? cats[0].slug : f.categoria }))
     setLoading(false)
   }
 
@@ -55,7 +55,7 @@ export default function ProductosPage() {
 
   const abrirCrear = () => {
     setEditando(null)
-    setForm(EMPTY)
+    setForm({ ...EMPTY, categoria: categorias[0]?.slug ?? '' })
     setError('')
     setErrorIA('')
     setModalOpen(true)
@@ -146,10 +146,10 @@ export default function ProductosPage() {
 
       {/* Filtros */}
       <div className='flex gap-2 flex-wrap'>
-        {[{ value: 'todos', label: 'Todos' }, ...CATEGORIAS.map((c) => ({ value: c.value, label: c.label }))].map((f) => (
+        {[{ value: 'todos', label: 'Todos' }, ...categorias.map((c) => ({ value: c.slug, label: c.nombre }))].map((f) => (
           <button
             key={f.value}
-            onClick={() => setFiltro(f.value as 'todos' | Categoria)}
+            onClick={() => setFiltro(f.value)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
               filtro === f.value
                 ? 'bg-[#3d2b1f] text-white'
@@ -374,11 +374,11 @@ export default function ProductosPage() {
                   <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Categoría *</label>
                   <select
                     value={form.categoria}
-                    onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value as Categoria }))}
+                    onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value }))}
                     className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b] bg-white'
                   >
-                    {CATEGORIAS.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
+                    {categorias.map((c) => (
+                      <option key={c.slug} value={c.slug}>{c.nombre}</option>
                     ))}
                   </select>
                 </div>
