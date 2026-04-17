@@ -64,7 +64,12 @@ export default async function Home() {
         <Productos />
         <ComoFunciona config={config.comoFunciona} />
         <Beneficios items={config.beneficios} />
-        <Testimonios items={config.testimonios} />
+        <Testimonios
+          items={config.testimonios}
+          clientesFelices={
+            config.hero.stats.find((s) => s.label.toLowerCase().includes('cliente'))?.valor
+          }
+        />
         <Faqs config={config.faqs} />
         <Footer config={config.footer} />
       </main>

@@ -13,10 +13,22 @@ function Estrellas({ cantidad = 5 }: { cantidad?: number }) {
   )
 }
 
-export function Testimonios({ items = DEFAULT_CONFIG.testimonios }: { items?: TestimonioItem[] }) {
+export function Testimonios({
+  items = DEFAULT_CONFIG.testimonios,
+  clientesFelices
+}: {
+  items?: TestimonioItem[]
+  /** Valor del stat "Clientes felices" del hero, para sincronizar el subtítulo */
+  clientesFelices?: string
+}) {
   // Filtramos testimonios sin texto para no mostrar cards con comillas vacías.
   const visibles = items.filter((t) => t.texto?.trim().length > 0)
   if (visibles.length === 0) return null
+
+  // Si vino el stat del hero, armamos el subtítulo dinámico; si no, fallback neutro.
+  const subtitulo = clientesFelices
+    ? `Más de ${clientesFelices} personas ya cambiaron sus snacks por algo mejor.`
+    : 'Personas como vos ya cambiaron sus snacks por algo mejor.'
 
   return (
     <section id='opiniones' className='py-16 sm:py-24 px-6 sm:px-10 lg:px-16 bg-[#f0e6d3]'>
@@ -28,7 +40,7 @@ export function Testimonios({ items = DEFAULT_CONFIG.testimonios }: { items?: Te
           probaron, nos cuentan
         </h2>
         <p className='text-[#5c4033] text-base sm:text-lg font-light mb-10'>
-          Más de 2.400 personas ya cambiaron sus snacks por algo mejor.
+          {subtitulo}
         </p>
 
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
