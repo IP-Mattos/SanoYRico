@@ -102,7 +102,7 @@ export default function DashboardPage() {
     haceSieteDias.setDate(haceSieteDias.getDate() - 7)
     const hace2h = new Date(Date.now() - 2 * 60 * 60 * 1000)
 
-    const [ventasHoy, ventasAyer, productos, stockBajoRes, pedidosPend, pedidosViejos, ventasSemana] = await Promise.all([
+    const [ventasHoy, ventasAyer, productos, stockBajoRes, pedidosPend, pedidosViejos, topSemana] = await Promise.all([
       supabase.from('ventas').select('total, ganancia').gte('fecha', hoy.toISOString()),
       supabase
         .from('ventas')
@@ -123,10 +123,13 @@ export default function DashboardPage() {
         .eq('estado', 'pendiente')
         .neq('metodo_pago', 'mercadopago')
         .lt('created_at', hace2h.toISOString()),
+      // Top productos: pedido_items unidos a pedidos NO cancelados de la última semana.
+      // Inner join + filtro en la tabla relacionada via postgrest.
       supabase
-        .from('ventas')
-        .select('producto_nombre, cantidad, total, productos(emoji)')
-        .gte('fecha', haceSieteDias.toISOString())
+        .from('pedido_items')
+        .select('producto_nombre, producto_emoji, cantidad, subtotal, pedidos!inner(estado, created_at)')
+        .neq('pedidos.estado', 'cancelado')
+        .gte('pedidos.created_at', haceSieteDias.toISOString())
     ])
 
     const ingresosHoy = ventasHoy.data?.reduce((a, v) => a + v.total, 0) ?? 0
@@ -134,31 +137,28 @@ export default function DashboardPage() {
     const ingresosAyer = ventasAyer.data?.reduce((a, v) => a + v.total, 0) ?? 0
     const gananciaAyer = ventasAyer.data?.reduce((a, v) => a + v.ganancia, 0) ?? 0
 
-    // Top productos últimos 7 días (agrupando por nombre).
-    // Nota: Supabase infiere el join `productos(emoji)` como array — aunque la FK
-    // es 1:1, PostgREST lo devuelve así por compatibilidad con relaciones 1:N.
-    type VentaSemana = {
+    // Top productos últimos 7 días — viene de pedido_items (todos los pedidos
+    // NO cancelados, incluyendo pendientes), no de la tabla ventas que es
+    // solo para cierres contables.
+    type ItemSemana = {
       producto_nombre: string
+      producto_emoji: string | null
       cantidad: number
-      total: number
-      productos: { emoji: string | null }[] | { emoji: string | null } | null
+      subtotal: number
     }
-    const rowsSemana = (ventasSemana.data ?? []) as unknown as VentaSemana[]
+    const rowsSemana = (topSemana.data ?? []) as unknown as ItemSemana[]
     const agrupado = new Map<string, TopProducto>()
-    rowsSemana.forEach((v) => {
-      const existente = agrupado.get(v.producto_nombre)
-      const emoji = Array.isArray(v.productos)
-        ? v.productos[0]?.emoji ?? null
-        : v.productos?.emoji ?? null
+    rowsSemana.forEach((i) => {
+      const existente = agrupado.get(i.producto_nombre)
       if (existente) {
-        existente.cantidad += v.cantidad
-        existente.ingresos += v.total
+        existente.cantidad += i.cantidad
+        existente.ingresos += i.subtotal
       } else {
-        agrupado.set(v.producto_nombre, {
-          nombre: v.producto_nombre,
-          emoji,
-          cantidad: v.cantidad,
-          ingresos: v.total
+        agrupado.set(i.producto_nombre, {
+          nombre: i.producto_nombre,
+          emoji: i.producto_emoji,
+          cantidad: i.cantidad,
+          ingresos: i.subtotal
         })
       }
     })
@@ -366,9 +366,19 @@ export default function DashboardPage() {
           </Panel>
         )}
 
-        {/* Top productos últimos 7 días */}
-        {topProductos.length > 0 && (
-          <Panel title='Más vendidos · últimos 7 días' icon={Flame}>
+        {/* Top productos últimos 7 días (siempre se renderiza; empty state interno) */}
+        <Panel title='Más vendidos · últimos 7 días' icon={Flame}>
+          {topProductos.length === 0 ? (
+            <div className='py-6 text-center'>
+              <div className='text-3xl mb-2 opacity-40'>📦</div>
+              <p className='text-sm text-[#8a7060]'>
+                Todavía no hay pedidos en la última semana.
+              </p>
+              <p className='text-xs text-[#c4b5a8] mt-1'>
+                Cuando entren, acá vas a ver qué productos se mueven más.
+              </p>
+            </div>
+          ) : (
             <div className='space-y-3'>
               {topProductos.map((p, i) => {
                 const max = topProductos[0].cantidad
@@ -401,8 +411,8 @@ export default function DashboardPage() {
                 )
               })}
             </div>
-          </Panel>
-        )}
+          )}
+        </Panel>
       </div>
 
       {/* ── STOCK BAJO ── con link directo */}
