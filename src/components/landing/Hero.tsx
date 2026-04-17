@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { type HeroConfig, DEFAULT_CONFIG } from '@/lib/site-config'
 
@@ -14,6 +15,18 @@ export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) 
     <section className='min-h-screen grid lg:grid-cols-2 pt-16'>
       {/* Izquierda */}
       <div className='flex flex-col justify-center px-6 sm:px-10 lg:px-16 py-16 max-w-2xl mx-auto w-full lg:max-w-none lg:mx-0'>
+        {/* Logo visible solo en mobile/tablet (desktop lo muestra la columna derecha) */}
+        <div className='lg:hidden flex justify-center mb-8 animate-fadeup'>
+          <Image
+            src='/logo-sano-y-rico.png'
+            alt='Sano y Rico'
+            width={1157}
+            height={1157}
+            priority
+            className='w-40 sm:w-48 h-auto animate-float filter-[drop-shadow(0_18px_25px_rgba(61,43,31,0.3))_drop-shadow(0_8px_12px_rgba(61,43,31,0.18))]'
+          />
+        </div>
+
         <div className='inline-flex items-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#8a5a1a] text-xs font-medium tracking-widest uppercase px-4 py-2 rounded-full w-fit mb-6 animate-fadeup'>
           {config.badge}
         </div>
@@ -73,7 +86,15 @@ export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) 
           </div>
         ))}
 
-        <div className='text-[10rem] xl:text-[11rem] animate-float z-10 filter drop-shadow-xl'>🌾</div>
+        <Image
+          src='/logo-sano-y-rico.png'
+          alt='Sano y Rico'
+          width={1157}
+          height={1157}
+          priority
+          className='w-80 xl:w-96 h-auto animate-float z-10 filter-[drop-shadow(0_25px_35px_rgba(61,43,31,0.35))_drop-shadow(0_10px_15px_rgba(61,43,31,0.2))]'
+        />
+
       </div>
     </section>
   )
