@@ -21,8 +21,17 @@ const FORM_INICIAL = {
   metodo_pago: '' as MetodoPago | ''
 }
 
-export function Cart({ pagos, telefono }: { pagos?: PagosConfig; telefono?: string }) {
+export function Cart({
+  pagos,
+  telefono,
+  minimoPedido = 2000
+}: {
+  pagos?: PagosConfig
+  telefono?: string
+  minimoPedido?: number
+}) {
   const { items, quitar, cambiarCantidad, vaciar, total, cantidad, isOpen, setIsOpen } = useCart()
+  const MINIMO_PEDIDO = minimoPedido
   const [paso, setPaso] = useState<Paso>('carrito')
   const [guardando, setGuardando] = useState(false)
   const [numeroPedido, setNumeroPedido] = useState<number | null>(null)
@@ -214,6 +223,28 @@ export function Cart({ pagos, telefono }: { pagos?: PagosConfig; telefono?: stri
             </div>
             {items.length > 0 && (
               <div className='p-5 border-t border-[#f0e6d3] space-y-3'>
+                {/* Progress hacia el mínimo de pedido */}
+                {(() => {
+                  const alcanzado = total >= MINIMO_PEDIDO
+                  const pct = Math.min(100, Math.round((total / MINIMO_PEDIDO) * 100))
+                  return (
+                    <div className='space-y-1.5' aria-live='polite'>
+                      <div className='flex justify-between text-xs font-medium'>
+                        <span className={alcanzado ? 'text-green-600' : 'text-[#c47c2b]'}>
+                          {alcanzado ? '✓ Listo para confirmar' : `Faltan $${MINIMO_PEDIDO - total} para el mínimo`}
+                        </span>
+                        <span className='text-[#8a7060]'>${total} / ${MINIMO_PEDIDO}</span>
+                      </div>
+                      <div className='h-2 bg-[#f0e6d3] rounded-full overflow-hidden'>
+                        <div
+                          className={`h-full rounded-full transition-[width] duration-500 ease-out ${alcanzado ? 'bg-green-500' : 'bg-linear-to-r from-[#c47c2b] to-[#8a5a1a]'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 <div className='flex justify-between items-center'>
                   <span className='text-[#8a7060] text-sm'>Total</span>
                   <span className='text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'Georgia, serif' }}>
@@ -222,16 +253,12 @@ export function Cart({ pagos, telefono }: { pagos?: PagosConfig; telefono?: stri
                 </div>
                 <button
                   onClick={() => setPaso('checkout')}
-                  disabled={total < 2000}
+                  disabled={total < MINIMO_PEDIDO}
                   className='w-full bg-[#3d2b1f] text-white py-3 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   Continuar con el pedido →
                 </button>
-                {total < 2000 ? (
-                  <p className='text-xs text-[#c47c2b] text-center font-medium'>
-                    Mínimo $2000 — te faltan ${2000 - total}
-                  </p>
-                ) : (
+                {total >= MINIMO_PEDIDO && (
                   <p className='text-xs text-[#8a7060] text-center'>Envío incluido en todos los pedidos</p>
                 )}
               </div>

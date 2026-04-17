@@ -13,6 +13,7 @@ interface CartContextType {
   cantidad: number
   isOpen: boolean
   setIsOpen: (v: boolean) => void
+  justAdded: CartItem | null
 }
 
 const CartContext = createContext<CartContextType | null>(null)
@@ -21,6 +22,8 @@ const STORAGE_KEY = 'sano-carrito'
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [justAdded, setJustAdded] = useState<CartItem | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const montado = useRef(false)
 
   // Cargar desde localStorage tras el mount (evita hydration mismatch)
@@ -47,7 +50,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { ...item, cantidad: 1 }]
     })
-    // El carrito ya no se abre automáticamente al agregar
+    // Feedback visual: toast "agregado" que se oculta solo.
+    // Forzar nuevo objeto (timestamp) garantiza que React monte de nuevo el toast
+    // si el usuario agrega el mismo producto dos veces → se re-dispara la animación.
+    setJustAdded({ ...item, cantidad: 1 })
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setJustAdded(null), 3200)
+  }, [])
+
+  useEffect(() => () => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
   }, [])
 
   const quitar = useCallback((producto_id: string) => {
@@ -68,7 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const cantidad = items.reduce((a, i) => a + i.cantidad, 0)
 
   return (
-    <CartContext.Provider value={{ items, agregar, quitar, cambiarCantidad, vaciar, total, cantidad, isOpen, setIsOpen }}>
+    <CartContext.Provider value={{ items, agregar, quitar, cambiarCantidad, vaciar, total, cantidad, isOpen, setIsOpen, justAdded }}>
       {children}
     </CartContext.Provider>
   )
