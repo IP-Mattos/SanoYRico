@@ -38,11 +38,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true }
-  },
-  icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png'
   }
+  // icons: Next auto-detecta app/favicon.ico, app/icon.png y app/apple-icon.png
+  // desde el file-convention. No necesita declaración manual acá.
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
