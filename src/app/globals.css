@@ -20,6 +20,18 @@ body {
   overflow-x: hidden;
 }
 
+/* Tailwind v4 dropped cursor:pointer on <button> por spec HTML.
+   Lo restauramos para que todo elemento interactivo muestre la manito. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  label[for],
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
 @keyframes float {
   0%,
   100% {
