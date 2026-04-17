@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# source assets — PDFs del branding no van al bundle/repo, solo sus exportaciones
+/public/*.pdf
