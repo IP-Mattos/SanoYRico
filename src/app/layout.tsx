@@ -1,8 +1,12 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sano-y-rico.vercel.app'
+// Plausible analytics: se activa solo si NEXT_PUBLIC_PLAUSIBLE_DOMAIN está seteada.
+// Es privacy-friendly, sin cookies, sin consent banner.
+const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -44,7 +48,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='es'>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        {PLAUSIBLE_DOMAIN && (
+          <Script
+            defer
+            data-domain={PLAUSIBLE_DOMAIN}
+            src='https://plausible.io/js/script.js'
+            strategy='afterInteractive'
+          />
+        )}
+      </body>
     </html>
   )
 }

@@ -1,11 +1,13 @@
 // src/app/mp/success/page.tsx
 import Link from 'next/link'
+import { ConfettiBurst } from './ConfettiBurst'
 
 export default async function MpSuccessPage({ searchParams }: { searchParams: Promise<{ pedido?: string }> }) {
   const { pedido } = await searchParams
 
   return (
     <div className='min-h-screen bg-[#faf6ef] flex items-center justify-center px-4'>
+      <ConfettiBurst />
       <div className='w-full max-w-md text-center'>
         <div className='w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6'>
           <span className='text-4xl'>✅</span>
