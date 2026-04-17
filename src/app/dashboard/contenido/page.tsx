@@ -11,19 +11,23 @@ import {
   type BeneficioItem,
   type TestimonioItem,
   type FooterConfig,
-  type PagosConfig
+  type PagosConfig,
+  type ComoFuncionaConfig,
+  type FaqsConfig
 } from '@/lib/site-config'
 import { revalidateSiteConfig } from '@/app/actions/revalidate'
-import { Loader2, Save, Plus, Trash2, CheckCircle, Eye, Settings, Sparkles, Star, FileText, MessageSquare, Megaphone, CreditCard } from 'lucide-react'
+import { Loader2, Save, Plus, Trash2, CheckCircle, Eye, Settings, Sparkles, Star, FileText, MessageSquare, Megaphone, CreditCard, ListOrdered, HelpCircle } from 'lucide-react'
 
-type TabId = 'general' | 'hero' | 'marquee' | 'beneficios' | 'testimonios' | 'footer' | 'pagos'
+type TabId = 'general' | 'hero' | 'marquee' | 'comoFunciona' | 'beneficios' | 'testimonios' | 'faqs' | 'footer' | 'pagos'
 
 const TABS: { id: TabId; label: string; desc: string; icon: React.ElementType }[] = [
-  { id: 'general', label: 'General', desc: 'Nombre y WhatsApp', icon: Settings },
+  { id: 'general', label: 'General', desc: 'Nombre y pedido mínimo', icon: Settings },
   { id: 'hero', label: 'Hero', desc: 'Portada principal', icon: Sparkles },
   { id: 'marquee', label: 'Marquee', desc: 'Banda animada', icon: Megaphone },
+  { id: 'comoFunciona', label: 'Cómo funciona', desc: 'Pasos de compra', icon: ListOrdered },
   { id: 'beneficios', label: 'Beneficios', desc: 'Por qué elegirnos', icon: Star },
   { id: 'testimonios', label: 'Testimonios', desc: 'Opiniones', icon: MessageSquare },
+  { id: 'faqs', label: 'FAQs', desc: 'Preguntas frecuentes', icon: HelpCircle },
   { id: 'footer', label: 'Footer', desc: 'Pie de página', icon: FileText },
   { id: 'pagos', label: 'Pagos', desc: 'Métodos de pago', icon: CreditCard }
 ]
@@ -71,6 +75,13 @@ function PreviewGeneral({ g }: { g: GeneralConfig }) {
           <div className='w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-base'>📱</div>
           <span className='font-mono text-[#3d2b1f] font-semibold'>+{g.telefono || '—'}</span>
         </div>
+      </div>
+      <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
+        <p className='text-[#8a7060] text-xs uppercase tracking-widest mb-2'>Pedido mínimo</p>
+        <p className='text-[#3d2b1f] text-3xl font-bold' style={{ fontFamily: 'Georgia, serif' }}>
+          ${g.minimoPedido?.toLocaleString('es-UY') ?? '—'}
+        </p>
+        <p className='text-[10px] text-[#8a7060] mt-1'>El carrito bloquea el checkout hasta alcanzar este monto.</p>
       </div>
       <div className='bg-[#fef3d0] rounded-2xl p-4 text-xs text-[#c47c2b] leading-relaxed'>
         <strong>¿Cómo se usa el número?</strong><br />
@@ -145,21 +156,74 @@ function PreviewTestimonios({ items }: { items: TestimonioItem[] }) {
   return (
     <div className='space-y-3'>
       <p className='text-[#8a7060] text-[10px] uppercase tracking-widest'>Vista previa</p>
-      {items.map((t, i) => (
-        <div key={i} className='bg-[#faf6ef] rounded-2xl p-4 border border-[#f0e6d3]'>
-          <div className='text-[#c47c2b] text-sm mb-2'>★★★★★</div>
-          <p className='text-[#3d2b1f] text-xs italic leading-relaxed mb-3' style={{ fontFamily: 'Georgia, serif' }}>
-            &ldquo;{t.texto || '…'}&rdquo;
-          </p>
-          <div className='flex items-center gap-2'>
-            <div className='w-8 h-8 rounded-full bg-[#f0e6d3] flex items-center justify-center text-base'>{t.avatar || '😊'}</div>
-            <div>
-              <p className='text-xs font-semibold text-[#3d2b1f]'>{t.nombre || 'Nombre'}</p>
-              <p className='text-[10px] text-[#8a7060]'>{t.lugar || 'Ciudad'}</p>
+      {items.map((t, i) => {
+        const n = Math.min(5, Math.max(0, t.estrellas ?? 5))
+        return (
+          <div key={i} className='bg-[#faf6ef] rounded-2xl p-4 border border-[#f0e6d3]'>
+            <div className='text-sm mb-2'>
+              <span className='text-[#c47c2b]'>{'★'.repeat(n)}</span>
+              <span className='text-[#e5d5b9]'>{'★'.repeat(5 - n)}</span>
+            </div>
+            <p className='text-[#3d2b1f] text-xs italic leading-relaxed mb-3' style={{ fontFamily: 'Georgia, serif' }}>
+              &ldquo;{t.texto || '…'}&rdquo;
+            </p>
+            <div className='flex items-center gap-2'>
+              <div className='w-8 h-8 rounded-full bg-[#f0e6d3] flex items-center justify-center text-base'>{t.avatar || '😊'}</div>
+              <div>
+                <p className='text-xs font-semibold text-[#3d2b1f]'>{t.nombre || 'Nombre'}</p>
+                <p className='text-[10px] text-[#8a7060]'>{t.lugar || 'Ciudad'}</p>
+              </div>
             </div>
           </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function PreviewComoFunciona({ c }: { c: ComoFuncionaConfig }) {
+  return (
+    <div className='space-y-3'>
+      <p className='text-[#8a7060] text-[10px] uppercase tracking-widest'>Vista previa</p>
+      <div className='bg-[#faf6ef] rounded-2xl p-4 space-y-3'>
+        <p className='text-[#3d2b1f] text-sm font-black leading-tight' style={{ fontFamily: 'Georgia, serif' }}>{c.titulo || '…'}</p>
+        <p className='text-[#8a7060] text-xs'>{c.subtitulo || '…'}</p>
+        <div className='space-y-2 pt-2 border-t border-[#f0e6d3]'>
+          {c.pasos.map((p, i) => (
+            <div key={i} className='bg-white rounded-xl p-3 flex items-start gap-3 border border-[#f0e6d3]'>
+              <span className='text-2xl shrink-0'>{p.emoji || '✨'}</span>
+              <div className='flex-1 min-w-0'>
+                <div className='flex items-center gap-2'>
+                  <span className='text-[10px] font-bold text-[#c47c2b] font-mono'>{String(i + 1).padStart(2, '0')}</span>
+                  <p className='text-xs font-bold text-[#3d2b1f] truncate' style={{ fontFamily: 'Georgia, serif' }}>{p.titulo || 'Sin título'}</p>
+                </div>
+                <p className='text-[10px] text-[#8a7060] leading-snug mt-0.5'>{p.descripcion || '—'}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
+    </div>
+  )
+}
+
+function PreviewFaqs({ f }: { f: FaqsConfig }) {
+  return (
+    <div className='space-y-3'>
+      <p className='text-[#8a7060] text-[10px] uppercase tracking-widest'>Vista previa</p>
+      <div className='bg-white rounded-2xl p-4 border border-[#f0e6d3] space-y-3'>
+        <p className='text-[#3d2b1f] text-sm font-black leading-tight' style={{ fontFamily: 'Georgia, serif' }}>
+          {f.titulo || '…'} <span className='text-[#c47c2b] italic'>{f.tituloDestacado}</span>
+        </p>
+        <div className='space-y-1.5'>
+          {f.items.map((it, i) => (
+            <div key={i} className='bg-[#faf6ef] rounded-lg px-3 py-2 flex items-center justify-between gap-2'>
+              <p className='text-xs text-[#3d2b1f] font-semibold truncate'>{it.pregunta || '—'}</p>
+              <span className='w-5 h-5 rounded-full bg-[#f0e6d3] text-[#c47c2b] flex items-center justify-center font-bold text-xs shrink-0'>+</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -193,17 +257,19 @@ export default function ContenidoPage() {
   const [general, setGeneral] = useState<GeneralConfig>(DEFAULT_CONFIG.general)
   const [hero, setHero] = useState<HeroConfig>(DEFAULT_CONFIG.hero)
   const [marquee, setMarquee] = useState<MarqueeConfig>(DEFAULT_CONFIG.marquee)
+  const [comoFunciona, setComoFunciona] = useState<ComoFuncionaConfig>(DEFAULT_CONFIG.comoFunciona)
   const [beneficios, setBeneficios] = useState<BeneficioItem[]>(DEFAULT_CONFIG.beneficios)
   const [testimonios, setTestimonios] = useState<TestimonioItem[]>(DEFAULT_CONFIG.testimonios)
+  const [faqs, setFaqs] = useState<FaqsConfig>(DEFAULT_CONFIG.faqs)
   const [footer, setFooter] = useState<FooterConfig>(DEFAULT_CONFIG.footer)
 
   const [pagos, setPagos] = useState<PagosConfig>(DEFAULT_CONFIG.pagos)
 
   const [saving, setSaving] = useState<Record<TabId, boolean>>({
-    general: false, hero: false, marquee: false, beneficios: false, testimonios: false, footer: false, pagos: false
+    general: false, hero: false, marquee: false, comoFunciona: false, beneficios: false, testimonios: false, faqs: false, footer: false, pagos: false
   })
   const [saved, setSaved] = useState<Record<TabId, boolean>>({
-    general: false, hero: false, marquee: false, beneficios: false, testimonios: false, footer: false, pagos: false
+    general: false, hero: false, marquee: false, comoFunciona: false, beneficios: false, testimonios: false, faqs: false, footer: false, pagos: false
   })
 
   const supabase = createClient()
@@ -211,11 +277,15 @@ export default function ContenidoPage() {
   useEffect(() => {
     supabase.from('configuracion').select('clave, valor').then(({ data }) => {
       if (data) data.forEach(({ clave, valor }) => {
-        if (clave === 'general') setGeneral(valor as GeneralConfig)
+        // Merge con defaults para que campos nuevos agregados a DEFAULT_CONFIG
+        // se muestren aunque la fila guardada todavía no los tenga (ej. minimoPedido, estrellas).
+        if (clave === 'general') setGeneral({ ...DEFAULT_CONFIG.general, ...(valor as Partial<GeneralConfig>) })
         if (clave === 'hero') setHero(valor as HeroConfig)
         if (clave === 'marquee') setMarquee(valor as MarqueeConfig)
+        if (clave === 'comoFunciona') setComoFunciona({ ...DEFAULT_CONFIG.comoFunciona, ...(valor as Partial<ComoFuncionaConfig>) })
         if (clave === 'beneficios') setBeneficios(valor as BeneficioItem[])
-        if (clave === 'testimonios') setTestimonios(valor as TestimonioItem[])
+        if (clave === 'testimonios') setTestimonios((valor as TestimonioItem[]).map((t) => ({ estrellas: 5, ...t })))
+        if (clave === 'faqs') setFaqs({ ...DEFAULT_CONFIG.faqs, ...(valor as Partial<FaqsConfig>) })
         if (clave === 'footer') setFooter(valor as FooterConfig)
         if (clave === 'pagos') setPagos(valor as PagosConfig)
       })
@@ -251,7 +321,7 @@ export default function ContenidoPage() {
       </div>
 
       {/* Tabs — tarjetas con ícono y descripción */}
-      <div className='grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2'>
+      <div className='grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2'>
         {TABS.map((t) => {
           const Icon = t.icon
           return (
@@ -291,9 +361,113 @@ export default function ContenidoPage() {
                       <input className={`${inp} pl-9`} value={general.telefono} onChange={(e) => setGeneral((p) => ({ ...p, telefono: e.target.value }))} placeholder='59893644132' />
                     </div>
                   </Field>
+                  <Field label='Pedido mínimo ($)' hint='Monto mínimo para poder confirmar un pedido. El carrito muestra barra de progreso hacia este valor.'>
+                    <div className='relative'>
+                      <span className='absolute left-3 top-1/2 -translate-y-1/2 text-[#8a7060] text-sm'>$</span>
+                      <input
+                        type='number'
+                        min={0}
+                        step={100}
+                        className={`${inp} pl-7`}
+                        value={general.minimoPedido}
+                        onChange={(e) => setGeneral((p) => ({ ...p, minimoPedido: Math.max(0, Number(e.target.value) || 0) }))}
+                        placeholder='2000'
+                      />
+                    </div>
+                  </Field>
                 </div>
               </div>
               <SaveBtn guardando={saving.general} ok={saved.general} />
+            </form>
+          )}
+
+          {/* CÓMO FUNCIONA */}
+          {tab === 'comoFunciona' && (
+            <form onSubmit={(e) => { e.preventDefault(); guardar('comoFunciona', comoFunciona) }} className='space-y-4'>
+              <div className='bg-white rounded-2xl border border-[#f0e6d3] divide-y divide-[#f0e6d3]'>
+                <div className='p-5 space-y-3'>
+                  <p className='text-xs font-bold text-[#c47c2b] uppercase tracking-widest'>Encabezado</p>
+                  <Field label='Título'>
+                    <input className={inp} value={comoFunciona.titulo} onChange={(e) => setComoFunciona((p) => ({ ...p, titulo: e.target.value }))} placeholder='Tres pasos y a disfrutar' />
+                  </Field>
+                  <Field label='Subtítulo'>
+                    <textarea className={ta} rows={2} value={comoFunciona.subtitulo} onChange={(e) => setComoFunciona((p) => ({ ...p, subtitulo: e.target.value }))} />
+                  </Field>
+                </div>
+                <div className='p-5 space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <p className='text-xs font-bold text-[#c47c2b] uppercase tracking-widest'>Pasos (la numeración 01, 02… es automática)</p>
+                    <button type='button' onClick={() => setComoFunciona((p) => ({ ...p, pasos: [...p.pasos, { emoji: '✨', titulo: 'Nuevo paso', descripcion: 'Describí este paso.' }] }))} className='flex items-center gap-1 text-xs text-[#c47c2b] hover:text-[#3d2b1f] font-medium'>
+                      <Plus className='h-3.5 w-3.5' /> Agregar
+                    </button>
+                  </div>
+                  {comoFunciona.pasos.map((paso, i) => (
+                    <div key={i} className='bg-[#faf6ef] rounded-xl p-4 space-y-3 relative'>
+                      <span className='absolute top-2 right-3 text-[10px] font-mono text-[#c47c2b]'>{String(i + 1).padStart(2, '0')}</span>
+                      <div className='grid grid-cols-[80px,1fr] gap-3'>
+                        <Field label='Emoji'>
+                          <input className={`${inp} text-center text-xl`} value={paso.emoji} onChange={(e) => setComoFunciona((p) => ({ ...p, pasos: p.pasos.map((x, j) => j === i ? { ...x, emoji: e.target.value } : x) }))} />
+                        </Field>
+                        <Field label='Título'>
+                          <input className={inp} value={paso.titulo} onChange={(e) => setComoFunciona((p) => ({ ...p, pasos: p.pasos.map((x, j) => j === i ? { ...x, titulo: e.target.value } : x) }))} />
+                        </Field>
+                      </div>
+                      <Field label='Descripción'>
+                        <textarea className={ta} rows={2} value={paso.descripcion} onChange={(e) => setComoFunciona((p) => ({ ...p, pasos: p.pasos.map((x, j) => j === i ? { ...x, descripcion: e.target.value } : x) }))} />
+                      </Field>
+                      {comoFunciona.pasos.length > 1 && (
+                        <button type='button' onClick={() => setComoFunciona((p) => ({ ...p, pasos: p.pasos.filter((_, j) => j !== i) }))} className='absolute bottom-2 right-3 text-xs text-[#8a7060] hover:text-red-500 flex items-center gap-1'>
+                          <Trash2 className='h-3 w-3' /> Quitar
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <SaveBtn guardando={saving.comoFunciona} ok={saved.comoFunciona} />
+            </form>
+          )}
+
+          {/* FAQS */}
+          {tab === 'faqs' && (
+            <form onSubmit={(e) => { e.preventDefault(); guardar('faqs', faqs) }} className='space-y-4'>
+              <div className='bg-white rounded-2xl border border-[#f0e6d3] divide-y divide-[#f0e6d3]'>
+                <div className='p-5 space-y-3'>
+                  <p className='text-xs font-bold text-[#c47c2b] uppercase tracking-widest'>Encabezado</p>
+                  <div className='grid grid-cols-2 gap-3'>
+                    <Field label='Título'>
+                      <input className={inp} value={faqs.titulo} onChange={(e) => setFaqs((p) => ({ ...p, titulo: e.target.value }))} placeholder='Todo lo que querés saber,' />
+                    </Field>
+                    <Field label='Título destacado (en naranja cursiva)'>
+                      <input className={`${inp} text-[#c47c2b] italic font-bold`} value={faqs.tituloDestacado} onChange={(e) => setFaqs((p) => ({ ...p, tituloDestacado: e.target.value }))} placeholder='sin letra chica' />
+                    </Field>
+                  </div>
+                </div>
+                <div className='p-5 space-y-3'>
+                  <div className='flex items-center justify-between'>
+                    <p className='text-xs font-bold text-[#c47c2b] uppercase tracking-widest'>Preguntas</p>
+                    <button type='button' onClick={() => setFaqs((p) => ({ ...p, items: [...p.items, { pregunta: '¿Nueva pregunta?', respuesta: 'Respuesta acá…' }] }))} className='flex items-center gap-1 text-xs text-[#c47c2b] hover:text-[#3d2b1f] font-medium'>
+                      <Plus className='h-3.5 w-3.5' /> Agregar
+                    </button>
+                  </div>
+                  {faqs.items.map((item, i) => (
+                    <div key={i} className='bg-[#faf6ef] rounded-xl p-4 space-y-3'>
+                      <Field label={`Pregunta ${i + 1}`}>
+                        <input className={inp} value={item.pregunta} onChange={(e) => setFaqs((p) => ({ ...p, items: p.items.map((x, j) => j === i ? { ...x, pregunta: e.target.value } : x) }))} />
+                      </Field>
+                      <Field label='Respuesta' hint='Podés usar saltos de línea para separar párrafos.'>
+                        <textarea className={ta} rows={3} value={item.respuesta} onChange={(e) => setFaqs((p) => ({ ...p, items: p.items.map((x, j) => j === i ? { ...x, respuesta: e.target.value } : x) }))} />
+                      </Field>
+                      {faqs.items.length > 1 && (
+                        <button type='button' onClick={() => setFaqs((p) => ({ ...p, items: p.items.filter((_, j) => j !== i) }))} className='text-xs text-[#8a7060] hover:text-red-500 flex items-center gap-1'>
+                          <Trash2 className='h-3 w-3' /> Quitar
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <SaveBtn guardando={saving.faqs} ok={saved.faqs} />
             </form>
           )}
 
@@ -449,7 +623,10 @@ export default function ContenidoPage() {
                         <p className='text-sm font-semibold text-[#3d2b1f] truncate'>{t.nombre || 'Sin nombre'}</p>
                         <p className='text-xs text-[#8a7060]'>{t.lugar || 'Sin ciudad'}</p>
                       </div>
-                      <div className='text-[#c47c2b] text-xs'>★★★★★</div>
+                      <div className='text-[#c47c2b] text-xs' aria-hidden='true'>
+                        {'★'.repeat(t.estrellas ?? 5)}
+                        <span className='text-[#e5d5b9]'>{'★'.repeat(5 - (t.estrellas ?? 5))}</span>
+                      </div>
                       {testimonios.length > 1 && (
                         <button type='button' onClick={() => setTestimonios((p) => p.filter((_, j) => j !== i))} className='text-[#8a7060] hover:text-red-500 p-1'>
                           <Trash2 className='h-4 w-4' />
@@ -468,13 +645,32 @@ export default function ContenidoPage() {
                           <input className={inp} value={t.lugar} onChange={(e) => setTestimonios((p) => p.map((x, j) => j === i ? { ...x, lugar: e.target.value } : x))} />
                         </Field>
                       </div>
+                      <Field label='Rating' hint='De 1 a 5 estrellas — se muestra debajo del texto del testimonio.'>
+                        <div className='flex items-center gap-1'>
+                          {[1, 2, 3, 4, 5].map((n) => {
+                            const activa = n <= (t.estrellas ?? 5)
+                            return (
+                              <button
+                                key={n}
+                                type='button'
+                                onClick={() => setTestimonios((p) => p.map((x, j) => j === i ? { ...x, estrellas: n } : x))}
+                                aria-label={`${n} estrellas`}
+                                className={`text-2xl transition-colors ${activa ? 'text-[#c47c2b]' : 'text-[#e5d5b9] hover:text-[#c47c2b]/60'}`}
+                              >
+                                ★
+                              </button>
+                            )
+                          })}
+                          <span className='ml-2 text-xs text-[#8a7060]'>{t.estrellas ?? 5}/5</span>
+                        </div>
+                      </Field>
                       <Field label='Texto del testimonio'>
                         <textarea className={ta} rows={3} value={t.texto} onChange={(e) => setTestimonios((p) => p.map((x, j) => j === i ? { ...x, texto: e.target.value } : x))} />
                       </Field>
                     </div>
                   </div>
                 ))}
-                <button type='button' onClick={() => setTestimonios((p) => [...p, { nombre: 'Nombre Apellido', lugar: 'Ciudad', avatar: '😊', texto: 'Escribí aquí el testimonio del cliente.' }])} className='w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#f0e6d3] rounded-2xl text-sm text-[#8a7060] hover:border-[#c47c2b] hover:text-[#c47c2b] transition-colors'>
+                <button type='button' onClick={() => setTestimonios((p) => [...p, { nombre: 'Nombre Apellido', lugar: 'Ciudad', avatar: '😊', texto: 'Escribí aquí el testimonio del cliente.', estrellas: 5 }])} className='w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-[#f0e6d3] rounded-2xl text-sm text-[#8a7060] hover:border-[#c47c2b] hover:text-[#c47c2b] transition-colors'>
                   <Plus className='h-4 w-4' /> Agregar testimonio
                 </button>
               </div>
@@ -595,8 +791,10 @@ export default function ContenidoPage() {
           {tab === 'general' && <PreviewGeneral g={general} />}
           {tab === 'hero' && <PreviewHero h={hero} />}
           {tab === 'marquee' && <PreviewMarquee items={marquee.items} />}
+          {tab === 'comoFunciona' && <PreviewComoFunciona c={comoFunciona} />}
           {tab === 'beneficios' && <PreviewBeneficios items={beneficios} />}
           {tab === 'testimonios' && <PreviewTestimonios items={testimonios} />}
+          {tab === 'faqs' && <PreviewFaqs f={faqs} />}
           {tab === 'footer' && <PreviewFooter f={footer} />}
           {tab === 'pagos' && (
             <div className='space-y-3'>
