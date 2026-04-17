@@ -39,17 +39,21 @@ export function Navbar() {
         }`}
       >
         <div className='max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-16'>
-          {/* Logo */}
-          <div className='text-[#3d2b1f] text-2xl font-bold' style={{ fontFamily: 'Georgia, serif' }}>
+          {/* Logo — click lleva a la home desde cualquier ruta */}
+          <Link
+            href='/'
+            className='text-[#3d2b1f] text-2xl font-bold hover:opacity-80 transition-opacity'
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
             Sano y <span className='text-[#c47c2b] italic'>Rico</span>
-          </div>
+          </Link>
 
-          {/* Links desktop */}
+          {/* Links desktop — anchor absoluto (/#x) para que funcionen desde /pedido, /login, etc. */}
           <ul className='hidden lg:flex items-center gap-8 list-none'>
             {['Productos', 'Beneficios', 'Opiniones'].map((item) => (
               <li key={item}>
                 <Link
-                  href={`#${item.toLowerCase()}`}
+                  href={`/#${item.toLowerCase()}`}
                   className='text-[#8a7060] text-sm font-medium uppercase tracking-wider hover:text-[#3d2b1f] transition-colors'
                 >
                   {item}
@@ -113,7 +117,7 @@ export function Navbar() {
           {['Productos', 'Beneficios', 'Opiniones'].map((item) => (
             <Link
               key={item}
-              href={`#${item.toLowerCase()}`}
+              href={`/#${item.toLowerCase()}`}
               className='py-3 text-[#3d2b1f] font-medium border-b border-[#f0e6d3]'
             >
               {item}

@@ -69,10 +69,17 @@ function SkeletonCard() {
   )
 }
 
+// Umbral de longitud a partir del cual mostramos el toggle "Ver más".
+// 100 chars ≈ 2 líneas en el tamaño de fuente de la descripción.
+const DESCRIPCION_LARGA = 100
+
 function ProductCard({ p }: { p: Producto }) {
   const { agregar } = useCart()
   const bg = BG[p.emoji ?? ''] ?? DEFAULT_BG
   const sinStock = p.stock === 0
+  const descripcion = p.descripcion ?? ''
+  const esLarga = descripcion.length > DESCRIPCION_LARGA
+  const [expanded, setExpanded] = useState(false)
 
   return (
     <div className='group flex flex-col bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(61,43,31,0.25)] hover:border-[#c47c2b]/40 transition-all duration-300'>
@@ -113,8 +120,24 @@ function ProductCard({ p }: { p: Producto }) {
         >
           {p.nombre}
         </h3>
-        {p.descripcion && (
-          <p className='text-xs text-[#8a7060] leading-relaxed line-clamp-2 mb-4'>{p.descripcion}</p>
+        {descripcion && (
+          <div className='mb-4'>
+            <p
+              className={`text-xs text-[#8a7060] leading-relaxed ${!expanded && esLarga ? 'line-clamp-2' : ''}`}
+            >
+              {descripcion}
+            </p>
+            {esLarga && (
+              <button
+                type='button'
+                onClick={() => setExpanded((v) => !v)}
+                aria-expanded={expanded}
+                className='mt-1 text-[11px] text-[#c47c2b] hover:text-[#8a5a1a] font-semibold underline decoration-dotted underline-offset-2 transition-colors'
+              >
+                {expanded ? 'Ver menos' : 'Ver más'}
+              </button>
+            )}
+          </div>
         )}
 
         <div className='mt-auto flex items-center justify-between gap-2 pt-2'>
