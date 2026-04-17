@@ -134,13 +134,22 @@ export default function DashboardPage() {
     const ingresosAyer = ventasAyer.data?.reduce((a, v) => a + v.total, 0) ?? 0
     const gananciaAyer = ventasAyer.data?.reduce((a, v) => a + v.ganancia, 0) ?? 0
 
-    // Top productos últimos 7 días (agrupando por nombre)
-    type VentaSemana = { producto_nombre: string; cantidad: number; total: number; productos?: { emoji: string | null } | null }
-    const rowsSemana = (ventasSemana.data ?? []) as VentaSemana[]
+    // Top productos últimos 7 días (agrupando por nombre).
+    // Nota: Supabase infiere el join `productos(emoji)` como array — aunque la FK
+    // es 1:1, PostgREST lo devuelve así por compatibilidad con relaciones 1:N.
+    type VentaSemana = {
+      producto_nombre: string
+      cantidad: number
+      total: number
+      productos: { emoji: string | null }[] | { emoji: string | null } | null
+    }
+    const rowsSemana = (ventasSemana.data ?? []) as unknown as VentaSemana[]
     const agrupado = new Map<string, TopProducto>()
     rowsSemana.forEach((v) => {
       const existente = agrupado.get(v.producto_nombre)
-      const emoji = v.productos?.emoji ?? null
+      const emoji = Array.isArray(v.productos)
+        ? v.productos[0]?.emoji ?? null
+        : v.productos?.emoji ?? null
       if (existente) {
         existente.cantidad += v.cantidad
         existente.ingresos += v.total
