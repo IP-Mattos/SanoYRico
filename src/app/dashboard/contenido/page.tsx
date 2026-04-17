@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import {
   DEFAULT_CONFIG,
+  BANCOS_UY,
+  TIPOS_CUENTA_UY,
   type GeneralConfig,
   type HeroConfig,
   type MarqueeConfig,
@@ -12,6 +14,7 @@ import {
   type TestimonioItem,
   type FooterConfig,
   type PagosConfig,
+  type PagoMetodo,
   type ComoFuncionaConfig,
   type FaqsConfig
 } from '@/lib/site-config'
@@ -287,7 +290,21 @@ export default function ContenidoPage() {
         if (clave === 'testimonios') setTestimonios((valor as TestimonioItem[]).map((t) => ({ estrellas: 5, ...t })))
         if (clave === 'faqs') setFaqs({ ...DEFAULT_CONFIG.faqs, ...(valor as Partial<FaqsConfig>) })
         if (clave === 'footer') setFooter(valor as FooterConfig)
-        if (clave === 'pagos') setPagos(valor as PagosConfig)
+        if (clave === 'pagos') {
+          // Auto-migración: si la fila guardada tiene campos argentinos (cbu/alias)
+          // y todavía no tiene numeroCuenta, lo copiamos para que el admin vea
+          // sus datos ya en los campos nuevos sin re-cargarlos.
+          const raw = valor as PagosConfig
+          const migrar = (m: PagoMetodo): PagoMetodo => ({
+            ...m,
+            numeroCuenta: m.numeroCuenta || m.cbu || ''
+          })
+          setPagos({
+            transferencia: migrar(raw.transferencia),
+            deposito: migrar(raw.deposito),
+            mercadopago: raw.mercadopago
+          })
+        }
       })
       setLoading(false)
     })
@@ -681,50 +698,95 @@ export default function ContenidoPage() {
           {/* PAGOS */}
           {tab === 'pagos' && (
             <form onSubmit={(e) => { e.preventDefault(); guardar('pagos', pagos) }} className='space-y-4'>
-              {/* Transferencia */}
-              <div className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
-                <div className='flex items-center justify-between px-5 py-3 bg-[#faf6ef] border-b border-[#f0e6d3]'>
-                  <div className='flex items-center gap-2'>
-                    <span className='text-lg'>🏦</span>
-                    <span className='text-sm font-semibold text-[#3d2b1f]'>Transferencia bancaria</span>
-                  </div>
-                  <label className='flex items-center gap-2 cursor-pointer'>
-                    <input type='checkbox' checked={pagos.transferencia.activo} onChange={(e) => setPagos((p) => ({ ...p, transferencia: { ...p.transferencia, activo: e.target.checked } }))} className='w-4 h-4 accent-[#c47c2b]' />
-                    <span className='text-xs text-[#8a7060]'>Activo</span>
-                  </label>
-                </div>
-                {pagos.transferencia.activo && (
-                  <div className='p-5 grid grid-cols-2 gap-3'>
-                    <Field label='Banco'><input className={inp} value={pagos.transferencia.banco ?? ''} onChange={(e) => setPagos((p) => ({ ...p, transferencia: { ...p.transferencia, banco: e.target.value } }))} placeholder='Ej: BROU' /></Field>
-                    <Field label='Titular'><input className={inp} value={pagos.transferencia.titular ?? ''} onChange={(e) => setPagos((p) => ({ ...p, transferencia: { ...p.transferencia, titular: e.target.value } }))} placeholder='Nombre y apellido' /></Field>
-                    <Field label='CBU'><input className={inp} value={pagos.transferencia.cbu ?? ''} onChange={(e) => setPagos((p) => ({ ...p, transferencia: { ...p.transferencia, cbu: e.target.value } }))} placeholder='000-000000000' /></Field>
-                    <Field label='Alias'><input className={inp} value={pagos.transferencia.alias ?? ''} onChange={(e) => setPagos((p) => ({ ...p, transferencia: { ...p.transferencia, alias: e.target.value } }))} placeholder='mi.alias.pago' /></Field>
-                  </div>
-                )}
-              </div>
+              {(['transferencia', 'deposito'] as const).map((metodo) => {
+                const info = pagos[metodo]
+                const update = (patch: Partial<PagoMetodo>) =>
+                  setPagos((p) => ({ ...p, [metodo]: { ...p[metodo], ...patch } }))
+                const emoji = metodo === 'transferencia' ? '🏦' : '🏧'
+                const nombre = metodo === 'transferencia' ? 'Transferencia bancaria' : 'Depósito bancario'
+                const datalistId = `bancos-uy-${metodo}`
 
-              {/* Depósito */}
-              <div className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
-                <div className='flex items-center justify-between px-5 py-3 bg-[#faf6ef] border-b border-[#f0e6d3]'>
-                  <div className='flex items-center gap-2'>
-                    <span className='text-lg'>🏧</span>
-                    <span className='text-sm font-semibold text-[#3d2b1f]'>Depósito bancario</span>
-                  </div>
-                  <label className='flex items-center gap-2 cursor-pointer'>
-                    <input type='checkbox' checked={pagos.deposito.activo} onChange={(e) => setPagos((p) => ({ ...p, deposito: { ...p.deposito, activo: e.target.checked } }))} className='w-4 h-4 accent-[#c47c2b]' />
-                    <span className='text-xs text-[#8a7060]'>Activo</span>
-                  </label>
-                </div>
-                {pagos.deposito.activo && (
-                  <div className='p-5 grid grid-cols-2 gap-3'>
-                    <Field label='Banco'><input className={inp} value={pagos.deposito.banco ?? ''} onChange={(e) => setPagos((p) => ({ ...p, deposito: { ...p.deposito, banco: e.target.value } }))} placeholder='Ej: BROU' /></Field>
-                    <Field label='Titular'><input className={inp} value={pagos.deposito.titular ?? ''} onChange={(e) => setPagos((p) => ({ ...p, deposito: { ...p.deposito, titular: e.target.value } }))} placeholder='Nombre y apellido' /></Field>
-                    <div className='col-span-2'>
-                      <Field label='CBU / Número de cuenta'><input className={inp} value={pagos.deposito.cbu ?? ''} onChange={(e) => setPagos((p) => ({ ...p, deposito: { ...p.deposito, cbu: e.target.value } }))} placeholder='000-000000000' /></Field>
+                return (
+                  <div key={metodo} className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
+                    <div className='flex items-center justify-between px-5 py-3 bg-[#faf6ef] border-b border-[#f0e6d3]'>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-lg'>{emoji}</span>
+                        <span className='text-sm font-semibold text-[#3d2b1f]'>{nombre}</span>
+                      </div>
+                      <label className='flex items-center gap-2 cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={info.activo}
+                          onChange={(e) => update({ activo: e.target.checked })}
+                          className='w-4 h-4 accent-[#c47c2b]'
+                        />
+                        <span className='text-xs text-[#8a7060]'>Activo</span>
+                      </label>
                     </div>
+                    {info.activo && (
+                      <div className='p-5 space-y-3'>
+                        <datalist id={datalistId}>
+                          {BANCOS_UY.map((b) => <option key={b} value={b} />)}
+                        </datalist>
+
+                        <div className='grid grid-cols-2 gap-3'>
+                          <Field label='Banco' hint='Escribí o elegí uno de la lista'>
+                            <input
+                              className={inp}
+                              list={datalistId}
+                              value={info.banco ?? ''}
+                              onChange={(e) => update({ banco: e.target.value })}
+                              placeholder='Ej: BROU'
+                            />
+                          </Field>
+                          <Field label='Tipo de cuenta'>
+                            <select
+                              className={inp}
+                              value={info.tipoCuenta ?? ''}
+                              onChange={(e) => update({ tipoCuenta: e.target.value })}
+                            >
+                              <option value=''>— Elegir —</option>
+                              {TIPOS_CUENTA_UY.map((t) => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                          </Field>
+                          <Field label='Sucursal' hint='Solo si tu banco la usa (BROU)'>
+                            <input
+                              className={inp}
+                              value={info.sucursal ?? ''}
+                              onChange={(e) => update({ sucursal: e.target.value })}
+                              placeholder='Ej: 001'
+                            />
+                          </Field>
+                          <Field label='Número de cuenta'>
+                            <input
+                              className={`${inp} font-mono`}
+                              value={info.numeroCuenta ?? ''}
+                              onChange={(e) => update({ numeroCuenta: e.target.value })}
+                              placeholder='Ej: 123456789'
+                            />
+                          </Field>
+                          <Field label='Titular'>
+                            <input
+                              className={inp}
+                              value={info.titular ?? ''}
+                              onChange={(e) => update({ titular: e.target.value })}
+                              placeholder='Nombre y apellido'
+                            />
+                          </Field>
+                          <Field label='C.I. del titular' hint='Opcional, ayuda al cliente a cotejar'>
+                            <input
+                              className={inp}
+                              value={info.documento ?? ''}
+                              onChange={(e) => update({ documento: e.target.value })}
+                              placeholder='1.234.567-8'
+                            />
+                          </Field>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                )
+              })}
 
               {/* Mercado Pago */}
               <div className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
@@ -800,9 +862,9 @@ export default function ContenidoPage() {
             <div className='space-y-3'>
               <p className='text-[#8a7060] text-[10px] uppercase tracking-widest'>Así lo ve el cliente en el carrito</p>
               {[
-                pagos.transferencia.activo && { label: '🏦 Transferencia', info: pagos.transferencia, tipo: 'banco' },
-                pagos.deposito.activo && { label: '🏧 Depósito', info: pagos.deposito, tipo: 'banco' },
-                pagos.mercadopago.activo && { label: '💳 Mercado Pago', info: pagos.mercadopago, tipo: 'mp' }
+                pagos.transferencia.activo && { label: '🏦 Transferencia', info: pagos.transferencia as PagoMetodo, tipo: 'banco' as const },
+                pagos.deposito.activo && { label: '🏧 Depósito', info: pagos.deposito as PagoMetodo, tipo: 'banco' as const },
+                pagos.mercadopago.activo && { label: '💳 Mercado Pago', info: pagos.mercadopago as PagoMetodo, tipo: 'mp' as const }
               ].filter(Boolean).map((m, i) => {
                 if (!m) return null
                 return (
@@ -812,10 +874,14 @@ export default function ContenidoPage() {
                       <p className='text-xs text-[#8a7060]'>Checkout Pro — pago dinámico</p>
                     ) : (
                       <div className='text-xs text-[#8a7060] space-y-0.5'>
-                        {(m.info as { banco?: string }).banco && <p>Banco: <span className='text-[#3d2b1f]'>{(m.info as { banco?: string }).banco}</span></p>}
-                        {(m.info as { titular?: string }).titular && <p>Titular: <span className='text-[#3d2b1f]'>{(m.info as { titular?: string }).titular}</span></p>}
-                        {(m.info as { cbu?: string }).cbu && <p>CBU: <span className='font-mono text-[#3d2b1f]'>{(m.info as { cbu?: string }).cbu}</span></p>}
-                        {(m.info as { alias?: string }).alias && <p>Alias: <span className='font-mono text-[#3d2b1f]'>{(m.info as { alias?: string }).alias}</span></p>}
+                        {m.info.banco && <p>Banco: <span className='text-[#3d2b1f]'>{m.info.banco}</span></p>}
+                        {m.info.tipoCuenta && <p>Tipo: <span className='text-[#3d2b1f]'>{m.info.tipoCuenta}</span></p>}
+                        {m.info.sucursal && <p>Sucursal: <span className='text-[#3d2b1f] font-mono'>{m.info.sucursal}</span></p>}
+                        {(m.info.numeroCuenta || m.info.cbu) && (
+                          <p>Cuenta: <span className='font-mono text-[#3d2b1f]'>{m.info.numeroCuenta || m.info.cbu}</span></p>
+                        )}
+                        {m.info.titular && <p>Titular: <span className='text-[#3d2b1f]'>{m.info.titular}</span></p>}
+                        {m.info.documento && <p>C.I.: <span className='font-mono text-[#3d2b1f]'>{m.info.documento}</span></p>}
                       </div>
                     )}
                   </div>

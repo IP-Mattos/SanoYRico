@@ -3,9 +3,9 @@
 
 import { useState } from 'react'
 import { useCart } from '@/context/CartContext'
-import { X, Plus, Minus, ShoppingBag, Loader2, CheckCircle, MessageCircle } from 'lucide-react'
+import { X, Plus, Minus, ShoppingBag, Loader2, CheckCircle, MessageCircle, Copy, Check } from 'lucide-react'
 import { PAISES } from '@/lib/localidades'
-import { type PagosConfig } from '@/lib/site-config'
+import { type PagosConfig, type PagoMetodo } from '@/lib/site-config'
 import { type MetodoPago } from '@/lib/types'
 
 type Paso = 'carrito' | 'checkout' | 'confirmado'
@@ -413,38 +413,13 @@ export function Cart({
 
                   {/* Info del método seleccionado */}
                   {metodoSeleccionado && (
-                    <div className='mt-3 p-3 bg-[#faf6ef] rounded-xl border border-[#f0e6d3] text-xs text-[#3d2b1f] space-y-1'>
+                    <div className='mt-3 p-3 bg-[#faf6ef] rounded-xl border border-[#f0e6d3] text-xs text-[#3d2b1f] space-y-2'>
                       {form.metodo_pago === 'mercadopago' ? (
                         <p className='text-[#8a7060]'>
                           Al confirmar serás redirigido a Mercado Pago para completar el pago de forma segura.
                         </p>
                       ) : (
-                        <>
-                          {(metodoSeleccionado.info as { banco?: string }).banco && (
-                            <p>
-                              <span className='text-[#8a7060]'>Banco:</span>{' '}
-                              {(metodoSeleccionado.info as { banco?: string }).banco}
-                            </p>
-                          )}
-                          {(metodoSeleccionado.info as { titular?: string }).titular && (
-                            <p>
-                              <span className='text-[#8a7060]'>Titular:</span>{' '}
-                              {(metodoSeleccionado.info as { titular?: string }).titular}
-                            </p>
-                          )}
-                          {(metodoSeleccionado.info as { cbu?: string }).cbu && (
-                            <p>
-                              <span className='text-[#8a7060]'>CBU:</span>{' '}
-                              <span className='font-mono'>{(metodoSeleccionado.info as { cbu?: string }).cbu}</span>
-                            </p>
-                          )}
-                          {(metodoSeleccionado.info as { alias?: string }).alias && (
-                            <p>
-                              <span className='text-[#8a7060]'>Alias:</span>{' '}
-                              <span className='font-mono'>{(metodoSeleccionado.info as { alias?: string }).alias}</span>
-                            </p>
-                          )}
-                        </>
+                        <DatosBancarios info={metodoSeleccionado.info} />
                       )}
                     </div>
                   )}
@@ -527,5 +502,68 @@ export function Cart({
         )}
       </div>
     </>
+  )
+}
+
+// ── Datos bancarios (Uruguay) con "Copiar" por campo clave ─────────────────
+
+function DatosBancarios({ info }: { info: PagoMetodo }) {
+  // Back-compat: si no hay numeroCuenta pero sí cbu viejo, mostrar ese.
+  const numero = info.numeroCuenta || info.cbu || ''
+  const filas: { label: string; value: string; mono?: boolean; copiable?: boolean }[] = [
+    { label: 'Banco', value: info.banco ?? '' },
+    { label: 'Tipo', value: info.tipoCuenta ?? '' },
+    { label: 'Sucursal', value: info.sucursal ?? '', mono: true, copiable: true },
+    { label: 'Cuenta', value: numero, mono: true, copiable: true },
+    { label: 'Titular', value: info.titular ?? '' },
+    { label: 'C.I.', value: info.documento ?? '', mono: true, copiable: true }
+  ].filter((f) => f.value.trim().length > 0)
+
+  if (filas.length === 0) {
+    return <p className='text-[#8a7060]'>Todavía no hay datos cargados — coordiná por WhatsApp.</p>
+  }
+
+  return (
+    <div className='space-y-1.5'>
+      {filas.map((f) => (
+        <div key={f.label} className='flex items-center justify-between gap-2'>
+          <div className='flex items-baseline gap-1.5 min-w-0'>
+            <span className='text-[#8a7060] shrink-0'>{f.label}:</span>
+            <span className={`text-[#3d2b1f] truncate ${f.mono ? 'font-mono' : ''}`}>{f.value}</span>
+          </div>
+          {f.copiable && <CopyButton text={f.value} />}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Fallback silencioso — algunos browsers sin permiso igual muestran el dato
+    }
+  }
+
+  return (
+    <button
+      type='button'
+      onClick={copiar}
+      aria-label={copied ? 'Copiado' : 'Copiar'}
+      className={`shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md transition-colors ${
+        copied
+          ? 'bg-green-100 text-green-700'
+          : 'bg-white text-[#c47c2b] border border-[#f0e6d3] hover:border-[#c47c2b]'
+      }`}
+    >
+      {copied ? <Check className='h-3 w-3' /> : <Copy className='h-3 w-3' />}
+      {copied ? 'Copiado' : 'Copiar'}
+    </button>
   )
 }

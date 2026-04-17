@@ -66,13 +66,25 @@ export interface FaqsConfig {
   items: FaqItem[]
 }
 
+// Datos bancarios adaptados a Uruguay.
+// Los viejos `cbu` y `alias` (nomenclatura argentina) quedan para retrocompatibilidad
+// con filas guardadas antes del cambio — se auto-migran a `numeroCuenta` al cargar.
 export interface PagoMetodo {
   activo: boolean
+  // Datos de la cuenta
   banco?: string
-  cbu?: string
-  alias?: string
+  tipoCuenta?: string // "Caja de Ahorros en Pesos", "Cuenta Corriente en Dólares", etc.
+  sucursal?: string   // BROU y otros suelen pedir sucursal separada
+  numeroCuenta?: string
   titular?: string
+  documento?: string  // C.I. del titular (opcional, ayuda al cliente a cotejar)
+  // Mercado Pago
   link?: string
+  // Deprecated — se mantienen solo para no perder datos cargados antes del rework UY.
+  /** @deprecated campo argentino, usar `numeroCuenta` */
+  cbu?: string
+  /** @deprecated campo argentino, no aplica a Uruguay */
+  alias?: string
 }
 
 export interface PagosConfig {
@@ -161,11 +173,20 @@ export const DEFAULT_CONFIG: SiteConfig = {
     email: 'contacto@sanoyrico.uy'
   },
   pagos: {
-    transferencia: { activo: false, banco: '', cbu: '', alias: '', titular: '' },
-    deposito: { activo: false, banco: '', cbu: '', titular: '' },
+    transferencia: { activo: false, banco: '', tipoCuenta: '', sucursal: '', numeroCuenta: '', titular: '', documento: '' },
+    deposito: { activo: false, banco: '', tipoCuenta: '', sucursal: '', numeroCuenta: '', titular: '', documento: '' },
     mercadopago: { activo: false, link: '' }
   }
 }
+
+// Opciones comunes para los selects del admin (exportadas para reutilizar en UI)
+export const BANCOS_UY = ['BROU', 'BBVA', 'Itaú', 'Santander', 'HSBC']
+export const TIPOS_CUENTA_UY = [
+  'Caja de Ahorros en Pesos',
+  'Caja de Ahorros en Dólares',
+  'Cuenta Corriente en Pesos',
+  'Cuenta Corriente en Dólares'
+]
 
 /** Fetch config from Supabase (server-side, revalidated by page-level ISR). */
 export async function getSiteConfig(): Promise<SiteConfig> {
