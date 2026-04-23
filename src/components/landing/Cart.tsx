@@ -60,6 +60,8 @@ export function Cart({
     const e: Record<string, string> = {}
     if (!form.nombre.trim()) e.nombre = 'Tu nombre es obligatorio'
     if (!form.telefono.trim()) e.telefono = 'Tu teléfono es obligatorio'
+    if (!form.email.trim()) e.email = 'Tu email es obligatorio'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Ingresá un email válido'
     if (!form.localidad) e.localidad = 'Seleccioná tu localidad'
     if (!form.calle.trim()) e.calle = 'Tu calle y número son obligatorios'
     if (hayMetodos && !form.metodo_pago) e.metodo_pago = 'Seleccioná un método de pago'
@@ -77,7 +79,7 @@ export function Cart({
       body: JSON.stringify({
         nombre: form.nombre,
         telefono: form.telefono,
-        email: form.email || undefined,
+        email: form.email.trim(),
         localidad: form.localidad,
         calle: form.calle,
         notas: form.notas || undefined,
@@ -316,15 +318,17 @@ export function Cart({
               {/* Email */}
               <div>
                 <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>
-                  Email <span className='text-[#8a7060] font-normal'>(opcional — para recibir confirmación)</span>
+                  Email <span className='text-[#c47c2b]'>*</span> <span className='text-[#8a7060] font-normal'>(para enviarte la confirmación de tu pedido)</span>
                 </label>
                 <input
                   type='email'
+                  required
                   value={form.email}
                   onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
                   placeholder='Ej: maria@gmail.com'
-                  className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                  className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b] ${errores.email ? 'border-red-300 bg-red-50' : 'border-[#f0e6d3]'}`}
                 />
+                {errores.email && <p className='text-xs text-red-500 mt-1'>{errores.email}</p>}
               </div>
 
               {/* País */}

@@ -2,6 +2,8 @@
 import { Resend } from 'resend'
 
 const FROM = () => process.env.EMAIL_FROM ?? 'Sano y Rico <onboarding@resend.dev>'
+const REPLY_TO = 'sanoyrico.app@gmail.com'
+const HEADERS = { 'List-Unsubscribe': '<mailto:sanoyrico.app@gmail.com?subject=unsubscribe>' }
 const getResend = () => new Resend(process.env.RESEND_API_KEY!)
 
 interface ItemEmail {
@@ -24,6 +26,22 @@ function filas(items: ItemEmail[]) {
     .join('')
 }
 
+function filasTexto(items: ItemEmail[]) {
+  return items.map((i) => `${i.emoji} ${i.nombre} x${i.cantidad} — $${i.subtotal}`).join('\n')
+}
+
+async function enviarMail(opts: { to: string; subject: string; html: string; text: string }) {
+  await getResend().emails.send({
+    from: FROM(),
+    replyTo: REPLY_TO,
+    to: opts.to,
+    subject: opts.subject,
+    html: opts.html,
+    text: opts.text,
+    headers: HEADERS
+  })
+}
+
 // Simple email validation
 function emailValido(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -38,10 +56,25 @@ export async function notificarClienteRecibo(pedido: {
 }) {
   if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
 
-  await getResend().emails.send({
-    from: FROM(),
+  const sitio = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sano-y-rico.vercel.app'
+
+  await enviarMail({
     to: pedido.email,
     subject: `📬 Recibimos tu pedido #${pedido.numero} — Sano y Rico`,
+    text: `📬 Pedido #${pedido.numero} recibido
+
+Hola ${pedido.nombre}, recibimos tu pedido y lo estamos revisando.
+En breve te confirmamos y coordinamos la entrega.
+
+PRODUCTOS:
+${filasTexto(pedido.items)}
+
+TOTAL: $${pedido.total}
+
+Podés ver el estado de tu pedido en ${sitio}/pedido
+
+—
+Sano y Rico · snacks naturales`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
         <div style="background:#3d2b1f;padding:24px 32px;border-radius:16px 16px 0 0">
@@ -72,7 +105,7 @@ export async function notificarClienteRecibo(pedido: {
 
           <p style="margin:16px 0 0;font-size:13px;color:#8a7060">
             Podés ver el estado de tu pedido en cualquier momento en
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sano-y-rico.vercel.app'}/pedido" style="color:#c47c2b">sano-y-rico.vercel.app/pedido</a>
+            <a href="${sitio}/pedido" style="color:#c47c2b">sano-y-rico.vercel.app/pedido</a>
           </p>
         </div>
         <div style="background:#f0e6d3;padding:12px 32px;border-radius:0 0 16px 16px;text-align:center">
@@ -102,10 +135,22 @@ export async function notificarAdminNuevoPedido(pedido: {
     mercadopago: '💳 Mercado Pago'
   }
 
-  await getResend().emails.send({
-    from: FROM(),
+  await enviarMail({
     to: adminEmail,
     subject: `🛒 Nuevo pedido #${pedido.numero} — ${pedido.nombre}`,
+    text: `🛒 Nuevo pedido #${pedido.numero}
+
+Cliente: ${pedido.nombre}
+Teléfono: ${pedido.telefono}
+Dirección: ${pedido.direccion}
+${pedido.metodo_pago ? `Pago: ${metodoLabel[pedido.metodo_pago] ?? pedido.metodo_pago}\n` : ''}${pedido.notas ? `Notas: ${pedido.notas}\n` : ''}
+PRODUCTOS:
+${filasTexto(pedido.items)}
+
+TOTAL: $${pedido.total}
+
+—
+Sano y Rico — panel de administración`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
         <div style="background:#3d2b1f;padding:24px 32px;border-radius:16px 16px 0 0">
@@ -160,20 +205,29 @@ export async function notificarClienteEstado(pedido: {
       emoji: '📦',
       titulo: 'Tu pedido fue entregado',
       cuerpo: 'Tu pedido llegó. ¡Esperamos que lo disfrutes! 🌿',
+      cuerpoTexto: 'Tu pedido llegó. ¡Esperamos que lo disfrutes!',
       color: '#4a6741'
     },
     cancelado: {
       emoji: '❌',
       titulo: 'Tu pedido fue cancelado',
       cuerpo: 'Lamentamos informarte que tu pedido fue cancelado. Si tenés dudas, contactanos.',
+      cuerpoTexto: 'Lamentamos informarte que tu pedido fue cancelado. Si tenés dudas, contactanos.',
       color: '#c0392b'
     }
   }[pedido.estado]
 
-  await getResend().emails.send({
-    from: FROM(),
+  await enviarMail({
     to: pedido.email,
     subject: `${config.emoji} Pedido #${pedido.numero} — ${config.titulo}`,
+    text: `${config.emoji} Pedido #${pedido.numero} — ${config.titulo}
+
+Hola ${pedido.nombre},
+
+${config.cuerpoTexto}
+
+—
+Sano y Rico · snacks naturales`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
         <div style="background:${config.color};padding:24px 32px;border-radius:16px 16px 0 0">
@@ -203,10 +257,22 @@ export async function notificarClienteConfirmacion(pedido: {
 }) {
   if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
 
-  await getResend().emails.send({
-    from: FROM(),
+  await enviarMail({
     to: pedido.email,
     subject: `✅ Tu pedido #${pedido.numero} fue confirmado — Sano y Rico`,
+    text: `✅ Pedido #${pedido.numero} confirmado
+
+Hola ${pedido.nombre}, tu pedido está en preparación.
+
+PRODUCTOS:
+${filasTexto(pedido.items)}
+
+TOTAL: $${pedido.total}
+${pedido.nroRastreo ? `\n📦 Número de rastreo: ${pedido.nroRastreo}\n` : ''}
+Nos comunicamos pronto para coordinar la entrega. ¡Gracias por elegirnos!
+
+—
+Sano y Rico · snacks naturales`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
         <div style="background:#3d2b1f;padding:24px 32px;border-radius:16px 16px 0 0">

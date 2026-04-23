@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   // ── Validación de campos ──────────────────────────────────────────────────
   const nombre = clean(body.nombre, 100)
   const telefono = clean(body.telefono, 30)
-  const email = clean(body.email ?? '', 200) || null
+  const email = clean(body.email ?? '', 200)
   const localidad = clean(body.localidad, 100)
   const calle = clean(body.calle, 200)
   const notas = clean(body.notas ?? '', 500) || null
@@ -58,6 +58,10 @@ export async function POST(req: NextRequest) {
 
   if (!nombre) return NextResponse.json({ error: 'Nombre requerido' }, { status: 422 })
   if (!telefono) return NextResponse.json({ error: 'Teléfono requerido' }, { status: 422 })
+  if (!email) return NextResponse.json({ error: 'Email requerido' }, { status: 422 })
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Email inválido' }, { status: 422 })
+  }
   if (!localidad) return NextResponse.json({ error: 'Localidad requerida' }, { status: 422 })
   if (!calle) return NextResponse.json({ error: 'Calle requerida' }, { status: 422 })
   if (!Number.isFinite(total) || total <= 0) return NextResponse.json({ error: 'Total inválido' }, { status: 422 })
@@ -128,11 +132,9 @@ export async function POST(req: NextRequest) {
   }))
 
   // Recibo inmediato al cliente (fire-and-forget)
-  if (email) {
-    notificarClienteRecibo({ email, numero: pedido.numero, nombre, total, items: emailItems }).catch((e) =>
-      console.error('Email recibo error:', e)
-    )
-  }
+  notificarClienteRecibo({ email, numero: pedido.numero, nombre, total, items: emailItems }).catch((e) =>
+    console.error('Email recibo error:', e)
+  )
 
   // Notificar al admin por email (fire-and-forget)
   notificarAdminNuevoPedido({
