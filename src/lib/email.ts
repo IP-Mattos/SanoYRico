@@ -2,7 +2,6 @@
 import { Resend } from 'resend'
 
 const FROM = () => process.env.EMAIL_FROM ?? 'Sano y Rico <onboarding@resend.dev>'
-const REPLY_TO = 'sanoyrico.app@gmail.com'
 const HEADERS = { 'List-Unsubscribe': '<mailto:sanoyrico.app@gmail.com?subject=unsubscribe>' }
 const getResend = () => new Resend(process.env.RESEND_API_KEY!)
 
@@ -33,7 +32,6 @@ function filasTexto(items: ItemEmail[]) {
 async function enviarMail(opts: { to: string; subject: string; html: string; text: string }) {
   await getResend().emails.send({
     from: FROM(),
-    replyTo: REPLY_TO,
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
