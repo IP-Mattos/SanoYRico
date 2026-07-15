@@ -36,19 +36,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .select('producto_nombre, producto_emoji, cantidad, subtotal')
     .eq('pedido_id', id)
 
-  await notificarClienteConfirmacion({
-    email: pedido.email,
-    numero: pedido.numero,
-    nombre: pedido.nombre,
-    total: pedido.total,
-    nroRastreo,
-    items: (itemsRaw ?? []).map((i) => ({
-      emoji: i.producto_emoji ?? '',
-      nombre: i.producto_nombre,
-      cantidad: i.cantidad,
-      subtotal: i.subtotal
-    }))
-  })
+  try {
+    await notificarClienteConfirmacion({
+      email: pedido.email,
+      numero: pedido.numero,
+      nombre: pedido.nombre,
+      total: pedido.total,
+      nroRastreo,
+      items: (itemsRaw ?? []).map((i) => ({
+        emoji: i.producto_emoji ?? '',
+        nombre: i.producto_nombre,
+        cantidad: i.cantidad,
+        subtotal: i.subtotal
+      }))
+    })
+  } catch (e) {
+    console.error('Email confirmación error:', e)
+    const message = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ ok: false, error: message }, { status: 502 })
+  }
 
   return NextResponse.json({ ok: true })
 }

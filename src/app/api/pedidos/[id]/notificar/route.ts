@@ -34,12 +34,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true, skipped: true })
   }
 
-  await notificarClienteEstado({
-    email: pedido.email,
-    numero: pedido.numero,
-    nombre: pedido.nombre,
-    estado: estado as 'entregado' | 'cancelado'
-  })
+  try {
+    await notificarClienteEstado({
+      email: pedido.email,
+      numero: pedido.numero,
+      nombre: pedido.nombre,
+      estado: estado as 'entregado' | 'cancelado'
+    })
+  } catch (e) {
+    console.error('Email estado error:', e)
+    const message = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ ok: false, error: message }, { status: 502 })
+  }
 
   return NextResponse.json({ ok: true })
 }

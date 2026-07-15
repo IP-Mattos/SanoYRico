@@ -29,8 +29,8 @@ function filasTexto(items: ItemEmail[]) {
   return items.map((i) => `${i.emoji} ${i.nombre} x${i.cantidad} — $${i.subtotal}`).join('\n')
 }
 
-async function enviarMail(opts: { to: string; subject: string; html: string; text: string }) {
-  await getResend().emails.send({
+export async function enviarMail(opts: { to: string; subject: string; html: string; text: string }) {
+  const { data, error } = await getResend().emails.send({
     from: FROM(),
     to: opts.to,
     subject: opts.subject,
@@ -38,6 +38,10 @@ async function enviarMail(opts: { to: string; subject: string; html: string; tex
     text: opts.text,
     headers: HEADERS
   })
+  if (error) {
+    throw new Error(`Resend ${error.name}: ${error.message} (destinatario: ${opts.to})`)
+  }
+  return data?.id
 }
 
 // Simple email validation
@@ -52,7 +56,14 @@ export async function notificarClienteRecibo(pedido: {
   total: number
   items: ItemEmail[]
 }) {
-  if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(`Email recibo omitido (pedido #${pedido.numero}): falta RESEND_API_KEY`)
+    return
+  }
+  if (!emailValido(pedido.email)) {
+    console.warn(`Email recibo omitido (pedido #${pedido.numero}): email de cliente inválido`)
+    return
+  }
 
   const sitio = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sano-y-rico.vercel.app'
 
@@ -124,8 +135,11 @@ export async function notificarAdminNuevoPedido(pedido: {
   total: number
   items: ItemEmail[]
 }) {
-  const adminEmail = process.env.ADMIN_EMAIL
-  if (!adminEmail || !process.env.RESEND_API_KEY) return
+  const adminEmail = process.env.ADMIN_EMAIL?.trim()
+  if (!adminEmail || !process.env.RESEND_API_KEY) {
+    console.warn(`Email admin omitido (pedido #${pedido.numero}): falta ADMIN_EMAIL o RESEND_API_KEY`)
+    return
+  }
 
   const metodoLabel: Record<string, string> = {
     transferencia: '🏦 Transferencia',
@@ -196,7 +210,14 @@ export async function notificarClienteEstado(pedido: {
   nombre: string
   estado: 'entregado' | 'cancelado'
 }) {
-  if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(`Email estado omitido (pedido #${pedido.numero}): falta RESEND_API_KEY`)
+    return
+  }
+  if (!emailValido(pedido.email)) {
+    console.warn(`Email estado omitido (pedido #${pedido.numero}): email de cliente inválido`)
+    return
+  }
 
   const config = {
     entregado: {
@@ -253,7 +274,14 @@ export async function notificarClienteConfirmacion(pedido: {
   total: number
   nroRastreo?: string
 }) {
-  if (!process.env.RESEND_API_KEY || !emailValido(pedido.email)) return
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(`Email confirmación omitido (pedido #${pedido.numero}): falta RESEND_API_KEY`)
+    return
+  }
+  if (!emailValido(pedido.email)) {
+    console.warn(`Email confirmación omitido (pedido #${pedido.numero}): email de cliente inválido`)
+    return
+  }
 
   await enviarMail({
     to: pedido.email,

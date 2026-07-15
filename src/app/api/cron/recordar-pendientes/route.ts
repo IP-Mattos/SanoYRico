@@ -2,7 +2,7 @@
 // Vercel Cron: se ejecuta cada hora y avisa al admin si hay pedidos pendientes viejos
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
-import { Resend } from 'resend'
+import { enviarMail } from '@/lib/email'
 
 export async function GET(req: NextRequest) {
   // Verificar que viene de Vercel Cron
@@ -11,8 +11,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL
+  const adminEmail = process.env.ADMIN_EMAIL?.trim()
   if (!adminEmail || !process.env.RESEND_API_KEY) {
+    console.warn('Email recordatorio omitido: falta ADMIN_EMAIL o RESEND_API_KEY')
     return NextResponse.json({ ok: true, skipped: true })
   }
 
@@ -34,9 +35,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, pendientes: 0 })
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY)
-  const FROM = process.env.EMAIL_FROM ?? 'Sano y Rico <onboarding@resend.dev>'
-
   const filas = pendientes
     .map((p) => {
       const horas = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 3_600_000)
@@ -49,11 +47,26 @@ export async function GET(req: NextRequest) {
     })
     .join('')
 
-  await resend.emails.send({
-    from: FROM,
-    to: adminEmail,
-    subject: `⏰ ${pendientes.length} pedido${pendientes.length > 1 ? 's' : ''} pendiente${pendientes.length > 1 ? 's' : ''} sin atender`,
-    html: `
+  const filasTexto = pendientes
+    .map((p) => {
+      const horas = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 3_600_000)
+      return `#${p.numero} — ${p.nombre} — $${p.total} — hace ${horas}h`
+    })
+    .join('\n')
+
+  try {
+    await enviarMail({
+      to: adminEmail,
+      subject: `⏰ ${pendientes.length} pedido${pendientes.length > 1 ? 's' : ''} pendiente${pendientes.length > 1 ? 's' : ''} sin atender`,
+      text: `⏰ Pedidos sin atender
+
+Tenés ${pendientes.length} pedido${pendientes.length > 1 ? 's' : ''} en estado pendiente con más de 2 horas de antigüedad.
+
+${filasTexto}
+
+—
+Sano y Rico — recordatorio automático`,
+      html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
         <div style="background:#c47c2b;padding:24px 32px;border-radius:16px 16px 0 0">
           <h1 style="margin:0;color:#fff;font-size:20px">
@@ -81,7 +94,12 @@ export async function GET(req: NextRequest) {
         </div>
       </div>
     `
-  })
+    })
+  } catch (e) {
+    console.error('Email recordatorio error:', e)
+    const message = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ ok: false, error: message }, { status: 502 })
+  }
 
   return NextResponse.json({ ok: true, pendientes: pendientes.length })
 }
