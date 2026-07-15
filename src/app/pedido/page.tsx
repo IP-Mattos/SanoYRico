@@ -5,6 +5,8 @@ import { Suspense, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
+import { type PedidoItem } from '@/lib/types'
+import { linkWhatsApp, mensajeComprobante } from '@/lib/whatsapp'
 import { useCart } from '@/context/CartContext'
 import {
   Loader2,
@@ -18,14 +20,6 @@ import {
   MessageCircle,
   RefreshCw
 } from 'lucide-react'
-
-interface PedidoItem {
-  emoji: string
-  nombre: string
-  cantidad: number
-  precio: number
-  subtotal: number
-}
 
 interface Pedido {
   id?: string
@@ -190,7 +184,7 @@ function SeguimientoContent() {
     setReorderAviso(null)
 
     const items = typeof pedido.items === 'string' ? (JSON.parse(pedido.items) as PedidoItem[]) : pedido.items
-    const nombres = items.map((i) => i.nombre)
+    const nombres = items.map((i) => i.producto_nombre)
 
     const { data: productos } = await supabase
       .from('productos')
@@ -200,15 +194,15 @@ function SeguimientoContent() {
 
     const faltantes: string[] = []
     items.forEach((item) => {
-      const producto = productos?.find((p) => p.nombre === item.nombre)
+      const producto = productos?.find((p) => p.nombre === item.producto_nombre)
       if (!producto || producto.stock === 0) {
-        faltantes.push(item.nombre)
+        faltantes.push(item.producto_nombre)
         return
       }
       agregar({
         producto_id: producto.id,
         nombre: producto.nombre,
-        emoji: producto.emoji ?? item.emoji,
+        emoji: producto.emoji ?? item.producto_emoji ?? '',
         precio: producto.precio
       })
       if (item.cantidad > 1) cambiarCantidad(producto.id, item.cantidad)
@@ -236,8 +230,21 @@ function SeguimientoContent() {
   const entregado = pedido?.estado === 'entregado'
   const items = pedido ? (typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])) : []
 
-  const waHref = (msg: string) =>
-    telefonoWA ? `https://wa.me/${telefonoWA}?text=${encodeURIComponent(msg)}` : '#'
+  // Links de WhatsApp por mensaje: null si no hay teléfono configurado o no se puede
+  // normalizar — en ese caso el anchor directamente no se muestra (nada de href '#').
+  const waLink = (msg: string) => (telefonoWA ? linkWhatsApp(telefonoWA, msg) : null)
+  const linkBusquedaWA = waLink('Hola! Estoy buscando mi pedido y no lo encuentro.')
+  const linkConsultaWA = pedido ? waLink(`Hola! Tengo una duda sobre el pedido #${pedido.numero}.`) : null
+  const linkConsultaPreviaWA = waLink('Hola! Tengo una consulta antes de hacer el pedido.')
+
+  // Comprobante de pago manual: solo mientras el pedido sigue pendiente
+  const linkComprobante =
+    pedido &&
+    pedido.estado === 'pendiente' &&
+    telefonoWA &&
+    (pedido.metodo_pago === 'transferencia' || pedido.metodo_pago === 'deposito')
+      ? linkWhatsApp(telefonoWA, mensajeComprobante(pedido.numero, pedido.total, pedido.metodo_pago))
+      : null
 
   return (
     <div className='min-h-screen bg-[#faf6ef] pt-16'>
@@ -291,9 +298,9 @@ function SeguimientoContent() {
           {error && (
             <div className='mt-4 bg-red-50 border border-red-100 rounded-xl px-4 py-3'>
               <p className='text-sm text-red-600'>{error}</p>
-              {intentos >= 1 && telefonoWA && (
+              {intentos >= 1 && linkBusquedaWA && (
                 <a
-                  href={waHref('Hola! Estoy buscando mi pedido y no lo encuentro.')}
+                  href={linkBusquedaWA}
                   target='_blank'
                   rel='noopener noreferrer'
                   className='inline-flex items-center gap-1.5 text-xs text-green-700 font-semibold mt-2 hover:underline'
@@ -316,7 +323,11 @@ function SeguimientoContent() {
                 <div>
                   <p className='text-xs font-medium opacity-70 mb-0.5'>Pedido #{pedido.numero}</p>
                   <h2 className='text-xl font-bold'>{estado.label}</h2>
-                  <p className='text-sm opacity-80 mt-0.5'>{estado.desc}</p>
+                  <p className='text-sm opacity-80 mt-0.5'>
+                    {linkComprobante
+                      ? 'Recibimos tu pedido. Si ya pagaste, envianos el comprobante por WhatsApp así lo confirmamos.'
+                      : estado.desc}
+                  </p>
                 </div>
               </div>
             </div>
@@ -364,11 +375,11 @@ function SeguimientoContent() {
               <div className='space-y-2.5'>
                 {items.map((item: PedidoItem, i: number) => (
                   <div key={i} className='flex items-center gap-3'>
-                    <span className='text-2xl'>{item.emoji}</span>
+                    <span className='text-2xl'>{item.producto_emoji}</span>
                     <div className='flex-1'>
-                      <p className='text-sm font-medium text-[#3d2b1f]'>{item.nombre}</p>
+                      <p className='text-sm font-medium text-[#3d2b1f]'>{item.producto_nombre}</p>
                       <p className='text-xs text-[#8a7060]'>
-                        {item.cantidad} unidad{item.cantidad !== 1 ? 'es' : ''} × ${item.precio}
+                        {item.cantidad} unidad{item.cantidad !== 1 ? 'es' : ''} × ${item.precio_unitario}
                       </p>
                     </div>
                     <span className='text-sm font-bold text-[#3d2b1f]'>${item.subtotal}</span>
@@ -437,9 +448,21 @@ function SeguimientoContent() {
                 </button>
               )}
 
-              {telefonoWA && (
+              {linkComprobante && (
                 <a
-                  href={waHref(`Hola! Tengo una duda sobre el pedido #${pedido.numero}.`)}
+                  href={linkComprobante}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='w-full inline-flex items-center justify-center gap-2 bg-green-500 text-white py-3 rounded-xl text-sm font-semibold leading-none hover:bg-green-600 active:scale-[0.98] transition-all'
+                >
+                  <MessageCircle className='h-4 w-4' />
+                  Enviar comprobante por WhatsApp
+                </a>
+              )}
+
+              {linkConsultaWA && (
+                <a
+                  href={linkConsultaWA}
                   target='_blank'
                   rel='noopener noreferrer'
                   className='w-full inline-flex items-center justify-center gap-2 bg-white border border-[#f0e6d3] text-[#3d2b1f] py-3 rounded-xl text-sm font-semibold leading-none hover:border-[#c47c2b] transition-colors'
@@ -485,11 +508,11 @@ function SeguimientoContent() {
               >
                 Ver productos
               </Link>
-              {telefonoWA && (
+              {linkConsultaPreviaWA && (
                 <p className='text-xs text-[#8a7060]'>
                   O si tenés dudas,{' '}
                   <a
-                    href={waHref('Hola! Tengo una consulta antes de hacer el pedido.')}
+                    href={linkConsultaPreviaWA}
                     target='_blank'
                     rel='noopener noreferrer'
                     className='text-green-700 font-semibold hover:underline inline-flex items-center gap-1'

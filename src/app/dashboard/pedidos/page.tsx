@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { type Pedido, type EstadoPedido } from '@/lib/types'
+import { type Pedido, type PedidoItem, type EstadoPedido } from '@/lib/types'
+import { linkWhatsApp, mensajeConfirmacion, mensajeEstadoCliente } from '@/lib/whatsapp'
 import {
   Loader2,
   ChevronDown,
@@ -24,13 +25,6 @@ import {
   MessageCircle,
   type LucideIcon
 } from 'lucide-react'
-
-interface PedidoItem {
-  emoji: string
-  nombre: string
-  cantidad: number
-  subtotal: string | number
-}
 
 const ESTADOS: { value: EstadoPedido; label: string; color: string; icon: LucideIcon }[] = [
   { value: 'pendiente', label: 'Pendiente', color: 'bg-yellow-50 text-yellow-600 border-yellow-200', icon: Clock },
@@ -348,6 +342,28 @@ export default function PedidosPage() {
                           <div>
                             <p className='text-xs text-[#8a7060]'>Teléfono</p>
                             <p className='text-sm font-medium text-[#3d2b1f]'>{pedido.telefono}</p>
+                            {(() => {
+                              const esTransferencia =
+                                pedido.metodo_pago === 'transferencia' || pedido.metodo_pago === 'deposito'
+                              const link = linkWhatsApp(
+                                pedido.telefono,
+                                mensajeEstadoCliente(pedido.nombre, pedido.numero, pedido.total, pedido.estado, esTransferencia)
+                              )
+                              if (!link) return null
+                              return (
+                                <a
+                                  href={link}
+                                  target='_blank'
+                                  rel='noopener noreferrer'
+                                  className='inline-flex items-center gap-1 text-xs text-green-700 font-medium mt-1 hover:underline'
+                                >
+                                  <MessageCircle className='h-3 w-3' />
+                                  {pedido.estado === 'pendiente' && esTransferencia
+                                    ? 'Pedir comprobante'
+                                    : 'Escribir por WhatsApp'}
+                                </a>
+                              )
+                            })()}
                           </div>
                         </div>
                         <div className='flex items-start gap-2'>
@@ -384,7 +400,7 @@ export default function PedidosPage() {
                         {items.map((item: PedidoItem, i: number) => (
                           <div key={i} className='flex items-center justify-between text-sm'>
                             <span className='text-[#3d2b1f]'>
-                              {item.emoji} {item.nombre}
+                              {item.producto_emoji} {item.producto_nombre}
                               <span className='text-[#8a7060] ml-1'>x{item.cantidad}</span>
                             </span>
                             <span className='font-medium text-[#3d2b1f]'>${item.subtotal}</span>
@@ -518,23 +534,26 @@ export default function PedidosPage() {
               </div>
 
               {/* WhatsApp opcional */}
-              <button
-                onClick={() => {
-                  const p = modalConfirmar.pedido
-                  const tel = p.telefono.replace(/\D/g, '').replace(/^0/, '').replace(/^598/, '')
-                  const rastreo = nroRastreo.trim()
-                  const texto = encodeURIComponent(
-                    `Hola ${p.nombre}! Tu pedido #${p.numero} de Sano y Rico fue confirmado.` +
-                    (rastreo ? ` Número de rastreo: ${rastreo}.` : '') +
-                    ` Total: $${p.total}. ¡Gracias por elegirnos! 🌿`
-                  )
-                  window.open(`https://wa.me/598${tel}?text=${texto}`, '_blank')
-                }}
-                className='w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-green-200 text-sm text-green-700 hover:bg-green-50 transition-colors'
-              >
-                <MessageCircle className='h-4 w-4' />
-                Avisar por WhatsApp (opcional)
-              </button>
+              {(() => {
+                const p = modalConfirmar.pedido
+                const esTransferencia = p.metodo_pago === 'transferencia' || p.metodo_pago === 'deposito'
+                const link = linkWhatsApp(
+                  p.telefono,
+                  mensajeConfirmacion(p.nombre, p.total, esTransferencia, nroRastreo.trim() || undefined)
+                )
+                if (!link) return null
+                return (
+                  <a
+                    href={link}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-green-200 text-sm text-green-700 hover:bg-green-50 transition-colors'
+                  >
+                    <MessageCircle className='h-4 w-4' />
+                    Avisar por WhatsApp (opcional)
+                  </a>
+                )
+              })()}
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { notificarAdminNuevoPedido, notificarClienteRecibo } from '@/lib/email'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 interface ItemInput {
-  producto_id: number
+  producto_id: string
   nombre: string
   emoji: string
   cantidad: number
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 999) throw new Error('Cantidad inválida')
     if (!Number.isFinite(precio) || precio < 0) throw new Error('Precio inválido')
     return {
-      producto_id: Number(it.producto_id),
+      producto_id: clean(it.producto_id, 40) || null,
       producto_nombre: clean(it.nombre, 100),
       producto_emoji: clean(it.emoji, 10),
       cantidad,

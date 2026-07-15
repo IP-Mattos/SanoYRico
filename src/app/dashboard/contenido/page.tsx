@@ -88,7 +88,7 @@ function PreviewGeneral({ g }: { g: GeneralConfig }) {
       </div>
       <div className='bg-[#fef3d0] rounded-2xl p-4 text-xs text-[#c47c2b] leading-relaxed'>
         <strong>¿Cómo se usa el número?</strong><br />
-        Cuando un cliente confirma un pedido, se abre WhatsApp con este número para enviar la notificación automáticamente.
+        Es el WhatsApp al que escriben los clientes desde la web: consultas, avisos de pedido y los comprobantes de transferencia o depósito llegan acá.
       </div>
     </div>
   )
@@ -372,7 +372,7 @@ export default function ContenidoPage() {
                   <Field label='Nombre del sitio'>
                     <input className={inp} value={general.sitioNombre} onChange={(e) => setGeneral((p) => ({ ...p, sitioNombre: e.target.value }))} placeholder='Sano y Rico' />
                   </Field>
-                  <Field label='Número de WhatsApp' hint='Con código de país, sin el +. Ej: 59893644132'>
+                  <Field label='Número de WhatsApp' hint='Con código de país, sin el +. Ej: 59893644132. A este número llegan las consultas y los comprobantes de transferencia o depósito.'>
                     <div className='relative'>
                       <span className='absolute left-3 top-1/2 -translate-y-1/2 text-sm'>📱</span>
                       <input className={`${inp} pl-9`} value={general.telefono} onChange={(e) => setGeneral((p) => ({ ...p, telefono: e.target.value }))} placeholder='59893644132' />

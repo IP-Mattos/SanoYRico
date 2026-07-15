@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { type Venta } from '@/lib/types'
+import { type Venta, type PedidoItem } from '@/lib/types'
 import {
   LineChart,
   Line,
@@ -55,19 +55,11 @@ interface Producto {
   activo?: boolean
 }
 
-interface ItemPedido {
-  emoji: string
-  nombre: string
-  cantidad: number
-  subtotal: number
-  precio: number
-}
-
 interface PedidoDetalle {
   id: string
   created_at: string
   total: number
-  items: string | ItemPedido[]
+  items: string | PedidoItem[]
 }
 
 const EMPTY_VENTA = {
@@ -136,21 +128,21 @@ export default function GananciasPage() {
 
     pedidos.forEach((pedido) => {
       const key = pedido.created_at.split('T')[0]
-      const items: ItemPedido[] =
+      const items: PedidoItem[] =
         typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items ?? [])
 
       let gananciadePedido = 0
       items.forEach((item) => {
-        const costo = costoMap[item.nombre.toLowerCase()] ?? 0
-        const ganancia = (item.precio - costo) * item.cantidad
+        const costo = costoMap[item.producto_nombre.toLowerCase()] ?? 0
+        const ganancia = (item.precio_unitario - costo) * item.cantidad
         gananciadePedido += ganancia
 
-        if (!agrupado[item.nombre]) {
-          agrupado[item.nombre] = { nombre: item.nombre, unidades: 0, ingresos: 0, ganancia: 0 }
+        if (!agrupado[item.producto_nombre]) {
+          agrupado[item.producto_nombre] = { nombre: item.producto_nombre, unidades: 0, ingresos: 0, ganancia: 0 }
         }
-        agrupado[item.nombre].unidades += item.cantidad
-        agrupado[item.nombre].ingresos += item.subtotal
-        agrupado[item.nombre].ganancia += ganancia
+        agrupado[item.producto_nombre].unidades += item.cantidad
+        agrupado[item.producto_nombre].ingresos += item.subtotal
+        agrupado[item.producto_nombre].ganancia += ganancia
       })
 
       if (porDia[key]) {

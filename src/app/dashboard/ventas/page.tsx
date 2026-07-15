@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { type PedidoItem } from '@/lib/types'
 import {
   Loader2,
   Search,
@@ -21,21 +22,13 @@ import {
 type Periodo = 'hoy' | '7d' | '30d' | 'todo'
 type TabType = 'pagina' | 'manual'
 
-interface Item {
-  emoji: string
-  nombre: string
-  cantidad: number
-  subtotal: number
-  precio: number
-}
-
 interface Pedido {
   id: string
   nombre: string
   numero: number
   telefono: string
   created_at: string
-  items: string | Item[]
+  items: string | PedidoItem[]
   direccion: string
   notas?: string
   total: number
@@ -349,18 +342,18 @@ export default function VentasPage() {
                         {pedido.notas && <span className='ml-3'>📝 {pedido.notas}</span>}
                       </div>
                       <div className='bg-[#faf6ef] rounded-xl p-3 space-y-2'>
-                        {items.map((item: Item, i: number) => (
+                        {items.map((item: PedidoItem, i: number) => (
                           <div key={i} className='flex items-center justify-between'>
                             <div className='flex items-center gap-2'>
-                              <span className='text-base'>{item.emoji}</span>
-                              <span className='text-sm text-[#3d2b1f]'>{item.nombre}</span>
+                              <span className='text-base'>{item.producto_emoji}</span>
+                              <span className='text-sm text-[#3d2b1f]'>{item.producto_nombre}</span>
                               <span className='text-xs text-[#8a7060] bg-white px-2 py-0.5 rounded-full border border-[#f0e6d3]'>
                                 x{item.cantidad}
                               </span>
                             </div>
                             <div className='text-right'>
                               <span className='text-sm font-medium text-[#3d2b1f]'>${item.subtotal}</span>
-                              <span className='text-xs text-[#8a7060] ml-1'>(${item.precio} c/u)</span>
+                              <span className='text-xs text-[#8a7060] ml-1'>(${item.precio_unitario} c/u)</span>
                             </div>
                           </div>
                         ))}

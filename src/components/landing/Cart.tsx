@@ -7,6 +7,7 @@ import { X, Plus, Minus, ShoppingBag, Loader2, CheckCircle, MessageCircle, Copy,
 import { PAISES } from '@/lib/localidades'
 import { type PagosConfig, type PagoMetodo } from '@/lib/site-config'
 import { type MetodoPago } from '@/lib/types'
+import { linkWhatsApp, mensajeComprobante, normalizarTelefonoUY } from '@/lib/whatsapp'
 
 type Paso = 'carrito' | 'checkout' | 'confirmado'
 
@@ -35,6 +36,7 @@ export function Cart({
   const [paso, setPaso] = useState<Paso>('carrito')
   const [guardando, setGuardando] = useState(false)
   const [numeroPedido, setNumeroPedido] = useState<number | null>(null)
+  const [totalPedido, setTotalPedido] = useState(0)
   const [mpInitPoint, setMpInitPoint] = useState<string | null>(null)
   const [form, setForm] = useState(FORM_INICIAL)
   const [errores, setErrores] = useState<Record<string, string>>({})
@@ -102,6 +104,9 @@ export function Cart({
 
     const pedido = await res.json()
 
+    // Capturar el total antes de vaciar() — el carrito queda en $0 después
+    setTotalPedido(total)
+
     // ── Mercado Pago Checkout Pro ────────────────────────────────────────────
     if (form.metodo_pago === 'mercadopago') {
       const mpRes = await fetch('/api/mp/create-preference', {
@@ -153,6 +158,15 @@ export function Cart({
   // Info del método seleccionado
   const metodoSeleccionado = metodosActivos.find((m) => m.value === form.metodo_pago)
 
+  // Link para que el cliente envíe el comprobante del pago manual por WhatsApp
+  const esPagoManual = form.metodo_pago === 'transferencia' || form.metodo_pago === 'deposito'
+  // ¿El teléfono del negocio sirve para armar el link? Si no, el copy no promete el botón.
+  const telefonoWANormalizable = telefono ? normalizarTelefonoUY(telefono) !== null : false
+  const linkComprobante =
+    telefono && esPagoManual && numeroPedido
+      ? linkWhatsApp(telefono, mensajeComprobante(numeroPedido, totalPedido, form.metodo_pago))
+      : null
+
   return (
     <>
       {isOpen && <div className='fixed inset-0 bg-black/40 z-50' onClick={cerrar} />}
@@ -167,7 +181,7 @@ export function Cart({
             <h2 className='text-lg font-bold text-[#3d2b1f]'>
               {paso === 'carrito' && `Tu carrito (${cantidad})`}
               {paso === 'checkout' && 'Datos de entrega'}
-              {paso === 'confirmado' && '¡Pedido confirmado!'}
+              {paso === 'confirmado' && (esPagoManual ? '¡Pedido recibido!' : '¡Pedido confirmado!')}
             </h2>
           </div>
           <button onClick={cerrar} aria-label='Cerrar carrito' className='text-[#8a7060] hover:text-[#3d2b1f]'>
@@ -423,7 +437,7 @@ export function Cart({
                           Al confirmar serás redirigido a Mercado Pago para completar el pago de forma segura.
                         </p>
                       ) : (
-                        <DatosBancarios info={metodoSeleccionado.info} />
+                        <DatosBancarios info={metodoSeleccionado.info} conBotonWhatsApp={telefonoWANormalizable} />
                       )}
                     </div>
                   )}
@@ -459,12 +473,31 @@ export function Cart({
             <h3 className='text-xl font-bold text-[#3d2b1f] mb-2' style={{ fontFamily: 'Georgia, serif' }}>
               ¡Pedido recibido!
             </h3>
-            <p className='text-[#8a7060] text-sm mb-2'>
-              Tu pedido <span className='font-bold text-[#c47c2b]'>#{numeroPedido}</span> fue confirmado.
-            </p>
-            <p className='text-[#8a7060] text-sm mb-6'>
-              Te contactaremos al teléfono que dejaste para coordinar la entrega.
-            </p>
+            {esPagoManual ? (
+              <>
+                <p className='text-[#8a7060] text-sm mb-2'>
+                  Recibimos tu pedido <span className='font-bold text-[#c47c2b]'>#{numeroPedido}</span>.
+                </p>
+                {linkComprobante ? (
+                  <p className='text-[#8a7060] text-sm mb-6'>
+                    Para confirmarlo, envianos el comprobante del pago por WhatsApp con el botón de acá abajo.
+                  </p>
+                ) : (
+                  <p className='text-[#8a7060] text-sm mb-6'>
+                    Te contactaremos al teléfono que dejaste para coordinar la entrega.
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className='text-[#8a7060] text-sm mb-2'>
+                  Tu pedido <span className='font-bold text-[#c47c2b]'>#{numeroPedido}</span> fue confirmado.
+                </p>
+                <p className='text-[#8a7060] text-sm mb-6'>
+                  Te contactaremos al teléfono que dejaste para coordinar la entrega.
+                </p>
+              </>
+            )}
 
             {/* Botón Mercado Pago */}
             {mpInitPoint && (
@@ -476,16 +509,16 @@ export function Cart({
               </button>
             )}
 
-            {/* WhatsApp para coordinar pago manual */}
-            {telefono && (form.metodo_pago === 'transferencia' || form.metodo_pago === 'deposito') && (
+            {/* Enviar comprobante del pago manual por WhatsApp */}
+            {linkComprobante && (
               <a
-                href={`https://wa.me/${telefono}?text=${encodeURIComponent(`Hola! Acabo de hacer el pedido #${numeroPedido} por $${total} y quiero coordinar el pago por ${form.metodo_pago}.`)}`}
+                href={linkComprobante}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='w-full flex items-center justify-center gap-2 bg-green-500 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-green-600 transition-colors mb-3'
+                className='w-full flex items-center justify-center gap-2 bg-green-500 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-green-600 transition-colors mb-3'
               >
                 <MessageCircle className='h-4 w-4' />
-                Coordinar pago por WhatsApp
+                Enviar comprobante por WhatsApp
               </a>
             )}
 
@@ -511,7 +544,7 @@ export function Cart({
 
 // ── Datos bancarios (Uruguay) con "Copiar" por campo clave ─────────────────
 
-function DatosBancarios({ info }: { info: PagoMetodo }) {
+function DatosBancarios({ info, conBotonWhatsApp }: { info: PagoMetodo; conBotonWhatsApp: boolean }) {
   // Back-compat: si no hay numeroCuenta pero sí cbu viejo, mostrar ese.
   const numero = info.numeroCuenta || info.cbu || ''
   const filas: { label: string; value: string; mono?: boolean; copiable?: boolean }[] = [
@@ -538,6 +571,11 @@ function DatosBancarios({ info }: { info: PagoMetodo }) {
           {f.copiable && <CopyButton text={f.value} />}
         </div>
       ))}
+      <p className='text-[#8a7060] pt-1.5'>
+        {conBotonWhatsApp
+          ? 'Después de pagar, envianos el comprobante por WhatsApp — el botón te aparece al confirmar el pedido.'
+          : 'Después de pagar, guardá el comprobante — te contactaremos para coordinar la entrega.'}
+      </p>
     </div>
   )
 }
