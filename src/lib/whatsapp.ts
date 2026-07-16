@@ -26,6 +26,10 @@ export function linkWhatsApp(telefono: string, mensaje: string): string | null {
 }
 
 // ── Plantillas de mensajes ──────────────────────────────────────────────────
+// IMPORTANTE: sin emojis en estos textos. Los servidores de WhatsApp (wa.me y
+// api.whatsapp.com) reemplazan cualquier emoji del parámetro ?text= por U+FFFD (�)
+// al decodificarlo, aunque llegue percent-encodeado en UTF-8 válido. Verificado
+// contra api.whatsapp.com: sobreviven acentos y ¡ (2 bytes), muere todo emoji.
 
 const METODO_LABEL: Record<string, string> = {
   transferencia: 'transferencia',
@@ -50,7 +54,7 @@ export function mensajeConfirmacion(
     ? `Hola ${nombre}! Recibimos tu comprobante y tu pedido de Sano y Rico ya está confirmado. Total: $${total}.`
     : `Hola ${nombre}! Tu pedido de Sano y Rico fue confirmado. Total: $${total}.`
   const conRastreo = rastreo ? `${base} Número de rastreo: ${rastreo}.` : base
-  return `${conRastreo} ¡Gracias por elegirnos! 🤗`
+  return `${conRastreo} ¡Gracias por elegirnos!`
 }
 
 // Mensaje del NEGOCIO al cliente según el estado actual del pedido.
@@ -69,7 +73,7 @@ export function mensajeEstadoCliente(
     case 'confirmado':
       return mensajeConfirmacion(nombre, total, esTransferencia)
     case 'entregado':
-      return `Hola ${nombre}! Tu pedido #${numero} de Sano y Rico fue entregado. ¡Gracias por elegirnos! 🌿`
+      return `Hola ${nombre}! Tu pedido #${numero} de Sano y Rico fue entregado. ¡Gracias por elegirnos!`
     case 'cancelado':
       return `Hola ${nombre}! Tu pedido #${numero} de Sano y Rico fue cancelado. Escribinos si tenés alguna duda.`
   }
