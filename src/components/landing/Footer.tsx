@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { type FooterConfig, DEFAULT_CONFIG } from '@/lib/site-config'
 
@@ -34,6 +35,20 @@ export function Footer({ config = DEFAULT_CONFIG.footer }: { config?: FooterConf
               Panel admin
             </Link>
           </div>
+        </div>
+        <div className='mt-6 flex items-center justify-center gap-[7px] text-[.78rem] text-white/60'>
+          <Image src='/image/charruacode-mark-light.svg' alt='' width={18} height={18} unoptimized />
+          <span>
+            Sitio web por{' '}
+            <a
+              href='https://charruacode.com'
+              target='_blank'
+              rel='noopener'
+              className='font-semibold underline underline-offset-2 hover:text-white/80 transition-colors'
+            >
+              CharrúaCode
+            </a>
+          </span>
         </div>
       </footer>
     </>
