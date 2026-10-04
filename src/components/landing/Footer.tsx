@@ -31,9 +31,6 @@ export function Footer({ config = DEFAULT_CONFIG.footer }: { config?: FooterConf
           <span className='text-white/60 text-sm text-center'>{config.copyright}</span>
           <div className='flex items-center gap-4 sm:gap-6'>
             <span className='text-white/60 text-sm'>{config.email}</span>
-            <Link href='/dashboard' className='text-white/50 text-xs hover:text-white/80 transition-colors'>
-              Panel admin
-            </Link>
           </div>
         </div>
         <div className='mt-6 flex items-center justify-center gap-[7px] text-[.78rem] text-white/60'>
