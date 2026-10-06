@@ -1,7 +1,7 @@
 // src/app/dashboard/descuentos/page.tsx
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { type Cupon, type CuponTipo } from '@/lib/types'
 import { DEFAULT_CONFIG, type PromoMontoConfig } from '@/lib/site-config'
@@ -9,7 +9,10 @@ import { normalizarCodigoCupon, leerPromoMonto } from '@/lib/pedidos/cupones'
 import { enmascararTelefono } from '@/lib/pedidos/seguimiento'
 import { isoALocal, localAIso } from '@/lib/fechas-local'
 import { revalidateSiteConfig } from '@/app/actions/revalidate'
-import { Loader2, Copy, Check, Sparkles, AlertCircle, Plus } from 'lucide-react'
+import type { FormatoFlyer } from '@/lib/flyers/params'
+import CuponImagenModal from './CuponImagenModal'
+import ImagenPreview, { FormatoToggle } from './ImagenPreview'
+import { Loader2, Copy, Check, Sparkles, AlertCircle, Plus, Image as ImageIcon } from 'lucide-react'
 
 const inp = 'w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
 const lbl = 'block text-xs font-medium text-[#3d2b1f] mb-1.5'
@@ -69,6 +72,18 @@ export default function DescuentosPage() {
   const [guardandoPromo, setGuardandoPromo] = useState(false)
   const [promoGuardada, setPromoGuardada] = useState(false)
   const [errorPromo, setErrorPromo] = useState('')
+  const [formatoPromo, setFormatoPromo] = useState<FormatoFlyer>('cuadrado')
+  const [cuponImagen, setCuponImagen] = useState<Cupon | null>(null)
+
+  // Vista previa de la promo con los valores actuales del formulario (aunque no estén guardados)
+  const urlPromo = useMemo(() => {
+    if (!(promo.pct >= 1 && promo.pct <= 100)) return null
+    if (promo.desde && promo.hasta && promo.hasta <= promo.desde) return null
+    const q = new URLSearchParams({ pct: String(promo.pct), minimo: String(promo.minimo), formato: formatoPromo })
+    if (promo.desde) q.set('desde', promo.desde)
+    if (promo.hasta) q.set('hasta', promo.hasta)
+    return `/api/imagenes/promo?${q.toString()}`
+  }, [promo.pct, promo.minimo, promo.desde, promo.hasta, formatoPromo])
 
   const cargar = async () => {
     const { data, error: err } = await supabase.from('cupones').select('*').order('created_at', { ascending: false })
@@ -231,6 +246,20 @@ export default function DescuentosPage() {
           {guardandoPromo && <Loader2 className='h-4 w-4 animate-spin' />}
           {promoGuardada ? '✓ Guardado' : 'Guardar promo'}
         </button>
+
+        <div className='border-t border-[#f0e6d3] pt-4 space-y-3'>
+          <h4 className='text-sm font-semibold text-[#3d2b1f]'>Imagen de la promo</h4>
+          {!promo.activo && <p className='text-xs text-[#8a7060]'>Vista previa — la promo está desactivada.</p>}
+          <div className='max-w-xs'>
+            <FormatoToggle formato={formatoPromo} onChange={setFormatoPromo} />
+          </div>
+          <ImagenPreview
+            url={urlPromo}
+            formato={formatoPromo}
+            nombreArchivo={`promo-${formatoPromo}.png`}
+            vacio='Completá un porcentaje entre 1 y 100 (y fechas válidas) para ver la imagen.'
+          />
+        </div>
       </section>
 
       {/* ── Nuevo cupón ── */}
@@ -332,6 +361,7 @@ export default function DescuentosPage() {
                   <th className='px-5 py-3'>Vence</th>
                   <th className='px-5 py-3'>Teléfono</th>
                   <th className='px-5 py-3'>Activo</th>
+                  <th className='px-5 py-3'>Imagen</th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-[#f0e6d3]'>
@@ -368,6 +398,17 @@ export default function DescuentosPage() {
                         <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${c.activo ? 'translate-x-6' : 'translate-x-1'}`} />
                       </button>
                     </td>
+                    <td className='px-5 py-3'>
+                      <button
+                        type='button'
+                        onClick={() => setCuponImagen(c)}
+                        aria-label={`Crear imagen del cupón ${c.codigo}`}
+                        className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#fef3d0] text-[#8a5a1a] text-xs font-medium hover:bg-[#c47c2b] hover:text-white transition-colors'
+                      >
+                        <ImageIcon className='h-3.5 w-3.5' />
+                        Imagen
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -375,6 +416,8 @@ export default function DescuentosPage() {
           </div>
         )}
       </section>
+
+      {cuponImagen && <CuponImagenModal cupon={cuponImagen} onClose={() => setCuponImagen(null)} />}
     </div>
   )
 }
