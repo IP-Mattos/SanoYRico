@@ -464,3 +464,78 @@ select:focus-visible {
     block-size: auto;
   }
 }
+
+/* ───────── Testimonios: marquee de tarjetas fijas ───────── */
+@keyframes marqueeR {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.t-fade {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.t-row {
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1.5rem;
+}
+.t-row::-webkit-scrollbar {
+  display: none;
+}
+.t-track {
+  display: flex;
+  width: max-content;
+  padding-block: 0.5rem 1rem;
+}
+.t-card {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: min(20rem, 82vw);
+  height: 16rem;
+  margin-right: 1rem;
+  scroll-snap-align: start;
+}
+.t-card.t-static {
+  margin-right: 0;
+  width: min(22rem, 100%);
+  scroll-snap-align: none;
+}
+.t-dup {
+  display: none;
+}
+.t-quote {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.t-card:hover .t-quote,
+.t-card:focus-within .t-quote {
+  -webkit-line-clamp: unset;
+  overflow-y: auto;
+}
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .t-row {
+    overflow: hidden;
+    scroll-snap-type: none;
+  }
+  .t-dup {
+    display: flex;
+  }
+  .t-track-l {
+    animation: marquee linear infinite;
+  }
+  .t-track-r {
+    animation: marqueeR linear infinite;
+  }
+  .t-row:hover .t-track,
+  .t-row:focus-within .t-track {
+    animation-play-state: paused;
+  }
+}
