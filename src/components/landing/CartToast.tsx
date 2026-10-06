@@ -8,6 +8,9 @@ import { useCart } from '@/context/CartContext'
 // Key derivada de justAdded.producto_id + cantidad fuerza re-animación en clics repetidos.
 export function CartToast() {
   const { justAdded, setIsOpen } = useCart()
+  // Contador que cambia con cada agregado (justAdded es un objeto nuevo cada vez): fuerza la re-animación.
+  const [anim, setAnim] = useState<{ item: typeof justAdded; n: number }>({ item: justAdded, n: 0 })
+  if (anim.item !== justAdded) setAnim({ item: justAdded, n: anim.n + 1 })
 
   if (!justAdded) return null
 
@@ -15,7 +18,7 @@ export function CartToast() {
     <div
       role='status'
       aria-live='polite'
-      key={`${justAdded.producto_id}-${Date.now()}`}
+      key={`${justAdded.producto_id}-${anim.n}`}
       className='fixed top-24 right-4 sm:right-6 z-[60] max-w-[calc(100vw-2rem)] sm:max-w-sm animate-toast'
     >
       <button

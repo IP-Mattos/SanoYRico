@@ -2,16 +2,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 import { notificarAdminNuevoPedido, notificarClienteRecibo } from '@/lib/email'
+import { cotizarPedido, type ProductoDB } from '@/lib/pedidos/cotizar'
+import { DEFAULT_CONFIG } from '@/lib/site-config'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
-interface ItemInput {
-  producto_id: string
-  nombre: string
-  emoji: string
-  cantidad: number
-  precio: number
-}
-
+// Del cliente solo se aceptan producto_id y cantidad por ítem; precios y nombres salen de la DB.
 interface PedidoInput {
   nombre: string
   telefono: string
@@ -20,8 +15,8 @@ interface PedidoInput {
   calle: string
   notas?: string
   metodo_pago?: string
-  total: number
-  items: ItemInput[]
+  total?: number
+  items: { producto_id: string; cantidad: number }[]
 }
 
 // ── Sanitización básica ───────────────────────────────────────────────────────
@@ -54,7 +49,6 @@ export async function POST(req: NextRequest) {
   const metodo_pago = ['transferencia', 'deposito', 'mercadopago'].includes(body.metodo_pago ?? '')
     ? body.metodo_pago
     : null
-  const total = Number(body.total)
 
   if (!nombre) return NextResponse.json({ error: 'Nombre requerido' }, { status: 422 })
   if (!telefono) return NextResponse.json({ error: 'Teléfono requerido' }, { status: 422 })
@@ -64,7 +58,6 @@ export async function POST(req: NextRequest) {
   }
   if (!localidad) return NextResponse.json({ error: 'Localidad requerida' }, { status: 422 })
   if (!calle) return NextResponse.json({ error: 'Calle requerida' }, { status: 422 })
-  if (!Number.isFinite(total) || total <= 0) return NextResponse.json({ error: 'Total inválido' }, { status: 422 })
   if (!Array.isArray(body.items) || body.items.length === 0) {
     return NextResponse.json({ error: 'El pedido no tiene ítems' }, { status: 422 })
   }
@@ -72,33 +65,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Demasiados ítems' }, { status: 422 })
   }
 
-  // Validar y sanitizar cada ítem
-  const items = body.items.map((it) => {
-    const cantidad = Math.floor(Number(it.cantidad))
-    const precio = Number(it.precio)
-    if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 999) throw new Error('Cantidad inválida')
-    if (!Number.isFinite(precio) || precio < 0) throw new Error('Precio inválido')
-    return {
-      producto_id: clean(it.producto_id, 40) || null,
-      producto_nombre: clean(it.nombre, 100),
-      producto_emoji: clean(it.emoji, 10),
-      cantidad,
-      precio_unitario: precio,
-      subtotal: precio * cantidad
-    }
-  })
-
-  // Verificar que el total declarado coincide con los ítems (tolerancia de $1 por redondeos)
-  const totalCalculado = items.reduce((s, i) => s + i.subtotal, 0)
-  if (Math.abs(totalCalculado - total) > 1) {
-    return NextResponse.json({ error: 'Total no coincide con los ítems' }, { status: 422 })
-  }
-
   // ── Supabase con service role (bypass RLS para escritura pública) ──────────
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
+
+  // ── Cotización server-side: precios, stock y mínimo salen de la DB ─────────
+  const ids = [
+    ...new Set(
+      body.items
+        .map((it) => (it as { producto_id?: unknown })?.producto_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 40)
+    )
+  ]
+  const [{ data: productos, error: errProductos }, { data: cfg }] = await Promise.all([
+    supabase.from('productos').select('id, nombre, emoji, precio, stock, activo').in('id', ids),
+    supabase.from('configuracion').select('valor').eq('clave', 'general').maybeSingle()
+  ])
+  if (errProductos) {
+    console.error('Error leyendo productos:', errProductos)
+    return NextResponse.json({ error: 'Error al crear el pedido' }, { status: 500 })
+  }
+
+  const minimoCfg = Number((cfg?.valor as { minimoPedido?: unknown } | null)?.minimoPedido)
+  const minimoPedido = Number.isFinite(minimoCfg) && minimoCfg >= 0 ? minimoCfg : DEFAULT_CONFIG.general.minimoPedido
+
+  const cotizacion = cotizarPedido(body.items, (productos ?? []) as ProductoDB[], { minimoPedido })
+  if (!cotizacion.ok) {
+    return NextResponse.json({ error: cotizacion.error }, { status: cotizacion.status })
+  }
+  const { items, total } = cotizacion
 
   const direccion = `${calle}, ${localidad}`
 

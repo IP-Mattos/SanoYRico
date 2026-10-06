@@ -98,6 +98,29 @@ export default function PedidosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Cambia el estado en el servidor (valida la transición y ajusta el stock)
+  const actualizarEstado = async (id: string, estado: EstadoPedido): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/pedidos/${id}/estado`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado })
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        alert(data?.error ?? 'No se pudo cambiar el estado del pedido')
+        return false
+      }
+      if (data?.stockFallido?.length) {
+        alert('El estado cambió, pero no se pudo ajustar el stock de algunos productos. Revisalo en Stock.')
+      }
+      return true
+    } catch {
+      alert('No se pudo cambiar el estado del pedido')
+      return false
+    }
+  }
+
   const cambiarEstado = async (id: string, estado: EstadoPedido, pedido?: Pedido) => {
     // Si es confirmado, abrir modal primero
     if (estado === 'confirmado' && pedido) {
@@ -107,9 +130,10 @@ export default function PedidosPage() {
     }
 
     setActualizando(id)
-    await supabase.from('pedidos').update({ estado }).eq('id', id)
+    const ok = await actualizarEstado(id, estado)
     await cargar()
     setActualizando(null)
+    if (!ok) return
 
     // Email al cliente para entregado/cancelado
     if (estado === 'entregado' || estado === 'cancelado') {
@@ -127,8 +151,13 @@ export default function PedidosPage() {
     setEnviando(true)
 
     // Cambiar estado en DB
-    await supabase.from('pedidos').update({ estado: 'confirmado' }).eq('id', pedido.id)
+    const ok = await actualizarEstado(pedido.id, 'confirmado')
     await cargar()
+    if (!ok) {
+      setEnviando(false)
+      setModalConfirmar(null)
+      return
+    }
 
     // Email de confirmación al cliente (si dejó email)
     fetch(`/api/pedidos/${pedido.id}/confirmar-email`, {

@@ -29,8 +29,6 @@ interface Pedido {
   items: string | PedidoItem[]
   total: number
   nombre: string
-  direccion: string
-  notas?: string
   created_at: string
   telefono: string
 }
@@ -120,18 +118,18 @@ function SeguimientoContent() {
       setError('')
       setPedido(null)
 
-      const esNumero = /^\d{1,6}$/.test(v)
-      let query = supabase.from('pedidos_detalle').select('*')
-      if (esNumero) {
-        query = query.eq('numero', parseInt(v))
-      } else {
-        const tel = v.replace(/\D/g, '').replace(/^0/, '').replace(/^598/, '')
-        query = query.ilike('telefono', `%${tel}%`)
+      let res: Response | null = null
+      let json: { pedido?: Pedido; error?: string } | null = null
+      try {
+        res = await fetch(`/api/seguimiento?q=${encodeURIComponent(v)}`, { cache: 'no-store' })
+        json = await res.json().catch(() => null)
+      } catch {
+        res = null
       }
 
-      const { data } = await query.order('created_at', { ascending: false }).limit(1).single()
-
-      if (!data) {
+      if (res?.ok && json?.pedido) {
+        setPedido(json.pedido)
+      } else if (res && res.status === 404) {
         setIntentos((prev) => prev + 1)
         setError(
           intentos >= 1
@@ -139,13 +137,11 @@ function SeguimientoContent() {
             : 'No encontramos ningún pedido con ese dato.'
         )
       } else {
-        const { data: extra } = await supabase.from('pedidos').select('metodo_pago').eq('id', data.id).single()
-        setPedido({ ...data, metodo_pago: extra?.metodo_pago ?? null })
+        setError(json?.error ?? 'No pudimos consultar tu pedido. Intentá de nuevo en unos minutos.')
       }
 
       setLoading(false)
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [intentos]
   )
 
@@ -158,23 +154,22 @@ function SeguimientoContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Realtime: actualizar estado cuando cambia en DB ──
+  // ── Polling: refrescar el estado cada 30s mientras la página está abierta ──
   useEffect(() => {
-    if (!pedido) return
-    const channel = supabase
-      .channel(`pedido-${pedido.numero}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `numero=eq.${pedido.numero}` },
-        (payload) => {
-          setPedido((prev) => (prev ? { ...prev, estado: payload.new.estado } : prev))
-        }
-      )
-      .subscribe()
-    return () => {
-      supabase.removeChannel(channel)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const numero = pedido?.numero
+    if (numero === undefined) return
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/seguimiento?q=${numero}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const json = (await res.json()) as { pedido?: Pedido }
+        const nuevo = json.pedido
+        if (nuevo) setPedido((prev) => (prev && prev.numero === nuevo.numero ? { ...prev, ...nuevo } : prev))
+      } catch {
+        // se reintenta en el próximo ciclo
+      }
+    }, 30_000)
+    return () => clearInterval(id)
   }, [pedido?.numero])
 
   // ── Re-order: matchear items por nombre, recargar precio/stock actual y abrir cart ──
@@ -400,7 +395,7 @@ function SeguimientoContent() {
             {/* Entrega */}
             <div className='bg-white rounded-2xl border border-[#f0e6d3] p-5'>
               <p className='text-xs font-semibold text-[#8a7060] uppercase tracking-wider mb-3'>
-                Dónde lo entregamos
+                Datos del pedido
               </p>
               <div className='flex items-start gap-3'>
                 <div className='w-8 h-8 bg-[#fef3d0] rounded-xl flex items-center justify-center shrink-0'>
@@ -408,8 +403,7 @@ function SeguimientoContent() {
                 </div>
                 <div>
                   <p className='text-sm font-medium text-[#3d2b1f]'>{pedido.nombre}</p>
-                  <p className='text-sm text-[#8a7060]'>{pedido.direccion}</p>
-                  {pedido.notas && <p className='text-xs text-[#8a7060] mt-1 italic'>{`"${pedido.notas}"`}</p>}
+                  {pedido.telefono && <p className='text-sm text-[#8a7060]'>Tel. {pedido.telefono}</p>}
                   <p className='text-xs text-[#c4b0a0] mt-2 capitalize'>
                     Pedido el{' '}
                     {new Date(pedido.created_at).toLocaleDateString('es-UY', {
