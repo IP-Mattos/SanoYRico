@@ -16,6 +16,9 @@ interface Props {
 const SWIPE_MIN = 50
 const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
+const ctrlClaro =
+  'inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#3d2b1f]/70 text-white hover:bg-[#3d2b1f] active:scale-95 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c47c2b] motion-reduce:transition-none motion-reduce:active:scale-100'
+
 const ctrl =
   'inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/15 text-white hover:bg-white/30 active:scale-95 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none motion-reduce:active:scale-100'
 
@@ -101,7 +104,7 @@ export function FotosLightbox({ titulo, fotos, inicial = 0, onClose }: Props) {
         </div>
 
         <div
-          className='relative w-full h-[min(68dvh,80vw)] min-h-60 rounded-2xl overflow-hidden bg-black/40 touch-pan-y select-none'
+          className='relative w-full h-[min(68dvh,80vw)] min-h-60 rounded-2xl overflow-hidden bg-[radial-gradient(circle_at_50%_55%,#fffaf0_0%,#f8ecd4_62%,#f1e2c4_100%)] touch-pan-y select-none'
           onTouchStart={(e) => {
             touchX.current = e.touches[0].clientX
           }}
@@ -118,16 +121,16 @@ export function FotosLightbox({ titulo, fotos, inicial = 0, onClose }: Props) {
             alt={`${titulo}, foto real ${i + 1} de ${total}`}
             fill
             sizes='(min-width: 768px) 768px, 100vw'
-            className='object-contain'
+            className='object-contain p-4 sm:p-8 drop-shadow-[0_16px_16px_rgba(61,43,31,0.22)]'
             priority
             draggable={false}
           />
           {total > 1 && (
             <>
-              <button type='button' onClick={() => ir(-1)} aria-label='Foto anterior' className={`${ctrl} absolute left-2 top-1/2 -translate-y-1/2`}>
+              <button type='button' onClick={() => ir(-1)} aria-label='Foto anterior' className={`${ctrlClaro} absolute left-2 top-1/2 -translate-y-1/2`}>
                 <ChevronLeft className='h-5 w-5' />
               </button>
-              <button type='button' onClick={() => ir(1)} aria-label='Foto siguiente' className={`${ctrl} absolute right-2 top-1/2 -translate-y-1/2`}>
+              <button type='button' onClick={() => ir(1)} aria-label='Foto siguiente' className={`${ctrlClaro} absolute right-2 top-1/2 -translate-y-1/2`}>
                 <ChevronRight className='h-5 w-5' />
               </button>
             </>
@@ -143,11 +146,11 @@ export function FotosLightbox({ titulo, fotos, inicial = 0, onClose }: Props) {
                   onClick={() => setI(n)}
                   aria-label={`Ver foto ${n + 1}`}
                   aria-current={n === i}
-                  className={`relative block w-12 h-12 rounded-lg overflow-hidden border-2 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                  className={`relative block w-12 h-12 rounded-lg overflow-hidden bg-[#f8ecd4] border-2 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                     n === i ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <Image src={f} alt='' fill sizes='48px' className='object-cover' />
+                  <Image src={f} alt='' fill sizes='48px' className='object-contain p-0.5' />
                 </button>
               </li>
             ))}

@@ -41,14 +41,18 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [ocupado, setOcupado] = useState<null | 'subiendo' | 'guardando'>(null)
   const [error, setError] = useState('')
+  const [quitarFondo, setQuitarFondo] = useState(true)
+  // Foto cuyo fondo no se pudo quitar: se ofrece subirla igual, sin tocar el fondo
+  const [fallida, setFallida] = useState<File | null>(null)
   const url = `/api/productos/${productoId}/fotos`
   const lleno = fotos.length >= MAX_FOTOS
 
-  const llamar = async (init: RequestInit): Promise<string[] | null> => {
+  const llamar = async (init: RequestInit): Promise<string[] | null | 'fondo_fallido'> => {
     try {
       const res = await fetch(url, init)
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
+        if (json.code === 'fondo_fallido') return 'fondo_fallido'
         setError(json.error ?? (res.status === 413 ? 'La imagen es demasiado pesada' : 'No pudimos completar la acción'))
         return null
       }
@@ -59,14 +63,21 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
     }
   }
 
-  const subir = async (original: File) => {
+  const subir = async (original: File, conFondo: boolean) => {
     setError('')
+    setFallida(null)
     setOcupado('subiendo')
     const file = await reducirFoto(original)
     const fd = new FormData()
     fd.append('file', file)
-    const nuevas = await llamar({ method: 'POST', body: fd })
-    if (nuevas) onChange(nuevas)
+    fd.append('quitarFondo', conFondo ? '1' : '0')
+    const res = await llamar({ method: 'POST', body: fd })
+    if (res === 'fondo_fallido') {
+      setError('No pudimos quitar el fondo de la foto (puede haber tardado demasiado).')
+      setFallida(original)
+    } else if (res) {
+      onChange(res)
+    }
     setOcupado(null)
   }
 
@@ -82,7 +93,7 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fotos: orden })
     })
-    if (nuevas) onChange(nuevas)
+    if (Array.isArray(nuevas)) onChange(nuevas)
     setOcupado(null)
   }
 
@@ -95,7 +106,7 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: foto })
     })
-    if (nuevas) onChange(nuevas)
+    if (Array.isArray(nuevas)) onChange(nuevas)
     setOcupado(null)
   }
 
@@ -147,10 +158,24 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
           className='inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#dccbb0] bg-white text-sm font-medium text-[#3d2b1f] hover:border-[#c47c2b] transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c47c2b]'
         >
           {ocupado === 'subiendo' ? <Loader2 className='h-4 w-4 animate-spin' /> : <Camera className='h-4 w-4' />}
-          {ocupado === 'subiendo' ? 'Subiendo…' : lleno ? 'Máximo alcanzado' : 'Agregar foto'}
+          {ocupado === 'subiendo' ? (quitarFondo ? 'Quitando fondo…' : 'Subiendo…') : lleno ? 'Máximo alcanzado' : 'Agregar foto'}
         </button>
         <span className='text-xs text-[#8a7060] tabular-nums'>{fotos.length} / {MAX_FOTOS}</span>
       </div>
+
+      <label className='flex items-center gap-2 text-xs text-[#3d2b1f] cursor-pointer w-fit'>
+        <input
+          type='checkbox'
+          checked={quitarFondo}
+          onChange={(e) => setQuitarFondo(e.target.checked)}
+          disabled={!!ocupado}
+          className='h-4 w-4 accent-[#c47c2b]'
+        />
+        Quitar fondo (recomendado)
+      </label>
+      {ocupado === 'subiendo' && quitarFondo && (
+        <p className='text-[11px] text-[#8a7060]'>Puede tardar hasta un minuto y medio.</p>
+      )}
 
       <input
         ref={inputRef}
@@ -159,7 +184,7 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
         className='hidden'
         onChange={(e) => {
           const file = e.target.files?.[0]
-          if (file) void subir(file)
+          if (file) void subir(file, quitarFondo)
           e.target.value = ''
         }}
       />
@@ -168,6 +193,15 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
         <p role='alert' className='text-xs text-red-500 flex items-center gap-1'>
           <AlertCircle className='h-3 w-3 shrink-0' /> {error}
         </p>
+      )}
+      {fallida && !ocupado && (
+        <button
+          type='button'
+          onClick={() => void subir(fallida, false)}
+          className='text-xs font-medium text-[#8a5a1a] underline underline-offset-4 hover:text-[#3d2b1f]'
+        >
+          Subir esta foto sin quitar el fondo
+        </button>
       )}
     </div>
   )

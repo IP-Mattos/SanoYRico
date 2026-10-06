@@ -59,6 +59,15 @@ export async function proxy(req: NextRequest) {
         )
       }
     }
+    // Subida de fotos reales (admin): cada una puede llamar a Replicate, que cuesta plata
+    if (req.method === 'POST' && /^\/api\/productos\/[^/]+\/fotos$/.test(pathname)) {
+      if (!allow(`fotos:${ip}`, 10, 60_000)) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Demasiadas fotos seguidas. Esperá un minuto.' }),
+          { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } }
+        )
+      }
+    }
     if (pathname === '/api/pedidos') {
       if (!allow(`pedidos:${ip}`, 5, 3_600_000)) {
         return new NextResponse(

@@ -4,7 +4,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
-import sharp from 'sharp'
+import { fotoJpeg, normalizarFoto, recortePng } from '@/lib/productos/imagen'
+import { quitarFondo } from '@/lib/productos/replicate'
 import {
   BUCKET_PRODUCTOS,
   MAX_FOTOS,
@@ -17,6 +18,7 @@ import {
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 120 // quitar el fondo puede tardar hasta ~90 s
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -74,23 +76,44 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   const chequeo = chequearSubida(actual.fotos.length, file.size, file.type)
   if (!chequeo.ok) return NextResponse.json({ error: chequeo.error }, { status: chequeo.status })
 
-  let jpeg: Buffer
+  // Por defecto se quita el fondo; "0" sube la foto tal cual (normalizada)
+  const sinQuitarFondo = formData.get('quitarFondo') === '0'
+
+  let normalizada: Buffer
   try {
-    jpeg = await sharp(Buffer.from(await file.arrayBuffer()), { limitInputPixels: 80_000_000 })
-      .rotate() // respeta la orientación EXIF
-      .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-      .flatten({ background: '#ffffff' }) // PNG/WebP con transparencia
-      .jpeg({ quality: 82, mozjpeg: true }) // sin metadata (sharp la descarta por defecto)
-      .toBuffer()
+    normalizada = await normalizarFoto(Buffer.from(await file.arrayBuffer()))
   } catch (e) {
     console.error('Fotos: no se pudo procesar la imagen', e)
     return NextResponse.json({ error: 'No pudimos procesar esa imagen. Probá con un JPG o PNG.' }, { status: 415 })
   }
 
-  const ruta = `${prefijoFotos(id)}${crypto.randomUUID()}.jpg`
+  let contenido: Buffer
+  let extension: 'png' | 'jpg'
+  if (sinQuitarFondo) {
+    contenido = await fotoJpeg(normalizada)
+    extension = 'jpg'
+  } else {
+    try {
+      contenido = await recortePng(await quitarFondo(normalizada, 'image/jpeg'))
+      extension = 'png'
+    } catch (e) {
+      // Nunca se guarda el original en silencio: el cliente decide si reintenta sin quitar el fondo
+      console.error('Fotos: error quitando el fondo', e)
+      return NextResponse.json(
+        { error: 'No pudimos quitar el fondo de la foto.', code: 'fondo_fallido' },
+        { status: 502 }
+      )
+    }
+  }
+
+  const ruta = `${prefijoFotos(id)}${crypto.randomUUID()}.${extension}`
   const { error: errSubida } = await supabase.storage
     .from(BUCKET_PRODUCTOS)
-    .upload(ruta, jpeg, { contentType: 'image/jpeg', upsert: false, cacheControl: '31536000' })
+    .upload(ruta, contenido, {
+      contentType: extension === 'png' ? 'image/png' : 'image/jpeg',
+      upsert: false,
+      cacheControl: '31536000'
+    })
   if (errSubida) {
     console.error('Fotos: error subiendo', errSubida)
     return NextResponse.json({ error: 'Error guardando la imagen' }, { status: 500 })
