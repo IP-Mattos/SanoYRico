@@ -2,29 +2,33 @@ import { type BeneficioItem, DEFAULT_CONFIG } from '@/lib/site-config'
 
 export function Beneficios({ items = DEFAULT_CONFIG.beneficios }: { items?: BeneficioItem[] }) {
   return (
-    <section id='beneficios' className='bg-[#3d2b1f] py-16 sm:py-24 px-6 sm:px-10 lg:px-16'>
+    <section id='beneficios' className='bg-[#3d2b1f] py-20 sm:py-28 px-6 sm:px-10 lg:px-16 scroll-mt-16'>
       <div className='max-w-7xl mx-auto'>
-        <p className='text-xs font-medium tracking-widest uppercase text-[#e8a832] mb-3'>Por qué elegirnos</p>
-        <h2 className='text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-3' style={{ fontFamily: 'Georgia, serif' }}>
-          Todo lo bueno,{' '}
-          <br />
-          nada de lo malo
-        </h2>
-        <p className='text-white/60 text-base sm:text-lg font-light mb-10 max-w-lg'>
-          Fabricamos cada producto con un único compromiso: que sea genuinamente bueno para vos.
-        </p>
+        <div className='reveal'>
+          <p className='eyebrow eyebrow-light'>Por qué elegirnos</p>
+          <h2 className='section-title text-white!'>
+            Todo lo bueno,{' '}
+            <br className='hidden sm:block' />
+            nada de lo malo
+          </h2>
+          <p className='section-lead mb-12 text-white/75!'>
+            Fabricamos cada producto con un único compromiso: que sea genuinamente bueno para vos.
+          </p>
+        </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4'>
           {items.map((item, i) => (
             <div
               key={i}
-              className='border border-white/10 rounded-2xl p-5 sm:p-6 hover:border-[#c47c2b]/50 transition-colors'
+              className='reveal bg-white/[0.04] border border-white/10 rounded-2xl p-5 sm:p-6 hover:bg-white/[0.07] hover:border-[#e8a832]/50 transition-colors'
             >
-              <div className='text-3xl mb-4'>{item.icono}</div>
-              <h3 className='text-white font-bold mb-2' style={{ fontFamily: 'Georgia, serif' }}>
+              <div className='min-w-14 h-14 w-fit px-3 rounded-2xl bg-[#faf6ef]/10 flex items-center justify-center text-3xl mb-5'>
+                {item.icono}
+              </div>
+              <h3 className='text-white text-lg font-bold mb-2 leading-snug' style={{ fontFamily: 'var(--display)' }}>
                 {item.titulo}
               </h3>
-              <p className='text-white/50 text-sm leading-relaxed font-light'>{item.descripcion}</p>
+              <p className='text-white/75 text-sm leading-relaxed'>{item.descripcion}</p>
             </div>
           ))}
         </div>

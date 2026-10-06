@@ -31,35 +31,42 @@ export function Testimonios({
     : 'Personas como vos ya cambiaron sus snacks por algo mejor.'
 
   return (
-    <section id='opiniones' className='py-16 sm:py-24 px-6 sm:px-10 lg:px-16 bg-[#f0e6d3]'>
+    <section id='opiniones' className='py-20 sm:py-28 px-6 sm:px-10 lg:px-16 bg-[#f0e6d3] scroll-mt-16'>
       <div className='max-w-7xl mx-auto'>
-        <p className='text-xs font-medium tracking-widest uppercase text-[#8a5a1a] mb-3'>Opiniones</p>
-        <h2 className='text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2b1f] mb-3' style={{ fontFamily: 'Georgia, serif' }}>
-          Los que ya las{' '}
-          <br />
-          probaron, nos cuentan
-        </h2>
-        <p className='text-[#5c4033] text-base sm:text-lg font-light mb-10'>
-          {subtitulo}
-        </p>
+        <div className='reveal'>
+          <p className='eyebrow'>Opiniones</p>
+          <h2 className='section-title'>
+            Los que ya las{' '}
+            <br className='hidden sm:block' />
+            probaron, nos cuentan
+          </h2>
+          <p className='section-lead mb-12'>{subtitulo}</p>
+        </div>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+        {/* Columnas tipo masonry: absorben cualquier cantidad de testimonios sin dejar huecos */}
+        <div className='columns-1 md:columns-2 lg:columns-3 gap-4'>
           {visibles.map((t, i) => (
-            <div key={i} className='bg-[#faf6ef] rounded-2xl p-5 sm:p-6 border border-[#f0e6d3]'>
+            <figure
+              key={i}
+              className='break-inside-avoid mb-4 bg-[#faf6ef] rounded-2xl p-5 sm:p-6 border border-[#e6d6bb] shadow-[0_14px_28px_-24px_rgba(61,43,31,0.45)]'
+            >
               <Estrellas cantidad={t.estrellas} />
-              <p className='text-[#3d2b1f] italic leading-relaxed mb-5 text-sm sm:text-base' style={{ fontFamily: 'Georgia, serif' }}>
+              <blockquote
+                className='text-[#3d2b1f] leading-relaxed mb-5 text-[15px] sm:text-base'
+                style={{ fontFamily: 'var(--display)' }}
+              >
                 &ldquo;{t.texto}&rdquo;
-              </p>
-              <div className='flex items-center gap-3'>
+              </blockquote>
+              <figcaption className='flex items-center gap-3 pt-4 border-t border-[#3d2b1f]/10'>
                 <div className='w-10 h-10 rounded-full bg-[#f0e6d3] flex items-center justify-center text-xl shrink-0'>
                   {t.avatar}
                 </div>
                 <div>
-                  <div className='text-sm font-medium text-[#3d2b1f]'>{t.nombre}</div>
-                  <div className='text-xs text-[#5c4033]'>{t.lugar}</div>
+                  <div className='text-sm font-semibold text-[#3d2b1f]'>{t.nombre}</div>
+                  <div className='text-xs text-[#6e5746]'>{t.lugar}</div>
                 </div>
-              </div>
-            </div>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>
