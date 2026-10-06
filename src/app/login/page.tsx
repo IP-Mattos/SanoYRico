@@ -2,16 +2,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { Lock, Mail, Loader2 } from 'lucide-react'
+import { Lock, Mail, Loader2, Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react'
 
 const MAX_INTENTOS = 5
 const COOLDOWN_MS = 30_000
 
+const input =
+  'w-full h-12 pl-11 pr-4 rounded-xl border border-[#e8dcc8] bg-[#fdfbf7] text-[15px] text-[#3d2b1f] placeholder:text-[#b3a393] transition-colors focus:outline-none focus:bg-white focus:border-[#c47c2b] focus:ring-4 focus:ring-[#c47c2b]/15 disabled:opacity-50'
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [verPassword, setVerPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [intentos, setIntentos] = useState(0)
@@ -70,77 +76,151 @@ export default function LoginPage() {
   }
 
   return (
-    <div className='min-h-screen bg-[#faf6ef] flex items-center justify-center px-4'>
-      <div className='w-full max-w-md'>
-        {/* Logo */}
-        <div className='text-center mb-8'>
-          <h1 className='text-4xl font-bold text-[#3d2b1f]'>
-            Sano y <span className='text-[#c47c2b] italic'>Rico</span>
-          </h1>
-          <p className='text-[#8a7060] mt-2 text-sm'>Panel de administración</p>
+    <div className='min-h-screen bg-[#faf6ef] lg:grid lg:grid-cols-[1.05fr_1fr]'>
+      {/* Panel de marca (desktop) */}
+      <aside className='relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#3d2b1f] text-white p-12 xl:p-16'>
+        <div
+          className='absolute -top-40 -left-40 w-[36rem] h-[36rem] rounded-full bg-[#c47c2b]/20 blur-3xl pointer-events-none'
+          aria-hidden='true'
+        />
+        <div className='relative flex items-center gap-3'>
+          <Image src='/logo-sano-y-rico-v2.png' alt='' width={40} height={40} className='h-10 w-10' />
+          <span className='text-xl font-bold' style={{ fontFamily: 'var(--display)' }}>
+            Sano y <span className='italic text-[#e8a832]'>Rico</span>
+          </span>
         </div>
 
-        {/* Card */}
-        <div className='bg-white rounded-2xl shadow-sm border border-[#f0e6d3] p-8'>
-          <h2 className='text-xl font-semibold text-[#3d2b1f] mb-6'>Iniciar sesión</h2>
+        <div className='relative flex flex-col items-center text-center'>
+          <div className='relative flex items-center justify-center'>
+            <div className='absolute w-[26rem] h-[26rem] rounded-full border border-white/10 animate-breathe' aria-hidden='true' />
+            <div className='absolute w-[34rem] h-[34rem] rounded-full border border-white/5 animate-breathe [animation-delay:-3.5s]' aria-hidden='true' />
+            <Image
+              src='/logo-sano-y-rico-v2.png'
+              alt='Sano y Rico'
+              width={1178}
+              height={1178}
+              priority
+              className='relative w-64 xl:w-72 h-auto animate-float-soft filter-[drop-shadow(0_24px_32px_rgba(0,0,0,0.35))]'
+            />
+          </div>
+          <h2 className='mt-12 text-4xl xl:text-5xl font-bold leading-tight' style={{ fontFamily: 'var(--display)' }}>
+            Tu tienda, <span className='italic text-[#e8a832]'>en orden</span>
+          </h2>
+          <p className='mt-3 max-w-sm text-white/75 text-[15px] leading-relaxed'>
+            Pedidos, stock, descuentos y flyers en un solo lugar.
+          </p>
+        </div>
 
-          <div className='space-y-4'>
-            {/* Email */}
+        <p className='relative text-xs text-white/50'>© {new Date().getFullYear()} Sano y Rico · Industria uruguaya</p>
+      </aside>
+
+      {/* Formulario */}
+      <main className='flex min-h-screen lg:min-h-0 items-center justify-center px-5 py-10'>
+        <div className='w-full max-w-sm'>
+          {/* Logo (mobile/tablet) */}
+          <div className='lg:hidden flex flex-col items-center mb-8'>
+            <Image
+              src='/logo-sano-y-rico-v2.png'
+              alt='Sano y Rico'
+              width={1178}
+              height={1178}
+              priority
+              className='w-28 h-auto filter-[drop-shadow(0_14px_18px_rgba(61,43,31,0.25))]'
+            />
+          </div>
+
+          <p className='text-xs font-semibold uppercase tracking-[0.18em] text-[#a8661f]'>Panel de administración</p>
+          <h1 className='mt-2 text-3xl sm:text-4xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'var(--display)' }}>
+            Hola de nuevo
+          </h1>
+          <p className='mt-2 text-[15px] text-[#6e5746]'>Ingresá con tu cuenta para gestionar la tienda.</p>
+
+          <form
+            className='mt-8 space-y-5'
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleLogin()
+            }}
+          >
             <div>
-              <label className='block text-sm font-medium text-[#3d2b1f] mb-1.5'>Email</label>
+              <label htmlFor='email' className='block text-sm font-medium text-[#3d2b1f] mb-2'>
+                Email
+              </label>
               <div className='relative'>
-                <Mail className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8a7060]' />
+                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#8a7060]' aria-hidden='true' />
                 <input
+                  id='email'
                   type='email'
+                  autoComplete='email'
+                  inputMode='email'
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                   disabled={bloqueado}
                   placeholder='admin@sanoyrico.com'
-                  className='w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#f0e6d3] text-sm text-[#3d2b1f] placeholder:text-[#c4b5a8] focus:outline-none focus:ring-2 focus:ring-[#c47c2b] focus:border-transparent disabled:opacity-50'
+                  className={input}
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label className='block text-sm font-medium text-[#3d2b1f] mb-1.5'>Contraseña</label>
+              <label htmlFor='password' className='block text-sm font-medium text-[#3d2b1f] mb-2'>
+                Contraseña
+              </label>
               <div className='relative'>
-                <Lock className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8a7060]' />
+                <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#8a7060]' aria-hidden='true' />
                 <input
-                  type='password'
+                  id='password'
+                  type={verPassword ? 'text' : 'password'}
+                  autoComplete='current-password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                   disabled={bloqueado}
                   placeholder='••••••••'
-                  className='w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#f0e6d3] text-sm text-[#3d2b1f] placeholder:text-[#c4b5a8] focus:outline-none focus:ring-2 focus:ring-[#c47c2b] focus:border-transparent disabled:opacity-50'
+                  className={`${input} pr-12`}
                 />
+                <button
+                  type='button'
+                  onClick={() => setVerPassword((v) => !v)}
+                  aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={verPassword}
+                  className='absolute right-1.5 top-1/2 -translate-y-1/2 h-10 w-10 flex items-center justify-center rounded-lg text-[#8a7060] hover:text-[#3d2b1f] hover:bg-[#f0e6d3]/60 transition-colors'
+                >
+                  {verPassword ? <EyeOff className='h-[18px] w-[18px]' /> : <Eye className='h-[18px] w-[18px]' />}
+                </button>
               </div>
             </div>
 
-            {/* Error */}
             {error && (
-              <p className='text-sm text-red-500 bg-red-50 px-4 py-2.5 rounded-xl'>
-                {error}
-                {bloqueado && segundosRestantes > 0 && (
-                  <span className='block text-xs mt-0.5 font-medium'>{segundosRestantes}s restantes</span>
-                )}
-              </p>
+              <div role='alert' className='flex gap-2.5 text-sm text-red-700 bg-red-50 border border-red-100 px-4 py-3 rounded-xl'>
+                <AlertCircle className='h-4 w-4 mt-0.5 shrink-0' aria-hidden='true' />
+                <p>
+                  {error}
+                  {bloqueado && segundosRestantes > 0 && (
+                    <span className='block text-xs mt-0.5 font-medium'>{segundosRestantes}s restantes</span>
+                  )}
+                </p>
+              </div>
             )}
 
-            {/* Submit */}
             <button
-              onClick={handleLogin}
+              type='submit'
               disabled={loading || bloqueado}
-              className='w-full bg-[#3d2b1f] text-white py-2.5 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+              className='group w-full h-12 bg-[#3d2b1f] text-white rounded-xl text-[15px] font-semibold shadow-[0_10px_24px_-10px_rgba(61,43,31,0.6)] hover:bg-[#2e2017] active:scale-[0.99] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2'
             >
-              {loading && <Loader2 className='h-4 w-4 animate-spin' />}
+              {loading && <Loader2 className='h-4 w-4 animate-spin' aria-hidden='true' />}
               {bloqueado ? `Bloqueado (${segundosRestantes}s)` : loading ? 'Entrando...' : 'Entrar al panel'}
             </button>
-          </div>
+          </form>
+
+          <Link
+            href='/'
+            className='mt-8 inline-flex items-center gap-1.5 text-sm text-[#6e5746] hover:text-[#3d2b1f] transition-colors'
+          >
+            <ArrowLeft className='h-4 w-4' aria-hidden='true' /> Volver a la tienda
+          </Link>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
