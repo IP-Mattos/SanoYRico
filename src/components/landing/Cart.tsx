@@ -312,7 +312,7 @@ export function Cart({
       {cuponMsg && (
         <p
           role={cuponMsg.tipo === 'error' ? 'alert' : 'status'}
-          className={`text-xs ${cuponMsg.tipo === 'error' ? 'text-red-500' : cuponMsg.tipo === 'ok' ? 'text-green-700' : 'text-[#8a7060]'}`}
+          className={`text-xs ${cuponMsg.tipo === 'error' ? 'text-red-500' : cuponMsg.tipo === 'ok' ? 'text-green-700' : 'text-[#6e5746]'}`}
         >
           {cuponMsg.texto}
         </p>
@@ -337,7 +337,7 @@ export function Cart({
               {paso === 'confirmado' && (esPagoManual ? '¡Pedido recibido!' : '¡Pedido confirmado!')}
             </h2>
           </div>
-          <button onClick={cerrar} aria-label='Cerrar carrito' className='text-[#8a7060] hover:text-[#3d2b1f]'>
+          <button onClick={cerrar} aria-label='Cerrar carrito' className='w-11 h-11 -mr-2 flex items-center justify-center text-[#6e5746] hover:text-[#3d2b1f]'>
             <X className='h-5 w-5' />
           </button>
         </div>
@@ -347,7 +347,7 @@ export function Cart({
           <>
             <div className='flex-1 overflow-y-auto p-5 space-y-3'>
               {items.length === 0 ? (
-                <div className='flex flex-col items-center justify-center h-48 text-[#8a7060]'>
+                <div className='flex flex-col items-center justify-center h-48 text-[#6e5746]'>
                   <ShoppingBag className='h-12 w-12 mb-3 opacity-30' />
                   <p className='text-sm'>Tu carrito está vacío</p>
                 </div>
@@ -356,14 +356,14 @@ export function Cart({
                   <div key={item.producto_id} className='flex items-center gap-3 bg-[#faf6ef] rounded-2xl p-3'>
                     <span className='text-3xl'>{item.emoji}</span>
                     <div className='flex-1 min-w-0'>
-                      <p className='text-sm font-medium text-[#3d2b1f] truncate'>{item.nombre}</p>
+                      <p className='text-sm font-medium text-[#3d2b1f] leading-snug line-clamp-2'>{item.nombre}</p>
                       <p className='text-xs text-[#8a5a1a] font-semibold'>${item.precio} c/u</p>
                     </div>
                     <div className='flex items-center gap-2'>
                       <button
                         onClick={() => cambiarCantidad(item.producto_id, item.cantidad - 1)}
                         aria-label={`Quitar una unidad de ${item.nombre}`}
-                        className='w-7 h-7 rounded-full bg-white border border-[#f0e6d3] flex items-center justify-center hover:border-[#c47c2b] transition-colors'
+                        className='w-11 h-11 sm:w-8 sm:h-8 rounded-full bg-white border border-[#e3d3b8] flex items-center justify-center hover:border-[#c47c2b] transition-colors'
                       >
                         <Minus className='h-3 w-3 text-[#3d2b1f]' />
                       </button>
@@ -371,7 +371,7 @@ export function Cart({
                       <button
                         onClick={() => cambiarCantidad(item.producto_id, item.cantidad + 1)}
                         aria-label={`Agregar una unidad de ${item.nombre}`}
-                        className='w-7 h-7 rounded-full bg-white border border-[#f0e6d3] flex items-center justify-center hover:border-[#c47c2b] transition-colors'
+                        className='w-11 h-11 sm:w-8 sm:h-8 rounded-full bg-white border border-[#e3d3b8] flex items-center justify-center hover:border-[#c47c2b] transition-colors'
                       >
                         <Plus className='h-3 w-3 text-[#3d2b1f]' />
                       </button>
@@ -381,7 +381,7 @@ export function Cart({
                       <button
                         onClick={() => quitar(item.producto_id)}
                         aria-label={`Quitar ${item.nombre} del carrito`}
-                        className='text-xs text-[#5c4033] hover:text-red-500 transition-colors'
+                        className='text-xs text-[#5c4033] hover:text-red-600 underline underline-offset-2 min-h-8 transition-colors'
                       >
                         quitar
                       </button>
@@ -399,10 +399,10 @@ export function Cart({
                   return (
                     <div className='space-y-1.5' aria-live='polite'>
                       <div className='flex justify-between text-xs font-medium'>
-                        <span className={alcanzado ? 'text-green-600' : 'text-[#c47c2b]'}>
+                        <span className={alcanzado ? 'text-green-700' : 'text-[#8a5a1a]'}>
                           {alcanzado ? '✓ Listo para confirmar' : `Faltan $${redondear(MINIMO_PEDIDO - totalFinal)} para el mínimo`}
                         </span>
-                        <span className='text-[#8a7060]'>${totalFinal} / ${MINIMO_PEDIDO}</span>
+                        <span className='text-[#6e5746]'>${totalFinal} / ${MINIMO_PEDIDO}</span>
                       </div>
                       <div className='h-2 bg-[#f0e6d3] rounded-full overflow-hidden'>
                         <div
@@ -417,7 +417,7 @@ export function Cart({
                 {cuponBox}
                 {descuento > 0 && (
                   <div className='space-y-1 text-sm'>
-                    <div className='flex justify-between text-[#8a7060]'>
+                    <div className='flex justify-between text-[#6e5746]'>
                       <span>Subtotal</span>
                       <span>${subtotalMostrar}</span>
                     </div>
@@ -428,8 +428,8 @@ export function Cart({
                   </div>
                 )}
                 <div className='flex justify-between items-center'>
-                  <span className='text-[#8a7060] text-sm'>Total</span>
-                  <span className='text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'Georgia, serif' }}>
+                  <span className='text-[#6e5746] text-sm'>Total</span>
+                  <span className='text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'var(--display)' }}>
                     ${totalFinal}
                   </span>
                 </div>
@@ -441,7 +441,7 @@ export function Cart({
                   Continuar con el pedido →
                 </button>
                 {totalFinal >= MINIMO_PEDIDO && (
-                  <p className='text-xs text-[#8a7060] text-center'>Envío incluido en todos los pedidos</p>
+                  <p className='text-xs text-[#6e5746] text-center'>Envío incluido en todos los pedidos</p>
                 )}
               </div>
             )}
@@ -454,7 +454,7 @@ export function Cart({
             <div className='flex-1 overflow-y-auto p-5 space-y-4'>
               {/* Resumen */}
               <div className='bg-[#faf6ef] rounded-2xl p-4'>
-                <p className='text-xs text-[#8a7060] mb-2 font-medium uppercase tracking-wider'>Tu pedido</p>
+                <p className='text-xs text-[#6e5746] mb-2 font-medium uppercase tracking-wider'>Tu pedido</p>
                 {items.map((i) => (
                   <div key={i.producto_id} className='flex justify-between text-sm py-1'>
                     <span className='text-[#3d2b1f]'>
@@ -465,7 +465,7 @@ export function Cart({
                 ))}
                 {descuento > 0 && (
                   <>
-                    <div className='flex justify-between text-sm pt-2 border-t border-[#f0e6d3] mt-2 text-[#8a7060]'>
+                    <div className='flex justify-between text-sm pt-2 border-t border-[#f0e6d3] mt-2 text-[#6e5746]'>
                       <span>Subtotal</span>
                       <span>${subtotalMostrar}</span>
                     </div>
@@ -512,7 +512,7 @@ export function Cart({
               {/* Email */}
               <div>
                 <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>
-                  Email <span className='text-[#c47c2b]'>*</span> <span className='text-[#8a7060] font-normal'>(para enviarte la confirmación de tu pedido)</span>
+                  Email <span className='text-[#c47c2b]'>*</span> <span className='text-[#6e5746] font-normal'>(para enviarte la confirmación de tu pedido)</span>
                 </label>
                 <input
                   type='email'
@@ -599,7 +599,7 @@ export function Cart({
                         className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border text-xs font-medium transition-all ${
                           form.metodo_pago === m.value
                             ? 'border-[#c47c2b] bg-[#fef3d0] text-[#c47c2b]'
-                            : 'border-[#f0e6d3] text-[#8a7060] hover:border-[#c47c2b]/50'
+                            : 'border-[#f0e6d3] text-[#6e5746] hover:border-[#c47c2b]/50'
                         }`}
                       >
                         <span className='text-xl'>{m.label.split(' ')[0]}</span>
@@ -613,7 +613,7 @@ export function Cart({
                   {metodoSeleccionado && (
                     <div className='mt-3 p-3 bg-[#faf6ef] rounded-xl border border-[#f0e6d3] text-xs text-[#3d2b1f] space-y-2'>
                       {form.metodo_pago === 'mercadopago' ? (
-                        <p className='text-[#8a7060]'>
+                        <p className='text-[#6e5746]'>
                           Al confirmar serás redirigido a Mercado Pago para completar el pago de forma segura.
                         </p>
                       ) : (
@@ -641,7 +641,7 @@ export function Cart({
               </button>
               <button
                 onClick={() => setPaso('carrito')}
-                className='w-full py-2.5 text-sm text-[#8a7060] hover:text-[#3d2b1f] transition-colors'
+                className='w-full py-2.5 text-sm text-[#6e5746] hover:text-[#3d2b1f] transition-colors'
               >
                 ← Volver al carrito
               </button>
@@ -655,30 +655,30 @@ export function Cart({
             <div className='w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4'>
               <CheckCircle className='h-8 w-8 text-green-500' />
             </div>
-            <h3 className='text-xl font-bold text-[#3d2b1f] mb-2' style={{ fontFamily: 'Georgia, serif' }}>
+            <h3 className='text-xl font-bold text-[#3d2b1f] mb-2' style={{ fontFamily: 'var(--display)' }}>
               ¡Pedido recibido!
             </h3>
             {esPagoManual ? (
               <>
-                <p className='text-[#8a7060] text-sm mb-2'>
+                <p className='text-[#6e5746] text-sm mb-2'>
                   Recibimos tu pedido <span className='font-bold text-[#c47c2b]'>#{numeroPedido}</span>.
                 </p>
                 {linkComprobante ? (
-                  <p className='text-[#8a7060] text-sm mb-6'>
+                  <p className='text-[#6e5746] text-sm mb-6'>
                     Para confirmarlo, envianos el comprobante del pago por WhatsApp con el botón de acá abajo.
                   </p>
                 ) : (
-                  <p className='text-[#8a7060] text-sm mb-6'>
+                  <p className='text-[#6e5746] text-sm mb-6'>
                     Te contactaremos al teléfono que dejaste para coordinar la entrega.
                   </p>
                 )}
               </>
             ) : (
               <>
-                <p className='text-[#8a7060] text-sm mb-2'>
+                <p className='text-[#6e5746] text-sm mb-2'>
                   Tu pedido <span className='font-bold text-[#c47c2b]'>#{numeroPedido}</span> fue confirmado.
                 </p>
-                <p className='text-[#8a7060] text-sm mb-6'>
+                <p className='text-[#6e5746] text-sm mb-6'>
                   Te contactaremos al teléfono que dejaste para coordinar la entrega.
                 </p>
               </>
@@ -742,7 +742,7 @@ function DatosBancarios({ info, conBotonWhatsApp }: { info: PagoMetodo; conBoton
   ].filter((f) => f.value.trim().length > 0)
 
   if (filas.length === 0) {
-    return <p className='text-[#8a7060]'>Todavía no hay datos cargados — coordiná por WhatsApp.</p>
+    return <p className='text-[#6e5746]'>Todavía no hay datos cargados — coordiná por WhatsApp.</p>
   }
 
   return (
@@ -750,13 +750,13 @@ function DatosBancarios({ info, conBotonWhatsApp }: { info: PagoMetodo; conBoton
       {filas.map((f) => (
         <div key={f.label} className='flex items-center justify-between gap-2'>
           <div className='flex items-baseline gap-1.5 min-w-0'>
-            <span className='text-[#8a7060] shrink-0'>{f.label}:</span>
+            <span className='text-[#6e5746] shrink-0'>{f.label}:</span>
             <span className={`text-[#3d2b1f] truncate ${f.mono ? 'font-mono' : ''}`}>{f.value}</span>
           </div>
           {f.copiable && <CopyButton text={f.value} />}
         </div>
       ))}
-      <p className='text-[#8a7060] pt-1.5'>
+      <p className='text-[#6e5746] pt-1.5'>
         {conBotonWhatsApp
           ? 'Después de pagar, envianos el comprobante por WhatsApp — el botón te aparece al confirmar el pedido.'
           : 'Después de pagar, guardá el comprobante — te contactaremos para coordinar la entrega.'}
