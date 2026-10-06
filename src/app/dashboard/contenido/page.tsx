@@ -530,7 +530,7 @@ export default function ContenidoPage() {
                         {s.valor || '?'}
                       </div>
                       <div className='flex gap-3 flex-1'>
-                        <input className={`${inp} w-24`} value={s.valor} onChange={(e) => setHero((p) => ({ ...p, stats: p.stats.map((x, j) => j === i ? { ...x, valor: e.target.value } : x) }))} placeholder='18+' />
+                        <input className={`${inp} w-24! shrink-0`} value={s.valor} onChange={(e) => setHero((p) => ({ ...p, stats: p.stats.map((x, j) => j === i ? { ...x, valor: e.target.value } : x) }))} placeholder='18+' />
                         <input className={inp} value={s.label} onChange={(e) => setHero((p) => ({ ...p, stats: p.stats.map((x, j) => j === i ? { ...x, label: e.target.value } : x) }))} placeholder='Variedades' />
                       </div>
                     </div>
@@ -546,10 +546,18 @@ export default function ContenidoPage() {
                       </button>
                     )}
                   </div>
+                  {hero.tags.length > 0 && (
+                    <div className='flex gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#8a7060]'>
+                      <span className='w-16 shrink-0 text-center'>Emoji</span>
+                      <span className='flex-1'>Texto del tag</span>
+                      <span className='w-6 shrink-0' />
+                    </div>
+                  )}
                   {hero.tags.map((t, i) => (
                     <div key={i} className='flex gap-2 items-center'>
-                      <input className={`${inp} w-16 text-center`} value={t.emoji} onChange={(e) => setHero((p) => ({ ...p, tags: p.tags.map((x, j) => j === i ? { ...x, emoji: e.target.value } : x) }))} />
-                      <input className={`${inp} flex-1`} value={t.texto} onChange={(e) => setHero((p) => ({ ...p, tags: p.tags.map((x, j) => j === i ? { ...x, texto: e.target.value } : x) }))} />
+                      {/* inp trae w-full: se fuerza el ancho para que el texto no quede aplastado */}
+                      <input aria-label={`Emoji del tag ${i + 1}`} className={`${inp} w-16! shrink-0 text-center`} value={t.emoji} placeholder='🌿' maxLength={4} onChange={(e) => setHero((p) => ({ ...p, tags: p.tags.map((x, j) => j === i ? { ...x, emoji: e.target.value } : x) }))} />
+                      <input aria-label={`Texto del tag ${i + 1}`} className={`${inp} flex-1 min-w-0`} value={t.texto} placeholder='Ej: Sin gluten' onChange={(e) => setHero((p) => ({ ...p, tags: p.tags.map((x, j) => j === i ? { ...x, texto: e.target.value } : x) }))} />
                       <button type='button' onClick={() => setHero((p) => ({ ...p, tags: p.tags.filter((_, j) => j !== i) }))} className='text-[#8a7060] hover:text-red-500 p-1'>
                         <Trash2 className='h-4 w-4' />
                       </button>
