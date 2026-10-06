@@ -249,7 +249,7 @@ export default function DescuentosPage() {
 
         <div className='border-t border-[#f0e6d3] pt-4 space-y-3'>
           <h4 className='text-sm font-semibold text-[#3d2b1f]'>Imagen de la promo</h4>
-          {!promo.activo && <p className='text-xs text-[#8a7060]'>Vista previa — la promo está desactivada.</p>}
+          {!promo.activo && <p className='text-xs text-[#8a7060]'>Vista previa: la promo está desactivada.</p>}
           <div className='max-w-xs'>
             <FormatoToggle formato={formatoPromo} onChange={setFormatoPromo} />
           </div>

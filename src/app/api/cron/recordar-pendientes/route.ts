@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
   const filasTexto = pendientes
     .map((p) => {
       const horas = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 3_600_000)
-      return `#${p.numero} — ${p.nombre} — $${p.total} — hace ${horas}h`
+      return `#${p.numero} · ${p.nombre} · $${p.total} · hace ${horas}h`
     })
     .join('\n')
 
@@ -64,8 +64,7 @@ Tenés ${pendientes.length} pedido${pendientes.length > 1 ? 's' : ''} en estado 
 
 ${filasTexto}
 
-—
-Sano y Rico — recordatorio automático`,
+Sano y Rico · recordatorio automático`,
       html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
         <div style="background:#c47c2b;padding:24px 32px;border-radius:16px 16px 0 0">
@@ -90,7 +89,7 @@ Sano y Rico — recordatorio automático`,
           </table>
         </div>
         <div style="background:#f0e6d3;padding:12px 32px;border-radius:0 0 16px 16px;text-align:center">
-          <p style="margin:0;font-size:12px;color:#8a7060">Sano y Rico — recordatorio automático</p>
+          <p style="margin:0;font-size:12px;color:#8a7060">Sano y Rico · recordatorio automático</p>
         </div>
       </div>
     `

@@ -652,7 +652,7 @@ export default function ContenidoPage() {
                           <input className={inp} value={t.lugar} onChange={(e) => setTestimonios((p) => p.map((x, j) => j === i ? { ...x, lugar: e.target.value } : x))} />
                         </Field>
                       </div>
-                      <Field label='Rating' hint='De 1 a 5 estrellas — se muestra debajo del texto del testimonio.'>
+                      <Field label='Rating' hint='De 1 a 5 estrellas. Se muestra debajo del texto del testimonio.'>
                         <div className='flex items-center gap-1'>
                           {[1, 2, 3, 4, 5].map((n) => {
                             const activa = n <= (t.estrellas ?? 5)
@@ -735,7 +735,7 @@ export default function ContenidoPage() {
                               value={info.tipoCuenta ?? ''}
                               onChange={(e) => update({ tipoCuenta: e.target.value })}
                             >
-                              <option value=''>— Elegir —</option>
+                              <option value=''>Elegir…</option>
                               {TIPOS_CUENTA_UY.map((t) => <option key={t} value={t}>{t}</option>)}
                             </select>
                           </Field>
@@ -861,7 +861,7 @@ export default function ContenidoPage() {
                   <div key={i} className='bg-white rounded-2xl border border-[#f0e6d3] p-4'>
                     <p className='text-sm font-semibold text-[#3d2b1f] mb-2'>{m.label}</p>
                     {m.tipo === 'mp' ? (
-                      <p className='text-xs text-[#8a7060]'>Checkout Pro — pago dinámico</p>
+                      <p className='text-xs text-[#8a7060]'>Checkout Pro: pago dinámico</p>
                     ) : (
                       <div className='text-xs text-[#8a7060] space-y-0.5'>
                         {m.info.banco && <p>Banco: <span className='text-[#3d2b1f]'>{m.info.banco}</span></p>}
@@ -879,7 +879,7 @@ export default function ContenidoPage() {
               })}
               {!pagos.transferencia.activo && !pagos.deposito.activo && !pagos.mercadopago.activo && (
                 <div className='bg-[#faf6ef] rounded-2xl p-4 text-center text-xs text-[#8a7060]'>
-                  Ningún método activo — el cliente no verá el selector de pago.
+                  Ningún método activo: el cliente no verá el selector de pago.
                 </div>
               )}
             </div>

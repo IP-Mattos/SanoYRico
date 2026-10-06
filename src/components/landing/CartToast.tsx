@@ -66,7 +66,7 @@ export function StickyMobileCart() {
   return (
     <button
       onClick={() => setIsOpen(true)}
-      aria-label={`Ver carrito — ${cantidad} productos, total $${total}`}
+      aria-label={`Ver carrito: ${cantidad} productos, total $${total}`}
       className={`lg:hidden fixed bottom-5 right-4 z-40 flex items-center gap-3 bg-[#3d2b1f] text-white pl-4 pr-5 min-h-12 rounded-full ring-1 ring-white/10 shadow-[0_18px_40px_-12px_rgba(61,43,31,0.6)] transition-all duration-300 ${
         visible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
       }`}
