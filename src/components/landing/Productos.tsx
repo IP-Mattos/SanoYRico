@@ -1,7 +1,7 @@
 // src/components/landing/Productos.tsx
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import { Search, X, Plus, Minus, LayoutGrid } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -60,7 +60,7 @@ function SkeletonCard() {
 // 45 chars ≈ 1 línea en el tamaño de fuente de la descripción.
 const DESCRIPCION_LARGA = 45
 
-function ProductCard({ p }: { p: Producto }) {
+function ProductCard({ p, idx }: { p: Producto; idx: number }) {
   const { agregar, items, cambiarCantidad } = useCart()
   const sinStock = p.stock === 0
   const descripcion = p.descripcion ?? ''
@@ -72,7 +72,10 @@ function ProductCard({ p }: { p: Producto }) {
   const enCarrito = items.find((i) => i.producto_id === p.id)?.cantidad ?? 0
 
   return (
-    <article className={`group card card-hover flex flex-col overflow-hidden ${sinStock ? 'opacity-90' : ''}`}>
+    <article
+      className={`reveal group card card-hover flex flex-col overflow-hidden ${sinStock ? 'opacity-90' : ''}`}
+      style={{ '--i': idx % 4 } as React.CSSProperties}
+    >
       {/* Imagen / emoji a sangre completa */}
       <div className={`relative aspect-square ${IMG_BG} flex items-center justify-center overflow-hidden`}>
         {p.imagen_url ? (
@@ -154,7 +157,7 @@ function ProductCard({ p }: { p: Producto }) {
 
           {enCarrito > 0 && !sinStock ? (
             <div
-              className='flex items-center justify-between h-11 rounded-full bg-[#3d2b1f] text-white px-1.5'
+              className='animate-pop flex items-center justify-between h-11 rounded-full bg-[#3d2b1f] text-white px-1.5'
               role='group'
               aria-label={`Cantidad de ${p.nombre} en el carrito`}
             >
@@ -166,7 +169,7 @@ function ProductCard({ p }: { p: Producto }) {
               >
                 <Minus className='h-4 w-4' strokeWidth={2.5} />
               </button>
-              <span className='text-sm font-bold tabular-nums' aria-live='polite'>
+              <span key={enCarrito} className='animate-bump text-sm font-bold tabular-nums' aria-live='polite'>
                 {enCarrito}
               </span>
               <button
@@ -203,6 +206,8 @@ export function Productos() {
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState<SortKey>('nombre')
   const supabase = createClient()
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const indRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     const cargar = async () => {
@@ -232,9 +237,29 @@ export function Productos() {
     return sortProductos(base, orden)
   }, [productos, tab, busqueda, orden, buscando])
 
+  // Indicador deslizante: se posiciona sobre el tab activo midiendo el DOM (sin estado en React)
+  useEffect(() => {
+    const mover = () => {
+      const cont = tabsRef.current
+      const ind = indRef.current
+      if (!cont || !ind) return
+      const activo = cont.querySelector<HTMLElement>('button[aria-pressed="true"]')
+      if (!activo) {
+        ind.style.opacity = '0'
+        return
+      }
+      ind.style.opacity = '1'
+      ind.style.width = `${activo.offsetWidth}px`
+      ind.style.transform = `translateX(${activo.offsetLeft}px)`
+    }
+    mover()
+    window.addEventListener('resize', mover)
+    return () => window.removeEventListener('resize', mover)
+  }, [tab, buscando, categorias, productos.length, loading])
+
   const tabCls = (activo: boolean) =>
     `shrink-0 snap-start inline-flex items-center gap-2 px-4 min-h-10 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
-      activo ? 'bg-[#3d2b1f] text-white shadow-sm' : 'text-[#5c4033] hover:bg-[#f0e6d3]'
+      activo ? 'relative z-10 text-white' : 'relative z-10 text-[#5c4033] hover:bg-[#f0e6d3]'
     }`
   const countCls = (activo: boolean) =>
     `text-xs px-1.5 py-0.5 rounded-full tabular-nums ${activo ? 'bg-white/20' : 'bg-[#f0e6d3]'}`
@@ -255,10 +280,16 @@ export function Productos() {
         {/* Barra de herramientas: tabs a la izquierda, búsqueda y orden a la derecha */}
         <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-8'>
           <div
-            className='flex gap-1 overflow-x-auto -mx-6 px-6 lg:mx-0 lg:px-1 lg:overflow-visible snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:bg-white lg:border lg:border-[#eadfce] lg:rounded-full lg:py-1 lg:shadow-[var(--shadow-card)]'
+            ref={tabsRef}
+            className='relative flex gap-1 overflow-x-auto -mx-6 px-6 lg:mx-0 lg:px-1 lg:overflow-visible snap-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:bg-white lg:border lg:border-[#eadfce] lg:rounded-full lg:py-1 lg:shadow-[var(--shadow-card)]'
             role='group'
             aria-label='Categorías'
           >
+            <span
+              ref={indRef}
+              aria-hidden='true'
+              className='absolute left-0 top-0 bottom-0 my-auto h-10 rounded-full bg-[#3d2b1f] shadow-sm opacity-0 transition-[transform,width,opacity] duration-300 ease-[cubic-bezier(0.34,1.2,0.64,1)] motion-reduce:transition-none lg:top-1 lg:bottom-1 lg:my-0'
+            />
             <button
               onClick={() => setTab(TODOS)}
               aria-pressed={!buscando && tab === TODOS}
@@ -343,9 +374,9 @@ export function Productos() {
               : 'No hay productos disponibles en esta categoría.'}
           </div>
         ) : (
-          <div className={GRID}>
-            {filtrados.map((p) => (
-              <ProductCard key={p.id} p={p} />
+          <div key={`${tab}|${orden}|${buscando}`} className={`${GRID} animate-gridin`}>
+            {filtrados.map((p, idx) => (
+              <ProductCard key={p.id} p={p} idx={idx} />
             ))}
           </div>
         )}

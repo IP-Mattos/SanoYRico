@@ -153,7 +153,8 @@ select:focus-visible {
   animation: float 4s ease-in-out infinite;
 }
 .animate-fadeup {
-  animation: fadeUp 0.6s ease both;
+  animation: fadeUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
 }
 .animate-marquee {
   animation: marquee 20s linear infinite;
@@ -171,9 +172,9 @@ select:focus-visible {
     opacity: 0;
     transform: translateY(22px);
   }
+  /* sin transform en "to": al terminar se respeta el transform propio (hover lift) */
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 @supports (animation-timeline: view()) {
@@ -181,7 +182,7 @@ select:focus-visible {
     .reveal {
       animation: revealIn linear both;
       animation-timeline: view();
-      animation-range: entry 5% entry 40%;
+      animation-range: entry calc(5% + var(--i, 0) * 5%) entry calc(40% + var(--i, 0) * 5%);
     }
   }
 }
@@ -255,5 +256,211 @@ select:focus-visible {
     border-radius: 0.75rem;
     background: #f6ecd9;
     color: #8a5a1a;
+  }
+}
+
+/* ───────── Animaciones (todo bajo no-preference; sin JS salvo CountUp / TrustRow / indicador de tabs) ───────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes gridIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.045);
+    opacity: 0.65;
+  }
+}
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes underlineGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes iconDraw {
+  from {
+    stroke-dashoffset: 80;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  14%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes truckRoll {
+  0% {
+    transform: translateX(0);
+  }
+  35% {
+    transform: translateX(5px);
+  }
+  55% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+@keyframes pinDrop {
+  0% {
+    transform: translateY(-7px);
+  }
+  55% {
+    transform: translateY(0) scaleY(0.88);
+  }
+  75% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+}
+@keyframes cardFlip {
+  from {
+    transform: perspective(120px) rotateY(0);
+  }
+  to {
+    transform: perspective(120px) rotateY(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fadein {
+    animation: fadeIn 0.25s ease both;
+  }
+  .animate-gridin {
+    animation: gridIn 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .animate-pop {
+    animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-breathe {
+    animation: breathe 7s ease-in-out infinite;
+  }
+  .animate-float-soft {
+    animation: floatSoft 6s ease-in-out infinite;
+  }
+
+  /* palabra destacada del titular: subrayado que se dibuja */
+  .accent-word {
+    position: relative;
+    display: inline-block;
+  }
+  .accent-word::after {
+    content: '';
+    position: absolute;
+    left: 0.05em;
+    right: 0.1em;
+    bottom: 0.06em;
+    height: 0.07em;
+    border-radius: 999px;
+    background: rgba(196, 124, 43, 0.4);
+    transform-origin: left;
+    animation: underlineGrow 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.9s both;
+  }
+
+  /* marquee: pausa al pasar el mouse */
+  .marquee-wrap:hover .animate-marquee {
+    animation-play-state: paused;
+  }
+
+  /* fila de confianza: íconos que se dibujan, destello cálido y gesto por ícono al hover */
+  .trust-row {
+    position: relative;
+    overflow: hidden;
+  }
+  .trust-row::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 38%, rgba(232, 168, 50, 0.2) 50%, transparent 62%);
+    transform: translateX(-120%);
+    animation: sweep 11s ease-in-out 3s infinite;
+  }
+  .trust-row[data-ready]:not([data-in]) .trust-icon * {
+    stroke-dasharray: 80;
+    stroke-dashoffset: 80;
+  }
+  .trust-row[data-in] .trust-icon * {
+    stroke-dasharray: 80;
+    animation: iconDraw 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 260ms + 150ms);
+  }
+  .trust-item .trust-icon {
+    transform-origin: center;
+  }
+  .trust-item[data-kind='envio']:hover .trust-icon {
+    animation: truckRoll 0.7s ease-in-out;
+  }
+  .trust-item[data-kind='origen']:hover .trust-icon {
+    animation: pinDrop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1);
+  }
+  .trust-item[data-kind='pago']:hover .trust-icon {
+    animation: cardFlip 0.8s ease-in-out;
+  }
+
+  /* FAQ: animación de altura (Chrome/Edge modernos; resto abre sin animar) */
+  details {
+    interpolate-size: allow-keywords;
+  }
+  details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.3s ease,
+      content-visibility 0.3s allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
   }
 }

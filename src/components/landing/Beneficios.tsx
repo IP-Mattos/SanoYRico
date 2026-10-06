@@ -22,7 +22,7 @@ export function Beneficios({ items = DEFAULT_CONFIG.beneficios }: { items?: Bene
           {items.map((item, i) => {
             const Icon = iconFor(`${item.titulo} ${item.descripcion}`, i)
             return (
-              <div key={i} className='reveal border-t border-white/15 pt-6'>
+              <div key={i} className='reveal border-t border-white/15 pt-6' style={{ '--i': i % 4 } as React.CSSProperties}>
                 <span className='inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8a832]/15 text-[#e8a832] mb-4'>
                   <Icon className='h-5 w-5' strokeWidth={1.75} aria-hidden='true' />
                 </span>

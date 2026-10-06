@@ -49,7 +49,8 @@ export function Testimonios({
           {visibles.map((t, i) => (
             <figure
               key={i}
-              className='card break-inside-avoid mb-4 p-6 bg-[#faf6ef]!'
+              className='reveal card break-inside-avoid mb-4 p-6 bg-[#faf6ef]!'
+              style={{ '--i': i % 3 } as React.CSSProperties}
             >
               <Estrellas cantidad={t.estrellas} />
               <blockquote

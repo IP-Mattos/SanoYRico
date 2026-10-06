@@ -17,7 +17,7 @@ export function ComoFunciona({ config = DEFAULT_CONFIG.comoFunciona }: { config?
           {pasos.map((p, i) => {
             const Icon = iconFor(`${p.titulo} ${p.descripcion}`, i)
             return (
-              <li key={i} className='reveal card card-hover p-6 sm:p-8 bg-[#faf6ef]!'>
+              <li key={i} className='reveal card card-hover p-6 sm:p-8 bg-[#faf6ef]!' style={{ '--i': i } as React.CSSProperties}>
                 <div className='flex items-center justify-between mb-6'>
                   <span className='icon-chip bg-white!'>
                     <Icon className='h-5 w-5' strokeWidth={1.75} aria-hidden='true' />

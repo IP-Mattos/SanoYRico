@@ -322,7 +322,7 @@ export function Cart({
 
   return (
     <>
-      {isOpen && <div className='fixed inset-0 bg-black/40 z-50' onClick={cerrar} />}
+      {isOpen && <div className='fixed inset-0 bg-black/40 z-50 animate-fadein' onClick={cerrar} />}
 
       <div
         className={`fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl flex flex-col transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
