@@ -116,7 +116,7 @@ function PreviewHero({ h }: { h: HeroConfig }) {
       <div className='flex flex-wrap gap-2'>
         {h.tags.map((t, i) => (
           <span key={i} className='bg-white border border-[#f0e6d3] rounded-full px-3 py-1 text-xs text-[#3d2b1f] font-medium shadow-sm'>
-            {t.emoji} {t.texto}
+            {t.texto}
           </span>
         ))}
       </div>
@@ -146,7 +146,6 @@ function PreviewBeneficios({ items }: { items: BeneficioItem[] }) {
       <p className='text-white/40 text-[10px] uppercase tracking-widest mb-3'>Vista previa</p>
       {items.map((b, i) => (
         <div key={i} className='border border-white/10 rounded-xl p-4'>
-          <div className='text-2xl mb-2'>{b.icono}</div>
           <p className='text-white text-sm font-bold' style={{ fontFamily: 'Georgia, serif' }}>{b.titulo || '—'}</p>
           <p className='text-white/50 text-xs mt-1 leading-relaxed'>{b.descripcion || '—'}</p>
         </div>
@@ -171,7 +170,7 @@ function PreviewTestimonios({ items }: { items: TestimonioItem[] }) {
               &ldquo;{t.texto || '…'}&rdquo;
             </p>
             <div className='flex items-center gap-2'>
-              <div className='w-8 h-8 rounded-full bg-[#f0e6d3] flex items-center justify-center text-base'>{t.avatar || '😊'}</div>
+              <div className='w-8 h-8 rounded-full bg-[#f0e6d3] flex items-center justify-center text-base'>{(t.nombre || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join('')}</div>
               <div>
                 <p className='text-xs font-semibold text-[#3d2b1f]'>{t.nombre || 'Nombre'}</p>
                 <p className='text-[10px] text-[#8a7060]'>{t.lugar || 'Ciudad'}</p>
@@ -194,7 +193,6 @@ function PreviewComoFunciona({ c }: { c: ComoFuncionaConfig }) {
         <div className='space-y-2 pt-2 border-t border-[#f0e6d3]'>
           {c.pasos.map((p, i) => (
             <div key={i} className='bg-white rounded-xl p-3 flex items-start gap-3 border border-[#f0e6d3]'>
-              <span className='text-2xl shrink-0'>{p.emoji || '✨'}</span>
               <div className='flex-1 min-w-0'>
                 <div className='flex items-center gap-2'>
                   <span className='text-[10px] font-bold text-[#c47c2b] font-mono'>{String(i + 1).padStart(2, '0')}</span>
@@ -421,14 +419,10 @@ export default function ContenidoPage() {
                   {comoFunciona.pasos.map((paso, i) => (
                     <div key={i} className='bg-[#faf6ef] rounded-xl p-4 space-y-3 relative'>
                       <span className='absolute top-2 right-3 text-[10px] font-mono text-[#c47c2b]'>{String(i + 1).padStart(2, '0')}</span>
-                      <div className='grid grid-cols-[80px,1fr] gap-3'>
-                        <Field label='Emoji'>
-                          <input className={`${inp} text-center text-xl`} value={paso.emoji} onChange={(e) => setComoFunciona((p) => ({ ...p, pasos: p.pasos.map((x, j) => j === i ? { ...x, emoji: e.target.value } : x) }))} />
-                        </Field>
-                        <Field label='Título'>
-                          <input className={inp} value={paso.titulo} onChange={(e) => setComoFunciona((p) => ({ ...p, pasos: p.pasos.map((x, j) => j === i ? { ...x, titulo: e.target.value } : x) }))} />
-                        </Field>
-                      </div>
+                      {/* Sin campo de emoji: la landing elige el ícono según el texto */}
+                      <Field label='Título'>
+                        <input className={inp} value={paso.titulo} onChange={(e) => setComoFunciona((p) => ({ ...p, pasos: p.pasos.map((x, j) => j === i ? { ...x, titulo: e.target.value } : x) }))} />
+                      </Field>
                       <Field label='Descripción'>
                         <textarea className={ta} rows={2} value={paso.descripcion} onChange={(e) => setComoFunciona((p) => ({ ...p, pasos: p.pasos.map((x, j) => j === i ? { ...x, descripcion: e.target.value } : x) }))} />
                       </Field>
@@ -541,22 +535,14 @@ export default function ContenidoPage() {
                   <div className='flex items-center justify-between'>
                     <p className='text-xs font-bold text-[#c47c2b] uppercase tracking-widest'>Tags flotantes (máx. 4)</p>
                     {hero.tags.length < 4 && (
-                      <button type='button' onClick={() => setHero((p) => ({ ...p, tags: [...p.tags, { emoji: '✨', texto: 'Nuevo tag' }] }))} className='flex items-center gap-1 text-xs text-[#c47c2b] hover:text-[#3d2b1f] font-medium'>
+                      <button type='button' onClick={() => setHero((p) => ({ ...p, tags: [...p.tags, { emoji: '', texto: '' }] }))} className='flex items-center gap-1 text-xs text-[#c47c2b] hover:text-[#3d2b1f] font-medium'>
                         <Plus className='h-3.5 w-3.5' /> Agregar
                       </button>
                     )}
                   </div>
-                  {hero.tags.length > 0 && (
-                    <div className='flex gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#8a7060]'>
-                      <span className='w-16 shrink-0 text-center'>Emoji</span>
-                      <span className='flex-1'>Texto del tag</span>
-                      <span className='w-6 shrink-0' />
-                    </div>
-                  )}
+                  <p className='text-xs text-[#8a7060]'>El ícono se elige solo según el texto.</p>
                   {hero.tags.map((t, i) => (
                     <div key={i} className='flex gap-2 items-center'>
-                      {/* inp trae w-full: se fuerza el ancho para que el texto no quede aplastado */}
-                      <input aria-label={`Emoji del tag ${i + 1}`} className={`${inp} w-16! shrink-0 text-center`} value={t.emoji} placeholder='🌿' maxLength={4} onChange={(e) => setHero((p) => ({ ...p, tags: p.tags.map((x, j) => j === i ? { ...x, emoji: e.target.value } : x) }))} />
                       <input aria-label={`Texto del tag ${i + 1}`} className={`${inp} flex-1 min-w-0`} value={t.texto} placeholder='Ej: Sin gluten' onChange={(e) => setHero((p) => ({ ...p, tags: p.tags.map((x, j) => j === i ? { ...x, texto: e.target.value } : x) }))} />
                       <button type='button' onClick={() => setHero((p) => ({ ...p, tags: p.tags.filter((_, j) => j !== i) }))} className='text-[#8a7060] hover:text-red-500 p-1'>
                         <Trash2 className='h-4 w-4' />
@@ -605,7 +591,6 @@ export default function ContenidoPage() {
                 {beneficios.map((b, i) => (
                   <div key={i} className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
                     <div className='flex items-center gap-3 px-5 py-3 bg-[#faf6ef] border-b border-[#f0e6d3]'>
-                      <span className='text-2xl'>{b.icono || '⭐'}</span>
                       <span className='text-sm font-semibold text-[#3d2b1f] flex-1 truncate'>{b.titulo || 'Sin título'}</span>
                       {beneficios.length > 1 && (
                         <button type='button' onClick={() => setBeneficios((p) => p.filter((_, j) => j !== i))} className='text-[#8a7060] hover:text-red-500 p-1'>
@@ -613,14 +598,11 @@ export default function ContenidoPage() {
                         </button>
                       )}
                     </div>
-                    <div className='p-5 grid grid-cols-[80px,1fr] gap-3'>
-                      <Field label='Icono'>
-                        <input className={`${inp} text-center text-xl`} value={b.icono} onChange={(e) => setBeneficios((p) => p.map((x, j) => j === i ? { ...x, icono: e.target.value } : x))} />
-                      </Field>
+                    <div className='p-5 grid grid-cols-1 gap-3'>
                       <Field label='Título'>
                         <input className={inp} value={b.titulo} onChange={(e) => setBeneficios((p) => p.map((x, j) => j === i ? { ...x, titulo: e.target.value } : x))} />
                       </Field>
-                      <div className='col-span-2'>
+                      <div>
                         <Field label='Descripción'>
                           <textarea className={`${ta}`} rows={2} value={b.descripcion} onChange={(e) => setBeneficios((p) => p.map((x, j) => j === i ? { ...x, descripcion: e.target.value } : x))} />
                         </Field>
@@ -643,7 +625,10 @@ export default function ContenidoPage() {
                 {testimonios.map((t, i) => (
                   <div key={i} className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
                     <div className='flex items-center gap-3 px-5 py-3 bg-[#faf6ef] border-b border-[#f0e6d3]'>
-                      <span className='w-8 h-8 rounded-full bg-[#f0e6d3] flex items-center justify-center text-lg'>{t.avatar || '😊'}</span>
+                      {/* Igual que la landing: iniciales en vez de emoji */}
+                      <span className='w-8 h-8 rounded-full bg-[#3d2b1f] text-white flex items-center justify-center text-xs font-semibold'>
+                        {(t.nombre || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('')}
+                      </span>
                       <div className='flex-1 min-w-0'>
                         <p className='text-sm font-semibold text-[#3d2b1f] truncate'>{t.nombre || 'Sin nombre'}</p>
                         <p className='text-xs text-[#8a7060]'>{t.lugar || 'Sin ciudad'}</p>
@@ -659,10 +644,7 @@ export default function ContenidoPage() {
                       )}
                     </div>
                     <div className='p-5 space-y-3'>
-                      <div className='grid grid-cols-3 gap-3'>
-                        <Field label='Avatar (emoji)'>
-                          <input className={`${inp} text-center text-xl`} value={t.avatar} onChange={(e) => setTestimonios((p) => p.map((x, j) => j === i ? { ...x, avatar: e.target.value } : x))} />
-                        </Field>
+                      <div className='grid grid-cols-2 gap-3'>
                         <Field label='Nombre'>
                           <input className={inp} value={t.nombre} onChange={(e) => setTestimonios((p) => p.map((x, j) => j === i ? { ...x, nombre: e.target.value } : x))} />
                         </Field>
