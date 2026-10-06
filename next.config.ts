@@ -5,7 +5,9 @@ const nextConfig: NextConfig = {
   compress: true,
   // El generador de flyers lee fuentes y logo con fs: asegurar que viajen en el bundle de la función
   outputFileTracingIncludes: {
-    '/api/flyers': ['./public/fonts/**', './public/logo-sano-y-rico.png']
+    '/api/flyers': ['./public/fonts/**', './public/logo-sano-y-rico.png'],
+    '/api/imagenes/cupon': ['./public/fonts/**', './public/logo-sano-y-rico.png'],
+    '/api/imagenes/promo': ['./public/fonts/**', './public/logo-sano-y-rico.png']
   },
   images: {
     remotePatterns: [

@@ -110,7 +110,7 @@ export async function proxy(req: NextRequest) {
 
   // ── Rutas de API que requieren sesión de admin ────────────────────────────
   // /api/pedidos/ (with trailing slash) protects sub-routes only; root POST stays public
-  const PROTECTED_APIS = ['/api/remove-bg', '/api/pedidos/', '/api/flyers', '/api/productos/']
+  const PROTECTED_APIS = ['/api/remove-bg', '/api/pedidos/', '/api/flyers', '/api/imagenes/', '/api/productos/']
   if (PROTECTED_APIS.some((p) => pathname.startsWith(p))) {
     if (!user) {
       return new NextResponse(
