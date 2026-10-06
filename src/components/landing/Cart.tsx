@@ -112,19 +112,7 @@ export function Cart({
       const mpRes = await fetch('/api/mp/create-preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pedido_id: pedido.id,
-          pedido_numero: pedido.numero,
-          nombre: form.nombre,
-          telefono: form.telefono,
-          items: items.map((i) => ({
-            nombre: i.nombre,
-            emoji: i.emoji,
-            cantidad: i.cantidad,
-            precio: i.precio
-          })),
-          total
-        })
+        body: JSON.stringify({ pedido_id: pedido.id })
       })
 
       if (mpRes.ok) {
