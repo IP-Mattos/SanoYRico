@@ -74,7 +74,7 @@ export function FotosLightbox({ titulo, fotos, inicial = 0, onClose }: Props) {
 
   return createPortal(
     <div
-      className='fixed inset-0 z-100 bg-[#1d130c]/90 flex items-center justify-center p-3 sm:p-6'
+      className='fixed inset-0 z-100 bg-[#1d130c]/95 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6'
       onClick={onClose}
     >
       <div
