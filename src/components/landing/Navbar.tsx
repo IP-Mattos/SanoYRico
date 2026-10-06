@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
@@ -9,7 +9,7 @@ export function Navbar() {
   const { cantidad, setIsOpen } = useCart()
   const [scrolled, setScrolled] = useState(false)
   const [bump, setBump] = useState(false)
-  const prevCantidad = useRef(cantidad)
+  const [prevCantidad, setPrevCantidad] = useState(cantidad)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -19,14 +19,16 @@ export function Navbar() {
   }, [])
 
   // Flash el badge del carrito cuando sube la cantidad (refuerza el toast).
+  if (cantidad !== prevCantidad) {
+    setPrevCantidad(cantidad)
+    setBump(cantidad > prevCantidad)
+  }
+
   useEffect(() => {
-    if (cantidad > prevCantidad.current) {
-      setBump(true)
-      const t = setTimeout(() => setBump(false), 500)
-      return () => clearTimeout(t)
-    }
-    prevCantidad.current = cantidad
-  }, [cantidad])
+    if (!bump) return
+    const t = setTimeout(() => setBump(false), 500)
+    return () => clearTimeout(t)
+  }, [bump])
 
   return (
     <>
