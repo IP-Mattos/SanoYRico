@@ -17,6 +17,8 @@ export interface ParamsFlyer {
   formato: FormatoFlyer
   titulo: string
   cupon: string | null
+  /** Usar la primera foto real de cada producto en lugar de la ilustración. */
+  fotos: boolean
 }
 
 export type ResultadoParams = { ok: true; params: ParamsFlyer } | { ok: false; error: string }
@@ -48,7 +50,9 @@ export function parsearParamsFlyer(sp: URLSearchParams): ResultadoParams {
     return { ok: false, error: 'Cupón inválido (solo letras, números y guiones, hasta 20)' }
   }
 
-  return { ok: true, params: { ids, formato: formato as FormatoFlyer, titulo, cupon: cuponRaw || null } }
+  const fotos = sp.get('fotos') === '1'
+
+  return { ok: true, params: { ids, formato: formato as FormatoFlyer, titulo, cupon: cuponRaw || null, fotos } }
 }
 
 /** Reordena los productos cargados según el orden de selección y descarta los que no llegaron. */

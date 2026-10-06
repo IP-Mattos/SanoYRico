@@ -33,6 +33,7 @@ export default function FlyersPage() {
   const [formato, setFormato] = useState<FormatoFlyer>('cuadrado')
   const [titulo, setTitulo] = useState(TITULO_FLYER_DEFAULT)
   const [cupon, setCupon] = useState('')
+  const [usarFotos, setUsarFotos] = useState(false)
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [generando, setGenerando] = useState(false)
@@ -72,8 +73,9 @@ export default function FlyersPage() {
     if (seleccion.length === 0 || !cuponValido || !tituloValido) return null
     const q = new URLSearchParams({ ids: seleccion.join(','), formato, titulo: titulo.trim() || TITULO_FLYER_DEFAULT })
     if (cuponLimpio) q.set('cupon', cuponLimpio)
+    if (usarFotos) q.set('fotos', '1')
     return q.toString()
-  }, [seleccion, formato, titulo, cuponLimpio, cuponValido, tituloValido])
+  }, [seleccion, formato, titulo, cuponLimpio, cuponValido, tituloValido, usarFotos])
 
   // Vista previa con debounce (el proxy limita /api a 20 pedidos por minuto)
   useEffect(() => {
@@ -296,6 +298,18 @@ export default function FlyersPage() {
               {!cuponValido && <p className='text-xs text-red-600 mt-1'>Solo letras, números y guiones.</p>}
               <p className='text-xs text-[#3d2b1f]/50 mt-1'>Solo se muestra el texto en la imagen; el cupón se crea en Descuentos.</p>
             </div>
+            <label className='flex items-start gap-3 cursor-pointer'>
+              <input
+                type='checkbox'
+                checked={usarFotos}
+                onChange={(e) => setUsarFotos(e.target.checked)}
+                className='h-4 w-4 mt-0.5 accent-[#c47c2b]'
+              />
+              <span>
+                <span className='block text-sm font-medium text-[#3d2b1f]'>Usar fotos reales</span>
+                <span className='block text-xs text-[#3d2b1f]/50'>Los productos con fotos muestran la primera en lugar de la ilustración.</span>
+              </span>
+            </label>
           </section>
         </div>
 

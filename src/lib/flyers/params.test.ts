@@ -9,13 +9,23 @@ const sp = (q: string) => new URLSearchParams(q)
 describe('parsearParamsFlyer', () => {
   it('acepta un caso mínimo y aplica defaults', () => {
     const r = parsearParamsFlyer(sp(`ids=${A}`))
-    expect(r).toEqual({ ok: true, params: { ids: [A], formato: 'cuadrado', titulo: 'Nuestros favoritos', cupon: null } })
+    expect(r).toEqual({ ok: true, params: { ids: [A], formato: 'cuadrado', titulo: 'Nuestros favoritos', cupon: null, fotos: false } })
   })
   it('rechaza sin ids, con más de 6 o con uuid inválido', () => {
     expect(parsearParamsFlyer(sp('')).ok).toBe(false)
     const siete = Array.from({ length: 7 }, (_, i) => `00000000-0000-4000-8000-00000000000${i}`).join(',')
     expect(parsearParamsFlyer(sp(`ids=${siete}`)).ok).toBe(false)
     expect(parsearParamsFlyer(sp(`ids=${A},nope`)).ok).toBe(false)
+  })
+  it('fotos solo se activa con fotos=1', () => {
+    const f = (q: string) => {
+      const r = parsearParamsFlyer(sp(`ids=${A}${q}`))
+      return r.ok && r.params.fotos
+    }
+    expect(f('')).toBe(false)
+    expect(f('&fotos=1')).toBe(true)
+    expect(f('&fotos=0')).toBe(false)
+    expect(f('&fotos=true')).toBe(false)
   })
   it('deduplica ids conservando el orden', () => {
     const r = parsearParamsFlyer(sp(`ids=${B},${A},${B}`))
