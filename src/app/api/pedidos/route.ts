@@ -170,7 +170,8 @@ export async function POST(req: NextRequest) {
   }))
 
   // Recibo inmediato al cliente (fire-and-forget)
-  notificarClienteRecibo({ email, numero: pedido.numero, nombre, total, items: emailItems }).catch((e) =>
+  const descuentoEmail = descuento > 0 ? { subtotal, monto: descuento, cupon: cupon_codigo } : null
+  notificarClienteRecibo({ email, numero: pedido.numero, nombre, total, descuento: descuentoEmail, items: emailItems }).catch((e) =>
     console.error('Email recibo error:', e)
   )
 
@@ -183,6 +184,7 @@ export async function POST(req: NextRequest) {
     notas,
     metodo_pago,
     total,
+    descuento: descuentoEmail,
     items: emailItems
   }).catch((e) => console.error('Email admin error:', e))
 

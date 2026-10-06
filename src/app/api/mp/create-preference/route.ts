@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   // Todo el contenido de la preferencia sale de la DB, nunca del cliente
   const { data: pedido, error: errPedido } = await supabase
     .from('pedidos')
-    .select('id, numero, nombre, telefono, estado, metodo_pago, mp_preference_id')
+    .select('id, numero, nombre, telefono, estado, metodo_pago, mp_preference_id, total, descuento')
     .eq('id', pedidoId)
     .maybeSingle()
 
@@ -59,14 +59,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Error leyendo el pedido' }, { status: 500 })
   }
 
+  // Con descuento, un único ítem por el total guardado: MP no admite descuentos negativos y así
+  // el monto cobrado coincide siempre con pedidos.total (que el webhook verifica).
+  const conDescuento = Number(pedido.descuento) > 0
   const preference = {
     external_reference: pedido.id,
-    items: items.map((i) => ({
-      title: `${i.producto_emoji ?? ''} ${i.producto_nombre}`.trim(),
-      quantity: i.cantidad,
-      unit_price: Number(i.precio_unitario),
-      currency_id: 'UYU'
-    })),
+    items: conDescuento
+      ? [
+          {
+            title: `Pedido Sano y Rico #${pedido.numero}`,
+            quantity: 1,
+            unit_price: Number(pedido.total),
+            currency_id: 'UYU'
+          }
+        ]
+      : items.map((i) => ({
+          title: `${i.producto_emoji ?? ''} ${i.producto_nombre}`.trim(),
+          quantity: i.cantidad,
+          unit_price: Number(i.precio_unitario),
+          currency_id: 'UYU'
+        })),
     payer: {
       name: pedido.nombre,
       phone: { area_code: '', number: pedido.telefono }

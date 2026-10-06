@@ -29,6 +29,32 @@ function filasTexto(items: ItemEmail[]) {
   return items.map((i) => `${i.emoji} ${i.nombre} x${i.cantidad} — $${i.subtotal}`).join('\n')
 }
 
+// Desglose cuando el pedido tiene descuento (subtotal, descuento con cupón si hay, y luego el total)
+export interface DescuentoEmail {
+  subtotal: number
+  monto: number
+  cupon?: string | null
+}
+
+const etiquetaDescuento = (d: DescuentoEmail) => (d.cupon ? `Descuento (cupón ${d.cupon})` : 'Descuento por monto')
+
+function filasDescuento(d?: DescuentoEmail | null) {
+  if (!d || !(d.monto > 0)) return ''
+  return `<tr style="border-bottom:1px solid #f0e6d3">
+          <td colspan="2" style="padding:8px 12px;color:#8a7060">Subtotal</td>
+          <td style="padding:8px 12px;text-align:right">$${d.subtotal}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0e6d3">
+          <td colspan="2" style="padding:8px 12px;color:#4a6741">${etiquetaDescuento(d)}</td>
+          <td style="padding:8px 12px;text-align:right;color:#4a6741;font-weight:bold">-$${d.monto}</td>
+        </tr>`
+}
+
+function textoDescuento(d?: DescuentoEmail | null) {
+  if (!d || !(d.monto > 0)) return ''
+  return `SUBTOTAL: $${d.subtotal}\n${etiquetaDescuento(d).toUpperCase()}: -$${d.monto}\n`
+}
+
 export async function enviarMail(opts: { to: string; subject: string; html: string; text: string }) {
   const { data, error } = await getResend().emails.send({
     from: FROM(),
@@ -54,6 +80,7 @@ export async function notificarClienteRecibo(pedido: {
   numero: number
   nombre: string
   total: number
+  descuento?: DescuentoEmail | null
   items: ItemEmail[]
 }) {
   if (!process.env.RESEND_API_KEY) {
@@ -78,7 +105,7 @@ En breve te confirmamos y coordinamos la entrega.
 PRODUCTOS:
 ${filasTexto(pedido.items)}
 
-TOTAL: $${pedido.total}
+${textoDescuento(pedido.descuento)}TOTAL: $${pedido.total}
 
 Podés ver el estado de tu pedido en ${sitio}/pedido
 
@@ -105,6 +132,7 @@ Sano y Rico · snacks naturales`,
             </thead>
             <tbody>
               ${filas(pedido.items)}
+              ${filasDescuento(pedido.descuento)}
               <tr style="background:#fef3d0">
                 <td colspan="2" style="padding:10px 12px;font-weight:bold">Total</td>
                 <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#c47c2b;font-size:18px">$${pedido.total}</td>
@@ -133,6 +161,7 @@ export async function notificarAdminNuevoPedido(pedido: {
   notas?: string | null
   metodo_pago?: string | null
   total: number
+  descuento?: DescuentoEmail | null
   items: ItemEmail[]
 }) {
   const adminEmail = process.env.ADMIN_EMAIL?.trim()
@@ -159,7 +188,7 @@ ${pedido.metodo_pago ? `Pago: ${metodoLabel[pedido.metodo_pago] ?? pedido.metodo
 PRODUCTOS:
 ${filasTexto(pedido.items)}
 
-TOTAL: $${pedido.total}
+${textoDescuento(pedido.descuento)}TOTAL: $${pedido.total}
 
 —
 Sano y Rico — panel de administración`,
@@ -189,6 +218,7 @@ Sano y Rico — panel de administración`,
             </thead>
             <tbody>
               ${filas(pedido.items)}
+              ${filasDescuento(pedido.descuento)}
               <tr style="background:#fef3d0">
                 <td colspan="2" style="padding:10px 12px;font-weight:bold">Total</td>
                 <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#c47c2b;font-size:18px">$${pedido.total}</td>
@@ -272,6 +302,7 @@ export async function notificarClienteConfirmacion(pedido: {
   nombre: string
   items: ItemEmail[]
   total: number
+  descuento?: DescuentoEmail | null
   nroRastreo?: string
 }) {
   if (!process.env.RESEND_API_KEY) {
@@ -293,7 +324,7 @@ Hola ${pedido.nombre}, tu pedido está en preparación.
 PRODUCTOS:
 ${filasTexto(pedido.items)}
 
-TOTAL: $${pedido.total}
+${textoDescuento(pedido.descuento)}TOTAL: $${pedido.total}
 ${pedido.nroRastreo ? `\n📦 Número de rastreo: ${pedido.nroRastreo}\n` : ''}
 Nos comunicamos pronto para coordinar la entrega. ¡Gracias por elegirnos!
 
@@ -319,6 +350,7 @@ Sano y Rico · snacks naturales`,
             </thead>
             <tbody>
               ${filas(pedido.items)}
+              ${filasDescuento(pedido.descuento)}
               <tr style="background:#fef3d0">
                 <td colspan="2" style="padding:10px 12px;font-weight:bold">Total</td>
                 <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#c47c2b;font-size:18px">$${pedido.total}</td>

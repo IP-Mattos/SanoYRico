@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // Obtener pedido con items
   const { data: pedido } = await supabase
     .from('pedidos')
-    .select('numero, nombre, email, total')
+    .select('numero, nombre, email, total, subtotal, descuento, cupon_codigo')
     .eq('id', id)
     .single()
 
@@ -42,6 +42,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       numero: pedido.numero,
       nombre: pedido.nombre,
       total: pedido.total,
+      descuento: pedido.descuento > 0
+        ? { subtotal: pedido.subtotal ?? pedido.total + pedido.descuento, monto: pedido.descuento, cupon: pedido.cupon_codigo }
+        : null,
       nroRastreo,
       items: (itemsRaw ?? []).map((i) => ({
         emoji: i.producto_emoji ?? '',
