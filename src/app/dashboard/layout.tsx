@@ -18,7 +18,8 @@ import {
   ShoppingCart,
   PencilRuler,
   Tags,
-  Percent
+  Percent,
+  Image as ImageIcon
 } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/dashboard/ventas', label: 'Ventas', icon: ClipboardList },
   { href: '/dashboard/pedidos', label: 'Pedidos', icon: ShoppingCart },
   { href: '/dashboard/descuentos', label: 'Descuentos', icon: Percent },
+  { href: '/dashboard/flyers', label: 'Flyers', icon: ImageIcon },
   { href: '/dashboard/contenido', label: 'Contenido', icon: PencilRuler }
 ]
 

@@ -12,11 +12,14 @@ Dashboard section to build shareable product flyers (PNG) for WhatsApp / Instagr
 - Uses current product `imagen_url` (real photos are a later feature).
 
 ## Tasks
-- [ ] F1 Protected `GET /api/flyers` (ImageResponse) + pure layout/params helper + tests
-- [ ] F2 Dashboard page `dashboard/flyers` + nav link
-- [ ] F3 lint / test / build green
+- [x] F1 Protected `GET /api/flyers` (ImageResponse) + pure layout/params helper + tests
+- [x] F2 Dashboard page `dashboard/flyers` + nav link
+- [x] F3 lint / test / build green
 
 Route: delegated writer.
 
 ## Progress / Evidence
-(pending)
+- F1: `GET /api/flyers` (nodejs, ImageResponse, no-store), proxy PROTECTED_APIS + in-route getUser. Pure helpers `src/lib/flyers/{params,layout}.ts` with vitest. Fonts: Playfair Display 700 + DM Sans 400/600 as static woff (fontsource, latin) in public/fonts with OFL texts. Images: only supabase public-bucket PNG/JPEG as data URI; otherwise emoji tile.
+- F2: dashboard page with picker/format/title/coupon/debounced preview/download/share + nav link.
+- F3: pnpm test 104 passed, pnpm lint 0 problems, pnpm build ok. Unauthenticated GET /api/flyers -> 401 (dev server).
+- Samples rendered via temporary vitest (not committed).
