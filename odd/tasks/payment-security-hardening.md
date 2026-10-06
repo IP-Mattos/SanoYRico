@@ -27,7 +27,12 @@ Stop price tampering, harden the Mercado Pago webhook, and validate stock in the
 - [x] T4 Proxy: exclude `/api/mp/webhook` from rate limiting — route: delegated
 - [x] T5 Stock check at creation + decrement on confirmation — route: delegated
 - [x] T6 `supabase/` SQL: transactional order RPC, view/RLS fix, audit queries — route: delegated
-- [ ] T7 (test/lint/build run by writer, parent re-verifies)   `pnpm lint`, `pnpm test`, `pnpm build` green
+- [x] T7 test/lint/build green (re-run after T8-T12)
+- [x] T8 Lint: CartToast key via render-time counter, Navbar bump via derived state + timeout effect
+- [x] T9 Cart shows server `error` (409 stock naming product, 422 minimum) in a red alert above the confirm button
+- [x] T10 Shared stock module + `POST /api/pedidos/[id]/estado` + dashboard switched + webhook uses shared decrement
+- [x] T11 `GET /api/seguimiento` (no PII), /pedido page uses it with 30s polling, proxy bucket 10/min
+- [x] T12 `pedidos_detalle_privacy.sql` updated (run AFTER deploy) + `supabase/README.md`
 
 Route evidence: 4+ non-trivial files -> writer trigger fired; one delegated writer.
 
@@ -46,6 +51,14 @@ Writer pass (working tree, uncommitted):
 - Tests: vitest, 27 tests; RED observed (modules missing) before implementation.
 
 Checks: pnpm test 27/27 pass; pnpm build pass; pnpm lint: 2 pre-existing errors (CartToast.tsx:18 react-hooks/purity, Navbar.tsx:24 set-state-in-effect), none in touched files.
+
+Follow-up pass (working tree, uncommitted):
+- T8: `CartToast.tsx` key uses a render-time counter instead of `Date.now()`; `Navbar.tsx` bump derived during render + timeout effect.
+- T9: `Cart.tsx` sets `errores.general` from the response `error`; `cotizar.ts` messages: stock names product and remaining units / agotado; minimum states amount.
+- T10: `src/lib/pedidos/{transiciones,stock}.ts`; route auth is the proxy `PROTECTED_APIS` prefix `/api/pedidos/` (same as `notificar`). Table: pendiente->confirmado (descontar), pendiente->cancelado, confirmado->entregado, confirmado->cancelado (reponer), entregado->cancelado (reponer); rest 409. Conditional update `.eq('estado', actual)`. Dashboard writes found and replaced: `cambiarEstado`, `confirmarYNotificar` (dashboard/page.tsx has none).
+- T11: response `{pedido:{numero,estado,metodo_pago,total,created_at,nombre(first),telefono(masked),items[]}}`; no address/email/notas (page card renamed "Datos del pedido"). Not in PROTECTED_APIS.
+- T12: see `supabase/README.md`.
+Checks: pnpm test 49/49; pnpm lint 0 errors 0 warnings; pnpm build pass.
 
 ## Next step
 Parent: review diff, confirm no DB stock trigger, commit work units.
