@@ -39,7 +39,7 @@ export function TrustRow({ items }: { items: { kind: TrustKind; texto: string }[
   return (
     <div ref={ref} className='trust-row border-y border-[#eadfce] bg-white/60'>
       {/* Flex centrado con divisores: queda parejo con 2 o 3 ítems (Mercado Pago es opcional) */}
-      <ul className='container-x relative z-10 flex flex-col sm:flex-row sm:justify-center sm:items-center gap-3 sm:gap-0 py-4 list-none'>
+      <ul className='container-x relative z-10 flex flex-row flex-wrap justify-center items-center gap-x-5 gap-y-2.5 sm:gap-0 py-4 list-none'>
         {items.map(({ kind, texto }, i) => {
           const Icon = ICONS[kind]
           return (
@@ -47,7 +47,7 @@ export function TrustRow({ items }: { items: { kind: TrustKind; texto: string }[
               key={kind}
               data-kind={kind}
               style={{ ['--i' as string]: i }}
-              className='trust-item flex items-center gap-2.5 text-sm font-medium text-[#5c4033] sm:px-10 sm:not-first:border-l sm:border-[#eadfce]'
+              className='trust-item flex items-center gap-2.5 text-[13px] sm:text-sm font-medium text-[#5c4033] sm:px-10 sm:not-first:border-l sm:border-[#eadfce]'
             >
               <Icon className='trust-icon h-[18px] w-[18px] text-[#8a5a1a]' strokeWidth={1.75} aria-hidden='true' />
               {texto}

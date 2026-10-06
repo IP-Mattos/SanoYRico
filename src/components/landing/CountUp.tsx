@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 
 // Cuenta desde 0 hasta el número del valor ("13", "1,1K", "0g") cuando entra en pantalla.
 // El HTML del servidor ya trae el valor final (sin JS o con reduced-motion no cambia nada).
-export function CountUp({ valor, delay = 600 }: { valor: string; delay?: number }) {
+export function CountUp({ valor, delay = 250 }: { valor: string; delay?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
@@ -20,11 +20,10 @@ export function CountUp({ valor, delay = 600 }: { valor: string; delay?: number 
     if (!(objetivo > 0)) return
 
     const fmt = (n: number) => n.toFixed(dec).replace('.', sep) + sufijo
-    el.textContent = fmt(0)
-
     let raf = 0
     let timer = 0
     const correr = () => {
+      el.textContent = fmt(0)
       const t0 = performance.now()
       const dur = 1300
       const paso = (now: number) => {
