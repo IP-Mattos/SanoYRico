@@ -4,6 +4,15 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { notificarAdminNuevoPedido, notificarClienteRecibo } from '@/lib/email'
 import { cotizarPedido, type ProductoDB } from '@/lib/pedidos/cotizar'
 import { DEFAULT_CONFIG } from '@/lib/site-config'
+import { MSG_CUPON_INVALIDO } from '@/lib/pedidos/descuentos'
+import {
+  COLUMNAS_PRODUCTO_COTIZACION,
+  consumirCupon,
+  leerCupon,
+  leerPromoMonto,
+  liberarCupon,
+  normalizarCodigoCupon
+} from '@/lib/pedidos/cupones'
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 // Del cliente solo se aceptan producto_id y cantidad por ítem; precios y nombres salen de la DB.
@@ -15,7 +24,8 @@ interface PedidoInput {
   calle: string
   notas?: string
   metodo_pago?: string
-  total?: number
+  cupon?: string
+  total?: number // ignorado: el total se recalcula siempre en el servidor
   items: { producto_id: string; cantidad: number }[]
 }
 
@@ -79,9 +89,10 @@ export async function POST(req: NextRequest) {
         .filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 40)
     )
   ]
-  const [{ data: productos, error: errProductos }, { data: cfg }] = await Promise.all([
-    supabase.from('productos').select('id, nombre, emoji, precio, stock, activo').in('id', ids),
-    supabase.from('configuracion').select('valor').eq('clave', 'general').maybeSingle()
+  const [{ data: productos, error: errProductos }, { data: cfg }, { data: cfgPromo }] = await Promise.all([
+    supabase.from('productos').select(COLUMNAS_PRODUCTO_COTIZACION).in('id', ids),
+    supabase.from('configuracion').select('valor').eq('clave', 'general').maybeSingle(),
+    supabase.from('configuracion').select('valor').eq('clave', 'promoMonto').maybeSingle()
   ])
   if (errProductos) {
     console.error('Error leyendo productos:', errProductos)
@@ -91,22 +102,51 @@ export async function POST(req: NextRequest) {
   const minimoCfg = Number((cfg?.valor as { minimoPedido?: unknown } | null)?.minimoPedido)
   const minimoPedido = Number.isFinite(minimoCfg) && minimoCfg >= 0 ? minimoCfg : DEFAULT_CONFIG.general.minimoPedido
 
-  const cotizacion = cotizarPedido(body.items, (productos ?? []) as ProductoDB[], { minimoPedido })
+  // Cupón opcional: si el cliente manda uno, tiene que ser válido (no se descarta en silencio).
+  // Cualquier descuento que mande el cliente se ignora: todo se recalcula acá.
+  const codigoCrudo = typeof body.cupon === 'string' ? body.cupon.trim() : ''
+  let cupon: Awaited<ReturnType<typeof leerCupon>>['cupon'] | undefined
+  if (codigoCrudo) {
+    const codigo = normalizarCodigoCupon(codigoCrudo)
+    if (!codigo) return NextResponse.json({ error: MSG_CUPON_INVALIDO }, { status: 422 })
+    const lectura = await leerCupon(supabase, codigo)
+    if (lectura.error) return NextResponse.json({ error: 'Error al crear el pedido' }, { status: 500 })
+    cupon = lectura.cupon
+  }
+
+  const cotizacion = cotizarPedido(body.items, (productos ?? []) as ProductoDB[], {
+    minimoPedido,
+    promoMonto: leerPromoMonto(cfgPromo?.valor),
+    telefono,
+    ...(codigoCrudo ? { cupon: cupon ?? null, codigoCupon: codigoCrudo } : {})
+  })
   if (!cotizacion.ok) {
     return NextResponse.json({ error: cotizacion.error }, { status: cotizacion.status })
   }
-  const { items, total } = cotizacion
+  const { items, subtotal, descuento, descuento_tipo, cupon_codigo, total } = cotizacion
+
+  // Consumir el cupón ANTES de crear el pedido (update optimista); se libera si el pedido falla.
+  if (cupon_codigo) {
+    const consumo = await consumirCupon(supabase, cupon_codigo)
+    if (consumo === 'agotado') {
+      return NextResponse.json({ error: 'Este cupón ya alcanzó su límite de usos' }, { status: 422 })
+    }
+    if (consumo === 'error') {
+      return NextResponse.json({ error: 'No pudimos aplicar el cupón. Intentá de nuevo en unos segundos.' }, { status: 409 })
+    }
+  }
 
   const direccion = `${calle}, ${localidad}`
 
   const { data: pedido, error: errPedido } = await supabase
     .from('pedidos')
-    .insert({ nombre, telefono, email, direccion, notas, metodo_pago, total })
+    .insert({ nombre, telefono, email, direccion, notas, metodo_pago, total, subtotal, descuento, descuento_tipo, cupon_codigo })
     .select('id, numero')
     .single()
 
   if (errPedido || !pedido) {
     console.error('Error creando pedido:', errPedido)
+    if (cupon_codigo) await liberarCupon(supabase, cupon_codigo)
     return NextResponse.json({ error: 'Error al crear el pedido' }, { status: 500 })
   }
 
@@ -118,6 +158,7 @@ export async function POST(req: NextRequest) {
     console.error('Error insertando items:', errItems)
     // Eliminar el pedido huérfano
     await supabase.from('pedidos').delete().eq('id', pedido.id)
+    if (cupon_codigo) await liberarCupon(supabase, cupon_codigo)
     return NextResponse.json({ error: 'Error al guardar los productos' }, { status: 500 })
   }
 
