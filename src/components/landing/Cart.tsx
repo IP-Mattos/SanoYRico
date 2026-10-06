@@ -73,6 +73,7 @@ export function Cart({
 
   const confirmarPedido = async () => {
     if (!validar()) return
+    setErrores({})
     setGuardando(true)
 
     const res = await fetch('/api/pedidos', {
@@ -98,6 +99,8 @@ export function Cart({
     })
 
     if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      setErrores({ general: data?.error ?? 'No pudimos crear tu pedido. Intentá de nuevo en unos minutos.' })
       setGuardando(false)
       return
     }
@@ -434,6 +437,11 @@ export function Cart({
             </div>
 
             <div className='p-5 border-t border-[#f0e6d3] space-y-2'>
+              {errores.general && (
+                <p role='alert' className='text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl px-3 py-2'>
+                  {errores.general}
+                </p>
+              )}
               <button
                 onClick={confirmarPedido}
                 disabled={guardando}

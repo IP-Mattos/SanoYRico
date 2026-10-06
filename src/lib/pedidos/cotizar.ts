@@ -54,7 +54,9 @@ export function cotizarPedido(
     const p = porId.get(id)
     if (!p || !p.activo) return falla(422, 'Producto no disponible')
     if (cantidad > MAX_CANTIDAD) return falla(422, 'Cantidad inválida')
-    if (cantidad > p.stock) return falla(409, `Stock insuficiente para ${p.nombre}`)
+    if (cantidad > p.stock) return falla(409, p.stock > 0
+          ? `No hay stock suficiente de ${p.nombre}: quedan ${p.stock} unidad${p.stock === 1 ? '' : 'es'}. Ajustá la cantidad en tu carrito.`
+          : `${p.nombre} está agotado. Quitalo de tu carrito para continuar.`)
     const precio = Number(p.precio)
     items.push({
       producto_id: p.id,
@@ -67,7 +69,7 @@ export function cotizarPedido(
   }
 
   const total = items.reduce((s, i) => s + i.subtotal, 0)
-  if (total < minimoPedido) return falla(422, `El pedido mínimo es $${minimoPedido}`)
+  if (total < minimoPedido) return falla(422, `El pedido mínimo es de $${minimoPedido}. Sumá más productos para continuar.`)
 
   return { ok: true, items, total }
 }
