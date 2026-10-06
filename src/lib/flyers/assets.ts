@@ -44,7 +44,7 @@ export async function cargarFuentes(origin?: string): Promise<FuenteFlyer[]> {
 }
 
 export async function cargarLogo(origin?: string): Promise<string> {
-  const buf = await leerPublico('logo-sano-y-rico.png', origin)
+  const buf = await leerPublico('logo-sano-y-rico-v2.png', origin)
   return `data:image/png;base64,${buf.toString('base64')}`
 }
 

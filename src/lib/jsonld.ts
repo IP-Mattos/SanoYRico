@@ -12,7 +12,7 @@ export function organizationSchema() {
     '@type': 'Organization',
     name: 'Sano y Rico',
     url: BASE_URL,
-    logo: `${BASE_URL}/logo-sano-y-rico.png`,
+    logo: `${BASE_URL}/logo-sano-y-rico-v2.png`,
     description: 'Barras de cereal, mixes y alfajores artesanales hechos en Uruguay. Sin azúcar refinada, sin conservantes.',
     address: { '@type': 'PostalAddress', addressCountry: 'UY' },
     sameAs: []

@@ -34,7 +34,7 @@ export function Hero({
               <div className='absolute w-80 h-80 sm:w-96 sm:h-96 rounded-full border border-[#c47c2b]/12 animate-breathe [animation-delay:-3.5s]' aria-hidden='true' />
               <div className='relative animate-float-soft'>
                 <Image
-                  src='/logo-sano-y-rico.png'
+                  src='/logo-sano-y-rico-v2.png'
                   alt='Sano y Rico'
                   width={1157}
                   height={1157}
@@ -115,7 +115,7 @@ export function Hero({
             <div className='absolute w-[24rem] h-[24rem] rounded-full border border-[#c47c2b]/20 animate-breathe' />
             <div className='absolute w-[32rem] h-[32rem] rounded-full border border-[#c47c2b]/10 animate-breathe [animation-delay:-3.5s]' />
             <Image
-              src='/logo-sano-y-rico.png'
+              src='/logo-sano-y-rico-v2.png'
               alt='Sano y Rico'
               width={1157}
               height={1157}
