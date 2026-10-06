@@ -27,7 +27,7 @@ export function CartToast() {
       >
         <div className='relative shrink-0'>
           <div className='w-11 h-11 rounded-xl bg-[#faf6ef] flex items-center justify-center text-2xl'>
-            {justAdded.emoji || '🛒'}
+            {justAdded.emoji || <ShoppingBag className='h-5 w-5 text-[#3d2b1f]' strokeWidth={1.75} />}
           </div>
           <span className='absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center ring-2 ring-[#3d2b1f]'>
             <CheckCircle className='h-3 w-3 text-white' strokeWidth={3} />

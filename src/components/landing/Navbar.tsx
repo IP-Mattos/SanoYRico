@@ -40,7 +40,7 @@ export function Navbar() {
             : 'bg-[#faf6ef]/70 border-b border-transparent'
         }`}
       >
-        <div className='max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-16'>
+        <div className='container-x flex items-center justify-between h-16'>
           {/* Logo — click lleva a la home desde cualquier ruta */}
           <Link
             href='/'
