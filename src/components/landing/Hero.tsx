@@ -1,17 +1,22 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { CreditCard, MapPin, Truck } from 'lucide-react'
-import { type HeroConfig, DEFAULT_CONFIG } from '@/lib/site-config'
+import { type HeroConfig, type PagosConfig, DEFAULT_CONFIG } from '@/lib/site-config'
 import { iconFor } from './icons'
 
-// Hechos ya presentes en el copy del sitio (metadata, FAQs, marquee, pagos).
-const CONFIANZA = [
-  { icon: Truck, texto: 'Envíos a todo Uruguay' },
-  { icon: CreditCard, texto: 'Pagá con Mercado Pago' },
-  { icon: MapPin, texto: 'Hecho en Uruguay' }
-]
-
-export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) {
+export function Hero({
+  config = DEFAULT_CONFIG.hero,
+  pagos = DEFAULT_CONFIG.pagos
+}: {
+  config?: HeroConfig
+  pagos?: PagosConfig
+}) {
+  // Hechos ya presentes en el copy del sitio; Mercado Pago solo si está activo en la configuración
+  const CONFIANZA = [
+    { icon: Truck, texto: 'Envíos a todo Uruguay' },
+    ...(pagos.mercadopago?.activo ? [{ icon: CreditCard, texto: 'Pagá con Mercado Pago' }] : []),
+    { icon: MapPin, texto: 'Hecho en Uruguay' }
+  ]
   return (
     <section className='pt-16'>
       <div className='container-x grid lg:grid-cols-[1.15fr_0.85fr] gap-10 lg:gap-16 items-center py-10 lg:py-8'>

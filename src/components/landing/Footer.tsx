@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Mail } from 'lucide-react'
-import { type FooterConfig, DEFAULT_CONFIG } from '@/lib/site-config'
+import { type FooterConfig, type PagosConfig, DEFAULT_CONFIG } from '@/lib/site-config'
 
 const NAV = [
   { href: '/#productos', label: 'Productos' },
@@ -9,10 +9,19 @@ const NAV = [
   { href: '/#opiniones', label: 'Opiniones' },
   { href: '/pedido', label: 'Mi pedido' }
 ]
-// Métodos de pago que existen en el checkout (Cart.tsx)
-const PAGOS = ['Mercado Pago', 'Transferencia', 'Depósito']
-
-export function Footer({ config = DEFAULT_CONFIG.footer }: { config?: FooterConfig }) {
+export function Footer({
+  config = DEFAULT_CONFIG.footer,
+  pagos = DEFAULT_CONFIG.pagos
+}: {
+  config?: FooterConfig
+  pagos?: PagosConfig
+}) {
+  // Solo los métodos activos en la configuración, igual que el checkout (Cart.tsx)
+  const PAGOS = [
+    pagos.mercadopago?.activo && 'Mercado Pago',
+    pagos.transferencia?.activo && 'Transferencia',
+    pagos.deposito?.activo && 'Depósito'
+  ].filter((p): p is string => Boolean(p))
   return (
     <>
       {/* CTA */}
@@ -75,6 +84,7 @@ export function Footer({ config = DEFAULT_CONFIG.footer }: { config?: FooterConf
             </a>
           </div>
 
+          {PAGOS.length > 0 && (
           <div>
             <h3 className='text-xs font-semibold uppercase tracking-[0.16em] text-[#e8a832] mb-4'>Medios de pago</h3>
             <ul className='flex flex-wrap gap-2 list-none'>
@@ -88,6 +98,7 @@ export function Footer({ config = DEFAULT_CONFIG.footer }: { config?: FooterConf
               ))}
             </ul>
           </div>
+          )}
         </div>
 
         <div className='border-t border-white/10'>
