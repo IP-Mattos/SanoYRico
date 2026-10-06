@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
 import { type Producto, type CategoriaDB } from '@/lib/types'
+import { promoProductoActiva } from '@/lib/pedidos/descuentos'
+import { isoALocal, localAIso } from '@/lib/fechas-local'
 import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle, Sparkles, Trash } from 'lucide-react'
 
 const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
@@ -18,7 +20,10 @@ const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
   emoji: '🌾',
   imagen_url: null,
   badge: '',
-  activo: true
+  activo: true,
+  descuento_pct: null,
+  descuento_desde: null,
+  descuento_hasta: null
 }
 
 export default function ProductosPage() {
@@ -74,7 +79,10 @@ export default function ProductosPage() {
       emoji: p.emoji ?? '',
       imagen_url: p.imagen_url ?? null,
       badge: p.badge ?? '',
-      activo: p.activo
+      activo: p.activo,
+      descuento_pct: p.descuento_pct ?? null,
+      descuento_desde: p.descuento_desde ?? null,
+      descuento_hasta: p.descuento_hasta ?? null
     })
     setError('')
     setErrorIA('')
@@ -103,6 +111,14 @@ export default function ProductosPage() {
   const guardar = async () => {
     if (!form.nombre.trim()) { setError('El nombre es obligatorio'); return }
     if (form.precio <= 0) { setError('El precio debe ser mayor a 0'); return }
+    if (form.descuento_pct != null && !(form.descuento_pct > 0 && form.descuento_pct <= 100)) {
+      setError('El descuento debe ser un porcentaje entre 1 y 100')
+      return
+    }
+    if (form.descuento_desde && form.descuento_hasta && form.descuento_hasta <= form.descuento_desde) {
+      setError('La fecha "Hasta" de la promo tiene que ser posterior a "Desde"')
+      return
+    }
     setGuardando(true)
     setError('')
 
@@ -194,6 +210,9 @@ export default function ProductosPage() {
                         <div className='text-sm font-medium text-[#3d2b1f]'>{p.nombre}</div>
                         {p.badge && (
                           <span className='text-xs bg-[#fef3d0] text-[#c47c2b] px-2 py-0.5 rounded-full'>{p.badge}</span>
+                        )}
+                        {promoProductoActiva(p, new Date()) && (
+                          <span className='text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-medium'>-{p.descuento_pct}%</span>
                         )}
                       </div>
                     </div>
@@ -412,6 +431,49 @@ export default function ProductosPage() {
                     onChange={(e) => setForm((f) => ({ ...f, costo: Number(e.target.value) }))}
                     className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
                   />
+                </div>
+              </div>
+
+              {/* Promo del producto */}
+              <div className='rounded-xl border border-[#f0e6d3] bg-[#faf6ef] p-3 space-y-3'>
+                <div>
+                  <p className='text-xs font-medium text-[#3d2b1f]'>Promo del producto (opcional)</p>
+                  <p className='text-[11px] text-[#8a7060] mt-0.5'>
+                    Baja el precio en la tienda y no se combina con cupones ni con la promo por monto. Sin fechas, queda siempre activa.
+                  </p>
+                </div>
+                <div className='grid grid-cols-3 gap-3'>
+                  <div>
+                    <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Descuento %</label>
+                    <input
+                      type='number'
+                      min={1}
+                      max={100}
+                      step={1}
+                      value={form.descuento_pct ?? ''}
+                      onChange={(e) => setForm((f) => ({ ...f, descuento_pct: e.target.value === '' ? null : Number(e.target.value) }))}
+                      placeholder='Ej: 15'
+                      className='w-full px-3 py-2.5 rounded-xl border border-[#f0e6d3] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                    />
+                  </div>
+                  <div>
+                    <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Desde</label>
+                    <input
+                      type='datetime-local'
+                      value={isoALocal(form.descuento_desde)}
+                      onChange={(e) => setForm((f) => ({ ...f, descuento_desde: localAIso(e.target.value) }))}
+                      className='w-full px-2 py-2.5 rounded-xl border border-[#f0e6d3] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                    />
+                  </div>
+                  <div>
+                    <label className='block text-xs font-medium text-[#3d2b1f] mb-1.5'>Hasta</label>
+                    <input
+                      type='datetime-local'
+                      value={isoALocal(form.descuento_hasta)}
+                      onChange={(e) => setForm((f) => ({ ...f, descuento_hasta: localAIso(e.target.value) }))}
+                      className='w-full px-2 py-2.5 rounded-xl border border-[#f0e6d3] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+                    />
+                  </div>
                 </div>
               </div>
 
