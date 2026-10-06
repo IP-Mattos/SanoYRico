@@ -1,7 +1,16 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { DM_Sans, Playfair_Display } from 'next/font/google'
 import './globals.css'
+
+const fontDisplay = Playfair_Display({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-display-src'
+})
+const fontBody = DM_Sans({ subsets: ['latin'], display: 'swap', variable: '--font-body-src' })
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sano-y-rico.vercel.app'
 // Plausible analytics: se activa solo si NEXT_PUBLIC_PLAUSIBLE_DOMAIN está seteada.
@@ -45,7 +54,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='es'>
+    <html lang='es' className={`${fontDisplay.variable} ${fontBody.variable}`}>
       <body suppressHydrationWarning>
         {children}
         {PLAUSIBLE_DOMAIN && (

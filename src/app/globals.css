@@ -8,6 +8,12 @@
   --green: #4a6741;
   --muted: #8a7060;
   --text: #2a1f18;
+  /* Texto secundario con contraste AA sobre crema/blanco (el --muted original no llega a 4.5:1) */
+  --ink-soft: #6e5746;
+  --ink-body: #5c4033;
+  --caramel-ink: #8a5a1a;
+  --display: var(--font-display-src), Georgia, serif;
+  --font-body: var(--font-body-src), system-ui, sans-serif;
 }
 
 html {
@@ -17,7 +23,64 @@ html {
 body {
   background: var(--cream);
   color: var(--text);
+  font-family: var(--font-body);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: lining-nums;
+}
+
+/* Foco visible consistente para teclado */
+:focus-visible {
+  outline: 2px solid var(--caramel);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Sistema tipográfico de secciones */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--caramel-ink);
+}
+.eyebrow::before {
+  content: '';
+  width: 1.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--caramel);
+}
+.eyebrow-light {
+  color: #e8a832;
+}
+.eyebrow-light::before {
+  background: #e8a832;
+}
+.section-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 1.25rem + 2.6vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--brown);
+  margin-bottom: 0.9rem;
+}
+.section-lead {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--ink-body);
+  max-width: 34rem;
+  text-wrap: pretty;
 }
 
 /* Tailwind v4 dropped cursor:pointer on <button> por spec HTML.
@@ -100,4 +163,41 @@ body {
 }
 .animate-bump {
   animation: bump 0.5s ease;
+}
+
+/* Entrada al hacer scroll: mejora progresiva (sin JS), desactivada con reduced-motion */
+@keyframes revealIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: revealIn linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 40%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-float,
+  .animate-marquee,
+  .animate-fadeup,
+  .animate-toast,
+  .animate-bump {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }

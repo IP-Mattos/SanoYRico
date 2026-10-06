@@ -3,98 +3,105 @@ import Link from 'next/link'
 import { type HeroConfig, DEFAULT_CONFIG } from '@/lib/site-config'
 
 const TAG_POSITIONS = [
-  'top-[20%] left-[5%]',
-  'top-[15%] right-[8%]',
-  'bottom-[25%] left-[8%]',
-  'bottom-[20%] right-[5%]'
+  'top-[18%] left-[6%]',
+  'top-[13%] right-[7%]',
+  'bottom-[24%] left-[7%]',
+  'bottom-[17%] right-[6%]'
 ]
 const TAG_DELAYS = ['0s', '0.5s', '1s', '0.3s']
 
 export function Hero({ config = DEFAULT_CONFIG.hero }: { config?: HeroConfig }) {
   return (
-    <section className='min-h-screen grid lg:grid-cols-2 pt-16'>
+    <section className='lg:min-h-[100dvh] grid lg:grid-cols-[1.05fr_0.95fr] pt-16'>
       {/* Izquierda */}
-      <div className='flex flex-col justify-center px-6 sm:px-10 lg:px-16 py-16 max-w-2xl mx-auto w-full lg:max-w-none lg:mx-0'>
+      <div className='flex flex-col justify-center px-6 sm:px-10 lg:pl-16 lg:pr-12 xl:pl-24 pt-8 pb-12 lg:py-16 max-w-2xl mx-auto w-full lg:max-w-none lg:mx-0'>
         {/* Logo visible solo en mobile/tablet (desktop lo muestra la columna derecha) */}
-        <div className='lg:hidden flex justify-center mb-8 animate-fadeup'>
+        <div className='lg:hidden flex justify-center mb-5 animate-fadeup'>
           <Image
             src='/logo-sano-y-rico.png'
             alt='Sano y Rico'
             width={1157}
             height={1157}
             priority
-            className='w-40 sm:w-48 h-auto animate-float filter-[drop-shadow(0_18px_25px_rgba(61,43,31,0.3))_drop-shadow(0_8px_12px_rgba(61,43,31,0.18))]'
+            className='w-28 sm:w-40 h-auto animate-float filter-[drop-shadow(0_14px_18px_rgba(61,43,31,0.28))_drop-shadow(0_6px_8px_rgba(61,43,31,0.16))]'
           />
         </div>
 
-        <div className='inline-flex items-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#8a5a1a] text-xs font-medium tracking-widest uppercase px-4 py-2 rounded-full w-fit mb-6 animate-fadeup'>
+        <div className='inline-flex items-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#7a4e14] text-[10.5px] sm:text-xs font-semibold tracking-[0.05em] sm:tracking-[0.14em] uppercase px-3.5 sm:px-4 py-2 rounded-full w-fit mb-6 animate-fadeup'>
           {config.badge}
         </div>
 
         <h1
-          className='text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-[#3d2b1f] leading-tight mb-5'
-          style={{ fontFamily: 'Georgia, serif' }}
+          className='text-[2.5rem] sm:text-6xl xl:text-7xl font-extrabold text-[#3d2b1f] leading-[1.02] tracking-[-0.025em] mb-6 animate-fadeup'
+          style={{ fontFamily: 'var(--display)' }}
         >
-          {config.titulo} <em className='text-[#c47c2b]'>{config.tituloDestacado}</em>{' '}
+          {config.titulo} <em className='text-[#c47c2b] pr-1'>{config.tituloDestacado}</em>{' '}
           <br />
           {config.tituloCierre}
         </h1>
 
-        <p className='text-base sm:text-lg text-[#5c4033] leading-relaxed max-w-md mb-8 font-light'>
+        <p className='text-[15px] sm:text-lg text-[#5c4033] leading-relaxed max-w-xl mb-8 text-pretty animate-fadeup'>
           {config.subtitulo}
         </p>
 
-        <div className='flex gap-3 flex-wrap mb-10'>
+        <div className='flex gap-3 flex-wrap mb-10 animate-fadeup'>
           <Link
             href='#productos'
-            className='bg-[#3d2b1f] text-[#faf6ef] px-6 py-3 rounded-full text-sm font-medium hover:bg-[#c47c2b] transition-colors'
+            className='inline-flex items-center justify-center min-h-12 bg-[#3d2b1f] text-[#faf6ef] px-7 rounded-full text-[15px] font-semibold shadow-[0_10px_24px_-10px_rgba(61,43,31,0.6)] hover:bg-[#c47c2b] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all'
           >
             Ver productos
           </Link>
           <Link
             href='#beneficios'
-            className='border-2 border-[#3d2b1f] text-[#3d2b1f] px-6 py-3 rounded-full text-sm font-medium hover:bg-[#f0e6d3] transition-colors'
+            className='inline-flex items-center justify-center min-h-12 border-2 border-[#3d2b1f] text-[#3d2b1f] px-7 rounded-full text-[15px] font-semibold hover:bg-[#f0e6d3] active:scale-[0.98] transition-all'
           >
             Conocer más
           </Link>
         </div>
 
         {/* Stats */}
-        <div className='flex flex-wrap gap-6 sm:gap-8 pt-6 border-t border-[#3d2b1f]/10'>
-          {config.stats.map((s) => (
-            <div key={s.label}>
-              <div className='text-xl sm:text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'Georgia, serif' }}>
+        <dl className='grid grid-cols-3 max-w-lg border-t border-[#3d2b1f]/15 pt-6 divide-x divide-[#3d2b1f]/10'>
+          {config.stats.map((s, i) => (
+            <div key={s.label} className={`flex flex-col ${i === 0 ? 'pr-3 sm:pr-5' : 'px-3 sm:px-5'}`}>
+              <dd
+                className='text-2xl sm:text-3xl font-extrabold text-[#3d2b1f] leading-none order-first'
+                style={{ fontFamily: 'var(--display)' }}
+              >
                 {s.valor}
-              </div>
-              <div className='text-xs text-[#5c4033] uppercase tracking-wider mt-0.5'>{s.label}</div>
+              </dd>
+              <dt className='text-[11px] text-[#6e5746] uppercase tracking-wider mt-2 leading-snug'>{s.label}</dt>
             </div>
           ))}
-        </div>
+        </dl>
       </div>
 
       {/* Derecha — solo desktop */}
-      <div className='hidden lg:flex relative bg-[#f0e6d3] items-center justify-center overflow-hidden'>
-        <div className='absolute w-96 h-96 rounded-full bg-[#c47c2b]/10 blur-3xl' />
+      <div className='hidden lg:block p-5 pl-0'>
+        <div className='relative h-full min-h-[560px] rounded-3xl bg-[#f0e6d3] bg-[radial-gradient(ellipse_at_50%_45%,#fbefd6_0%,#f0e6d3_55%,#e8d6b8_100%)] flex items-center justify-center overflow-hidden border border-[#c47c2b]/15'>
+          {/* anillos concéntricos detrás del logo */}
+          <div className='absolute w-[26rem] h-[26rem] rounded-full border border-[#c47c2b]/20' />
+          <div className='absolute w-[34rem] h-[34rem] rounded-full border border-[#c47c2b]/10' />
+          <div className='absolute w-80 h-80 rounded-full bg-[#c47c2b]/15 blur-3xl' />
 
-        {config.tags.slice(0, 4).map((t, i) => (
-          <div
-            key={i}
-            className={`absolute ${TAG_POSITIONS[i]} bg-white rounded-full px-4 py-2 text-sm font-medium text-[#3d2b1f] shadow-md animate-float`}
-            style={{ animationDelay: TAG_DELAYS[i] }}
-          >
-            {t.emoji} {t.texto}
-          </div>
-        ))}
+          {config.tags.slice(0, 4).map((t, i) => (
+            <div
+              key={i}
+              className={`absolute ${TAG_POSITIONS[i]} z-20 bg-white/95 rounded-full px-4 py-2 text-sm font-semibold text-[#3d2b1f] shadow-[0_10px_24px_-12px_rgba(61,43,31,0.45)] animate-float`}
+              style={{ animationDelay: TAG_DELAYS[i] }}
+            >
+              {t.emoji} {t.texto}
+            </div>
+          ))}
 
-        <Image
-          src='/logo-sano-y-rico.png'
-          alt='Sano y Rico'
-          width={1157}
-          height={1157}
-          priority
-          className='w-80 xl:w-96 h-auto animate-float z-10 filter-[drop-shadow(0_25px_35px_rgba(61,43,31,0.35))_drop-shadow(0_10px_15px_rgba(61,43,31,0.2))]'
-        />
-
+          <Image
+            src='/logo-sano-y-rico.png'
+            alt='Sano y Rico'
+            width={1157}
+            height={1157}
+            priority
+            className='w-80 xl:w-96 h-auto animate-float z-10 filter-[drop-shadow(0_25px_35px_rgba(61,43,31,0.35))_drop-shadow(0_10px_15px_rgba(61,43,31,0.2))]'
+          />
+        </div>
       </div>
     </section>
   )

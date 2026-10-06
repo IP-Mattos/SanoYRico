@@ -34,12 +34,12 @@ export function CartToast() {
           </span>
         </div>
         <div className='text-left min-w-0 flex-1'>
-          <p className='text-[10px] uppercase tracking-widest font-semibold text-[#c47c2b] leading-none mb-1'>
+          <p className='text-[10px] uppercase tracking-widest font-semibold text-[#e8a832] leading-none mb-1'>
             Agregado al carrito
           </p>
           <p className='text-sm font-bold text-[#faf6ef] truncate'>{justAdded.nombre}</p>
         </div>
-        <div className='shrink-0 flex items-center gap-1 text-xs font-semibold text-[#c47c2b] group-hover:translate-x-0.5 transition-transform'>
+        <div className='shrink-0 flex items-center gap-1 text-xs font-semibold text-[#e8a832] group-hover:translate-x-0.5 transition-transform'>
           Ver
           <span aria-hidden='true'>→</span>
         </div>
@@ -67,7 +67,7 @@ export function StickyMobileCart() {
     <button
       onClick={() => setIsOpen(true)}
       aria-label={`Ver carrito — ${cantidad} productos, total $${total}`}
-      className={`lg:hidden fixed bottom-5 right-4 z-40 flex items-center gap-3 bg-[#3d2b1f] text-white pl-4 pr-5 py-3 rounded-full shadow-2xl transition-all duration-300 ${
+      className={`lg:hidden fixed bottom-5 right-4 z-40 flex items-center gap-3 bg-[#3d2b1f] text-white pl-4 pr-5 min-h-12 rounded-full ring-1 ring-white/10 shadow-[0_18px_40px_-12px_rgba(61,43,31,0.6)] transition-all duration-300 ${
         visible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'
       }`}
     >
@@ -77,7 +77,7 @@ export function StickyMobileCart() {
           {cantidad}
         </span>
       </div>
-      <span className='text-sm font-semibold' style={{ fontFamily: 'Georgia, serif' }}>
+      <span className='text-sm font-semibold' style={{ fontFamily: 'var(--display)' }}>
         ${total}
       </span>
     </button>
