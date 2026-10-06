@@ -26,15 +26,22 @@ export function Hero({
         {/* Texto */}
         <div className='flex flex-col max-w-2xl mx-auto lg:mx-0 w-full'>
           {/* Logo visible solo en mobile/tablet (desktop lo muestra la columna derecha) */}
-          <div className='lg:hidden flex justify-center mb-4 animate-float-soft'>
-            <Image
-              src='/logo-sano-y-rico.png'
-              alt='Sano y Rico'
-              width={1157}
-              height={1157}
-              priority
-              className='w-24 sm:w-36 h-auto filter-[drop-shadow(0_14px_18px_rgba(61,43,31,0.28))_drop-shadow(0_6px_8px_rgba(61,43,31,0.16))]'
+          {/* El logo es la cara de la marca: protagonista también en mobile */}
+          <div className='lg:hidden relative flex justify-center mb-6 sm:mb-8'>
+            <div
+              className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-88 sm:h-88 rounded-full bg-[radial-gradient(circle,rgba(196,124,43,0.22)_0%,rgba(196,124,43,0.08)_45%,transparent_70%)] pointer-events-none'
+              aria-hidden='true'
             />
+            <div className='relative animate-float-soft'>
+              <Image
+                src='/logo-sano-y-rico.png'
+                alt='Sano y Rico'
+                width={1157}
+                height={1157}
+                priority
+                className='w-56 sm:w-64 h-auto filter-[drop-shadow(0_18px_24px_rgba(61,43,31,0.30))_drop-shadow(0_6px_8px_rgba(61,43,31,0.16))]'
+              />
+            </div>
           </div>
 
           <div className='flex items-center justify-center text-center gap-2 bg-[#f0e6d3] border border-[#c47c2b]/30 text-[#7a4e14] text-[10.5px] sm:text-xs font-semibold tracking-[0.05em] sm:tracking-[0.14em] uppercase px-3.5 sm:px-4 py-2 rounded-full w-fit max-w-full mx-auto lg:mx-0 mb-5 sm:mb-6 animate-fadeup' style={{ '--i': 0 } as React.CSSProperties}>
