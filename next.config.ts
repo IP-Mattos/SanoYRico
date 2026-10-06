@@ -3,6 +3,10 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
+  // El generador de flyers lee fuentes y logo con fs: asegurar que viajen en el bundle de la función
+  outputFileTracingIncludes: {
+    '/api/flyers': ['./public/fonts/**', './public/logo-sano-y-rico.png']
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' }
