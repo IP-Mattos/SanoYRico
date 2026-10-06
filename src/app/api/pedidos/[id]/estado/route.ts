@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 import { decidirCambioEstado, esEstadoPedido } from '@/lib/pedidos/transiciones'
 import { descontarStockPedido, reponerStockPedido } from '@/lib/pedidos/stock'
+import { liberarCupon } from '@/lib/pedidos/cupones'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = createServerClient(
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data: pedido, error: errLectura } = await supabase
     .from('pedidos')
-    .select('id, estado')
+    .select('id, estado, cupon_codigo')
     .eq('id', id)
     .maybeSingle()
   if (errLectura) {
@@ -66,5 +67,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     stockFallido = await reponerStockPedido(supabase, id, `cancelación pedido ${id} (dashboard)`)
   }
 
-  return NextResponse.json({ ok: true, estado, stockFallido })
+  // Cancelar un pedido devuelve el uso del cupón (solo quien ganó la carrera de estado llega acá).
+  // El estado 'cancelado' es terminal, así que no se libera dos veces.
+  let cuponLiberado: boolean | undefined
+  if (estado === 'cancelado' && pedido.cupon_codigo) {
+    cuponLiberado = await liberarCupon(supabase, pedido.cupon_codigo)
+  }
+
+  return NextResponse.json({ ok: true, estado, stockFallido, ...(cuponLiberado === false ? { cuponSinLiberar: true } : {}) })
 }

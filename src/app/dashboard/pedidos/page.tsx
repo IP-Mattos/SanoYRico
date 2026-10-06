@@ -52,8 +52,13 @@ export default function PedidosPage() {
   const supabase = createClient()
 
   const cargar = async () => {
-    const { data } = await supabase.from('pedidos_detalle').select('*')
-    setPedidos(data ?? [])
+    const [{ data }, { data: descuentos }] = await Promise.all([
+      supabase.from('pedidos_detalle').select('*'),
+      // pedidos_detalle no expone las columnas de descuento: se leen de pedidos y se combinan por id
+      supabase.from('pedidos').select('id, subtotal, descuento, cupon_codigo, descuento_tipo').gt('descuento', 0)
+    ])
+    const porId = new Map((descuentos ?? []).map(d => [d.id, d]))
+    setPedidos((data ?? []).map(p => ({ ...p, ...porId.get(p.id) })))
     setLoading(false)
   }
 
@@ -435,6 +440,21 @@ export default function PedidosPage() {
                             <span className='font-medium text-[#3d2b1f]'>${item.subtotal}</span>
                           </div>
                         ))}
+                        {(pedido.descuento ?? 0) > 0 && (
+                          <>
+                            <div className='flex justify-between text-sm pt-2 border-t border-[#f0e6d3] text-[#8a7060]'>
+                              <span>Subtotal</span>
+                              <span>${pedido.subtotal}</span>
+                            </div>
+                            <div className='flex justify-between text-sm text-green-700'>
+                              <span>
+                                Descuento{' '}
+                                {pedido.descuento_tipo === 'cupon' ? `(cupón ${pedido.cupon_codigo})` : '(promo por monto)'}
+                              </span>
+                              <span>-${pedido.descuento}</span>
+                            </div>
+                          </>
+                        )}
                         <div className='flex justify-between text-sm font-bold pt-2 border-t border-[#f0e6d3]'>
                           <span className='text-[#3d2b1f]'>Total</span>
                           <span className='text-[#c47c2b]'>${pedido.total}</span>

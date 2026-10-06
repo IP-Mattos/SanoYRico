@@ -50,6 +50,15 @@ export async function proxy(req: NextRequest) {
         )
       }
     }
+    // Validar cupones: bucket estricto contra fuerza bruta de códigos (ruta pública)
+    if (pathname === '/api/cupones/validar') {
+      if (!allow(`cupones:${ip}`, 30, 60_000)) {
+        return new NextResponse(
+          JSON.stringify({ ok: false, mensaje: 'Demasiados intentos. Esperá un minuto y probá de nuevo.' }),
+          { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } }
+        )
+      }
+    }
     if (pathname === '/api/pedidos') {
       if (!allow(`pedidos:${ip}`, 5, 3_600_000)) {
         return new NextResponse(
@@ -92,7 +101,7 @@ export async function proxy(req: NextRequest) {
 
   // ── Rutas de API que requieren sesión de admin ────────────────────────────
   // /api/pedidos/ (with trailing slash) protects sub-routes only; root POST stays public
-  const PROTECTED_APIS = ['/api/remove-bg', '/api/pedidos/']
+  const PROTECTED_APIS = ['/api/remove-bg', '/api/pedidos/', '/api/flyers']
   if (PROTECTED_APIS.some((p) => pathname.startsWith(p))) {
     if (!user) {
       return new NextResponse(

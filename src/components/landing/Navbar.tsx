@@ -40,12 +40,12 @@ export function Navbar() {
             : 'bg-[#faf6ef]/70 border-b border-transparent'
         }`}
       >
-        <div className='max-w-7xl mx-auto px-6 lg:px-8 flex items-center justify-between h-16'>
+        <div className='container-x flex items-center justify-between h-16'>
           {/* Logo — click lleva a la home desde cualquier ruta */}
           <Link
             href='/'
-            className='text-[#3d2b1f] text-2xl font-bold hover:opacity-80 transition-opacity'
-            style={{ fontFamily: 'Georgia, serif' }}
+            className='text-[#3d2b1f] text-2xl font-extrabold tracking-tight hover:opacity-80 transition-opacity'
+            style={{ fontFamily: 'var(--display)' }}
           >
             Sano y <span className='text-[#c47c2b] italic'>Rico</span>
           </Link>
@@ -56,7 +56,7 @@ export function Navbar() {
               <li key={item}>
                 <Link
                   href={`/#${item.toLowerCase()}`}
-                  className='text-[#8a7060] text-sm font-medium uppercase tracking-wider hover:text-[#3d2b1f] transition-colors'
+                  className='text-[#6e5746] text-[13px] font-semibold uppercase tracking-[0.12em] hover:text-[#3d2b1f] py-2 transition-colors'
                 >
                   {item}
                 </Link>
@@ -65,7 +65,7 @@ export function Navbar() {
             <li>
               <Link
                 href='/pedido'
-                className='text-[#8a7060] text-sm font-medium uppercase tracking-wider hover:text-[#3d2b1f] transition-colors'
+                className='text-[#6e5746] text-[13px] font-semibold uppercase tracking-[0.12em] hover:text-[#3d2b1f] py-2 transition-colors'
               >
                 Mi pedido
               </Link>
@@ -73,7 +73,7 @@ export function Navbar() {
             <li>
               <button
                 onClick={() => setIsOpen(true)}
-                className='relative bg-[#3d2b1f] text-[#faf6ef] text-sm font-medium px-4 py-2 rounded-full hover:bg-[#c47c2b] transition-colors flex items-center gap-2'
+                className='relative bg-[#3d2b1f] text-[#faf6ef] text-sm font-semibold px-5 min-h-11 rounded-full hover:bg-[#c47c2b] active:scale-[0.97] transition-all flex items-center gap-2'
               >
                 <ShoppingBag className='h-4 w-4' />
                 Carrito
@@ -90,7 +90,7 @@ export function Navbar() {
 
           {/* Mobile: carrito + hamburger */}
           <div className='flex items-center gap-3 lg:hidden'>
-            <button onClick={() => setIsOpen(true)} aria-label='Ver carrito' className='relative p-2 text-[#3d2b1f]'>
+            <button onClick={() => setIsOpen(true)} aria-label='Ver carrito' className='relative w-11 h-11 flex items-center justify-center text-[#3d2b1f]'>
               <ShoppingBag className='h-5 w-5' />
               {cantidad > 0 && (
                 <span
@@ -100,7 +100,8 @@ export function Navbar() {
                 </span>
               )}
             </button>
-            <label htmlFor='menu-toggle' className='flex flex-col gap-1.5 cursor-pointer p-1'>
+            <label htmlFor='menu-toggle' className='flex flex-col justify-center gap-1.5 cursor-pointer w-11 h-11 items-center'>
+              <span className='sr-only'>Abrir menú</span>
               <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
               <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
               <span className='block w-5 h-0.5 bg-[#3d2b1f] rounded transition-all' />
@@ -120,17 +121,17 @@ export function Navbar() {
             <Link
               key={item}
               href={`/#${item.toLowerCase()}`}
-              className='py-3 text-[#3d2b1f] font-medium border-b border-[#f0e6d3]'
+              className='flex items-center min-h-12 text-[#3d2b1f] font-medium border-b border-[#f0e6d3]'
             >
               {item}
             </Link>
           ))}
-          <Link href='/pedido' className='py-3 text-[#3d2b1f] font-medium border-b border-[#f0e6d3]'>
+          <Link href='/pedido' className='flex items-center min-h-12 text-[#3d2b1f] font-medium border-b border-[#f0e6d3]'>
             Mi pedido
           </Link>
           <button
             onClick={() => setIsOpen(true)}
-            className='my-3 text-center bg-[#3d2b1f] text-white py-2.5 rounded-xl font-medium text-sm'
+            className='my-3 text-center bg-[#3d2b1f] text-white min-h-12 rounded-full font-semibold text-sm'
           >
             Ver carrito {cantidad > 0 && `(${cantidad})`}
           </button>

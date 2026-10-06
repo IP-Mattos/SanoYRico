@@ -8,6 +8,12 @@
   --green: #4a6741;
   --muted: #8a7060;
   --text: #2a1f18;
+  /* Texto secundario con contraste AA sobre crema/blanco (el --muted original no llega a 4.5:1) */
+  --ink-soft: #6e5746;
+  --ink-body: #5c4033;
+  --caramel-ink: #8a5a1a;
+  --display: var(--font-display-src), Georgia, serif;
+  --font-body: var(--font-body-src), system-ui, sans-serif;
 }
 
 html {
@@ -17,7 +23,64 @@ html {
 body {
   background: var(--cream);
   color: var(--text);
+  font-family: var(--font-body);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: lining-nums;
+}
+
+/* Foco visible consistente para teclado */
+:focus-visible {
+  outline: 2px solid var(--caramel);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
+/* Sistema tipográfico de secciones */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--caramel-ink);
+}
+.eyebrow::before {
+  content: '';
+  width: 1.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--caramel);
+}
+.eyebrow-light {
+  color: #e8a832;
+}
+.eyebrow-light::before {
+  background: #e8a832;
+}
+.section-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 1.25rem + 2.6vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--brown);
+  margin-bottom: 0.9rem;
+}
+.section-lead {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--ink-body);
+  max-width: 34rem;
+  text-wrap: pretty;
 }
 
 /* Tailwind v4 dropped cursor:pointer on <button> por spec HTML.
@@ -90,7 +153,8 @@ body {
   animation: float 4s ease-in-out infinite;
 }
 .animate-fadeup {
-  animation: fadeUp 0.6s ease both;
+  animation: fadeUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
 }
 .animate-marquee {
   animation: marquee 20s linear infinite;
@@ -100,4 +164,378 @@ body {
 }
 .animate-bump {
   animation: bump 0.5s ease;
+}
+
+/* Entrada al hacer scroll: mejora progresiva (sin JS), desactivada con reduced-motion */
+@keyframes revealIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  /* sin transform en "to": al terminar se respeta el transform propio (hover lift) */
+  to {
+    opacity: 1;
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: revealIn linear both;
+      animation-timeline: view();
+      animation-range: entry calc(5% + var(--i, 0) * 5%) entry calc(40% + var(--i, 0) * 5%);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-float,
+  .animate-marquee,
+  .animate-fadeup,
+  .animate-toast,
+  .animate-bump {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Tokens de layout: contenedor único, radios (card 16 / panel 24 / control pill) y sombras */
+:root {
+  --shadow-card: 0 1px 2px rgba(61, 43, 31, 0.05), 0 12px 28px -20px rgba(61, 43, 31, 0.38);
+  --shadow-lift: 0 2px 4px rgba(61, 43, 31, 0.06), 0 24px 40px -22px rgba(61, 43, 31, 0.4);
+  --line: #eadfce;
+}
+
+@layer components {
+  .container-x {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    .container-x {
+      padding-inline: 2rem;
+    }
+  }
+  .section-y {
+    padding-block: 5rem;
+  }
+  @media (min-width: 640px) {
+    .section-y {
+      padding-block: 7rem;
+    }
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
+  }
+  .card-hover {
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+    border-color: rgba(196, 124, 43, 0.45);
+  }
+  .icon-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    background: #f6ecd9;
+    color: #8a5a1a;
+  }
+}
+
+/* ───────── Animaciones (todo bajo no-preference; sin JS salvo CountUp / TrustRow / indicador de tabs) ───────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes gridIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.045);
+    opacity: 0.65;
+  }
+}
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes underlineGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes iconDraw {
+  from {
+    stroke-dashoffset: 80;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  14%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes truckRoll {
+  0% {
+    transform: translateX(0);
+  }
+  35% {
+    transform: translateX(5px);
+  }
+  55% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+@keyframes pinDrop {
+  0% {
+    transform: translateY(-7px);
+  }
+  55% {
+    transform: translateY(0) scaleY(0.88);
+  }
+  75% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+}
+@keyframes cardFlip {
+  from {
+    transform: perspective(120px) rotateY(0);
+  }
+  to {
+    transform: perspective(120px) rotateY(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fadein {
+    animation: fadeIn 0.25s ease both;
+  }
+  .animate-gridin {
+    animation: gridIn 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .animate-pop {
+    animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-breathe {
+    animation: breathe 7s ease-in-out infinite;
+  }
+  .animate-float-soft {
+    animation: floatSoft 6s ease-in-out infinite;
+  }
+
+  /* palabra destacada del titular: subrayado que se dibuja */
+  .accent-word {
+    position: relative;
+    display: inline-block;
+  }
+  .accent-word::after {
+    content: '';
+    position: absolute;
+    left: 0.05em;
+    right: 0.1em;
+    bottom: 0.06em;
+    height: 0.07em;
+    border-radius: 999px;
+    background: rgba(196, 124, 43, 0.4);
+    transform-origin: left;
+    animation: underlineGrow 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.9s both;
+  }
+
+  /* marquee: pausa al pasar el mouse */
+  .marquee-wrap:hover .animate-marquee {
+    animation-play-state: paused;
+  }
+
+  /* fila de confianza: íconos que se dibujan, destello cálido y gesto por ícono al hover */
+  .trust-row {
+    position: relative;
+    overflow: hidden;
+  }
+  .trust-row::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 38%, rgba(232, 168, 50, 0.2) 50%, transparent 62%);
+    transform: translateX(-120%);
+    animation: sweep 11s ease-in-out 3s infinite;
+  }
+  .trust-row[data-ready]:not([data-in]) .trust-icon * {
+    stroke-dasharray: 80;
+    stroke-dashoffset: 80;
+  }
+  .trust-row[data-in] .trust-icon * {
+    stroke-dasharray: 80;
+    animation: iconDraw 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 260ms + 150ms);
+  }
+  .trust-item .trust-icon {
+    transform-origin: center;
+  }
+  .trust-item[data-kind='envio']:hover .trust-icon {
+    animation: truckRoll 0.7s ease-in-out;
+  }
+  .trust-item[data-kind='origen']:hover .trust-icon {
+    animation: pinDrop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1);
+  }
+  .trust-item[data-kind='pago']:hover .trust-icon {
+    animation: cardFlip 0.8s ease-in-out;
+  }
+
+  /* FAQ: animación de altura (Chrome/Edge modernos; resto abre sin animar) */
+  details {
+    interpolate-size: allow-keywords;
+  }
+  details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.3s ease,
+      content-visibility 0.3s allow-discrete;
+  }
+  details[open]::details-content {
+    block-size: auto;
+  }
+}
+
+/* ───────── Testimonios: marquee de tarjetas fijas ───────── */
+@keyframes marqueeR {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.t-fade {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.t-row {
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1.5rem;
+}
+.t-row::-webkit-scrollbar {
+  display: none;
+}
+.t-track {
+  display: flex;
+  width: max-content;
+  padding-block: 0.5rem 1rem;
+}
+.t-card {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: min(20rem, 82vw);
+  height: 16rem;
+  margin-right: 1rem;
+  scroll-snap-align: start;
+}
+.t-card.t-static {
+  margin-right: 0;
+  width: min(22rem, 100%);
+  scroll-snap-align: none;
+}
+.t-dup {
+  display: none;
+}
+.t-quote {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.t-card:hover .t-quote,
+.t-card:focus-within .t-quote {
+  -webkit-line-clamp: unset;
+  overflow-y: auto;
+}
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .t-row {
+    overflow: hidden;
+    scroll-snap-type: none;
+  }
+  .t-dup {
+    display: flex;
+  }
+  .t-track-l {
+    animation: marquee linear infinite;
+  }
+  .t-track-r {
+    animation: marqueeR linear infinite;
+  }
+  .t-row:hover .t-track,
+  .t-row:focus-within .t-track {
+    animation-play-state: paused;
+  }
 }

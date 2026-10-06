@@ -24,6 +24,9 @@ export interface Producto {
   imagen_url: string | null
   badge: string | null
   activo: boolean
+  descuento_pct?: number | null
+  descuento_desde?: string | null
+  descuento_hasta?: string | null
   created_at: string
   updated_at: string
 }
@@ -58,6 +61,7 @@ export interface PedidoItem {
   producto_emoji: string | null
   cantidad: number
   precio_unitario: number
+  precio_lista?: number | null
   subtotal: number
 }
 
@@ -74,8 +78,29 @@ export interface Pedido {
   metodo_pago: MetodoPago | null
   estado: EstadoPedido
   total: number
+  subtotal?: number | null
+  descuento?: number | null
+  cupon_codigo?: string | null
+  descuento_tipo?: DescuentoTipo | null
   created_at: string
   items?: PedidoItem[]
+}
+
+export type DescuentoTipo = 'cupon' | 'monto'
+
+export type CuponTipo = 'porcentaje' | 'monto'
+
+export interface Cupon {
+  id?: string
+  codigo: string
+  tipo: CuponTipo
+  valor: number
+  vence_at: string | null
+  usos_max: number | null
+  usos: number
+  telefono: string | null
+  activo: boolean
+  created_at?: string
 }
 
 export interface CartItem {

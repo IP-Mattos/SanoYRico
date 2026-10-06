@@ -59,7 +59,7 @@ export default async function Home() {
         />
         <CartToast />
         <StickyMobileCart />
-        <Hero config={config.hero} />
+        <Hero config={config.hero} pagos={config.pagos} />
         <Marquee items={config.marquee.items} />
         <Productos />
         <ComoFunciona config={config.comoFunciona} />
@@ -71,7 +71,7 @@ export default async function Home() {
           }
         />
         <Faqs config={config.faqs} />
-        <Footer config={config.footer} />
+        <Footer config={config.footer} pagos={config.pagos} />
       </main>
     </CartProvider>
   )

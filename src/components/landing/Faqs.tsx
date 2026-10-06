@@ -4,35 +4,39 @@ export function Faqs({ config = DEFAULT_CONFIG.faqs }: { config?: FaqsConfig }) 
   const items = config.items ?? []
 
   return (
-    <section className='py-16 sm:py-24 px-6 sm:px-10 lg:px-16'>
-      <div className='max-w-3xl mx-auto'>
-        <p className='text-xs font-medium tracking-widest uppercase text-[#8a5a1a] mb-3'>Preguntas frecuentes</p>
-        <h2 className='text-3xl sm:text-4xl lg:text-5xl font-black text-[#3d2b1f] mb-10' style={{ fontFamily: 'Georgia, serif' }}>
-          {config.titulo}
-          {config.tituloDestacado && (
-            <>
-              <br />
-              <span className='text-[#c47c2b] italic'>{config.tituloDestacado}</span>
-            </>
-          )}
-        </h2>
+    <section className='section-y'>
+      <div className='container-x max-w-4xl!'>
+        <div className='reveal'>
+          <p className='eyebrow'>Preguntas frecuentes</p>
+          <h2 className='section-title mb-10!'>
+            {config.titulo}
+            {config.tituloDestacado && (
+              <>
+                <br />
+                <span className='text-[#c47c2b] italic pr-1'>{config.tituloDestacado}</span>
+              </>
+            )}
+          </h2>
+        </div>
 
         <div className='space-y-3'>
           {items.map((f, i) => (
             <details
               key={i}
-              className='group bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden [&_summary::-webkit-details-marker]:hidden'
+              className='group card overflow-hidden open:border-[#c47c2b]/45 transition-[border-color,box-shadow] [&_summary::-webkit-details-marker]:hidden'
             >
-              <summary className='flex items-center justify-between gap-4 px-5 py-4 cursor-pointer list-none hover:bg-[#faf6ef] transition-colors'>
-                <span className='text-sm sm:text-base font-semibold text-[#3d2b1f]'>{f.pregunta}</span>
+              <summary className='flex items-center justify-between gap-4 px-5 min-h-16 py-4 cursor-pointer list-none hover:bg-[#faf6ef] focus-visible:bg-[#faf6ef] transition-colors'>
+                <span className='text-[15px] sm:text-base font-semibold text-[#3d2b1f] leading-snug'>{f.pregunta}</span>
                 <span
-                  className='shrink-0 w-7 h-7 rounded-full bg-[#f0e6d3] text-[#c47c2b] flex items-center justify-center font-bold transition-transform duration-300 group-open:rotate-45'
+                  className='shrink-0 w-8 h-8 rounded-full bg-[#f0e6d3] text-[#8a5a1a] text-lg leading-none flex items-center justify-center font-bold transition-transform duration-300 group-open:rotate-45 group-open:bg-[#3d2b1f] group-open:text-white'
                   aria-hidden='true'
                 >
                   +
                 </span>
               </summary>
-              <div className='px-5 pb-5 pt-0 text-sm text-[#5c4033] leading-relaxed whitespace-pre-line'>{f.respuesta}</div>
+              <div className='px-5 pb-5 pt-0 text-[15px] text-[#5c4033] leading-relaxed whitespace-pre-line max-w-[62ch]'>
+                {f.respuesta}
+              </div>
             </details>
           ))}
         </div>
