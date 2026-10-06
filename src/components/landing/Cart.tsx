@@ -742,7 +742,7 @@ function DatosBancarios({ info, conBotonWhatsApp }: { info: PagoMetodo; conBoton
   ].filter((f) => f.value.trim().length > 0)
 
   if (filas.length === 0) {
-    return <p className='text-[#6e5746]'>Todavía no hay datos cargados — coordiná por WhatsApp.</p>
+    return <p className='text-[#6e5746]'>Todavía no hay datos cargados. Coordiná por WhatsApp.</p>
   }
 
   return (
@@ -758,8 +758,8 @@ function DatosBancarios({ info, conBotonWhatsApp }: { info: PagoMetodo; conBoton
       ))}
       <p className='text-[#6e5746] pt-1.5'>
         {conBotonWhatsApp
-          ? 'Después de pagar, envianos el comprobante por WhatsApp — el botón te aparece al confirmar el pedido.'
-          : 'Después de pagar, guardá el comprobante — te contactaremos para coordinar la entrega.'}
+          ? 'Después de pagar, envianos el comprobante por WhatsApp. El botón te aparece al confirmar el pedido.'
+          : 'Después de pagar, guardá el comprobante y te contactaremos para coordinar la entrega.'}
       </p>
     </div>
   )

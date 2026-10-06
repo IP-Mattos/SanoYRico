@@ -169,7 +169,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     items: [
       { pregunta: '¿Cuánto demora el envío?', respuesta: 'Entre 24 y 72 horas hábiles en Montevideo y área metropolitana. Para el interior del país, entre 2 y 5 días hábiles. Te avisamos por WhatsApp cuando el pedido sale.' },
       { pregunta: '¿Cómo sé si mi pedido se confirmó?', respuesta: 'Recibís un email apenas lo hacés con el número de pedido y el detalle. Si elegiste transferencia o depósito, te contactamos para coordinar el pago. Con Mercado Pago se confirma automáticamente.' },
-      { pregunta: '¿Cuál es el pedido mínimo?', respuesta: '$2000. Es el mínimo para que el envío nos quede viable — una vez alcanzado, el envío va incluido en el precio.' },
+      { pregunta: '¿Cuál es el pedido mínimo?', respuesta: '$2000. Es el mínimo para que el envío nos quede viable. Una vez alcanzado, el envío va incluido en el precio.' },
       { pregunta: '¿Qué métodos de pago aceptan?', respuesta: 'Transferencia bancaria, depósito y Mercado Pago (tarjeta de crédito, débito o saldo). Elegís en el checkout y te mostramos los datos que necesites.' },
       { pregunta: '¿Los productos tienen gluten o azúcar agregada?', respuesta: 'Ninguno tiene azúcar refinada. Varios son sin gluten (está indicado en cada producto). Si tenés alguna intolerancia específica, preguntanos antes y te asesoramos.' },
       { pregunta: '¿Puedo cambiar o cancelar un pedido?', respuesta: 'Sí, mientras esté en estado "pendiente". Escribinos por WhatsApp al número que figura en el footer lo antes posible y lo resolvemos.' }

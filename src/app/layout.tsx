@@ -20,7 +20,7 @@ const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Sano y Rico — Snacks naturales hechos en Uruguay',
+    default: 'Sano y Rico | Snacks naturales hechos en Uruguay',
     template: '%s | Sano y Rico'
   },
   description:
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
     locale: 'es_UY',
     url: BASE_URL,
     siteName: 'Sano y Rico',
-    title: 'Sano y Rico — Snacks naturales hechos en Uruguay',
+    title: 'Sano y Rico | Snacks naturales hechos en Uruguay',
     description: 'Barras de cereal, mixes y alfajores artesanales. Sin azúcar refinada, sin conservantes.',
     images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Sano y Rico' }]
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sano y Rico — Snacks naturales',
+    title: 'Sano y Rico | Snacks naturales',
     description: 'Barras de cereal, mixes y alfajores artesanales.',
     images: ['/og.png']
   },

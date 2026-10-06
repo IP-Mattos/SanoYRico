@@ -26,7 +26,7 @@ function filas(items: ItemEmail[]) {
 }
 
 function filasTexto(items: ItemEmail[]) {
-  return items.map((i) => `${i.emoji} ${i.nombre} x${i.cantidad} — $${i.subtotal}`).join('\n')
+  return items.map((i) => `${i.emoji} ${i.nombre} x${i.cantidad}: $${i.subtotal}`).join('\n')
 }
 
 // Desglose cuando el pedido tiene descuento (subtotal, descuento con cupón si hay, y luego el total)
@@ -96,7 +96,7 @@ export async function notificarClienteRecibo(pedido: {
 
   await enviarMail({
     to: pedido.email,
-    subject: `📬 Recibimos tu pedido #${pedido.numero} — Sano y Rico`,
+    subject: `📬 Recibimos tu pedido #${pedido.numero} | Sano y Rico`,
     text: `📬 Pedido #${pedido.numero} recibido
 
 Hola ${pedido.nombre}, recibimos tu pedido y lo estamos revisando.
@@ -109,7 +109,6 @@ ${textoDescuento(pedido.descuento)}TOTAL: $${pedido.total}
 
 Podés ver el estado de tu pedido en ${sitio}/pedido
 
-—
 Sano y Rico · snacks naturales`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
@@ -178,7 +177,7 @@ export async function notificarAdminNuevoPedido(pedido: {
 
   await enviarMail({
     to: adminEmail,
-    subject: `🛒 Nuevo pedido #${pedido.numero} — ${pedido.nombre}`,
+    subject: `🛒 Nuevo pedido #${pedido.numero} | ${pedido.nombre}`,
     text: `🛒 Nuevo pedido #${pedido.numero}
 
 Cliente: ${pedido.nombre}
@@ -190,8 +189,7 @@ ${filasTexto(pedido.items)}
 
 ${textoDescuento(pedido.descuento)}TOTAL: $${pedido.total}
 
-—
-Sano y Rico — panel de administración`,
+Sano y Rico · panel de administración`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
         <div style="background:#3d2b1f;padding:24px 32px;border-radius:16px 16px 0 0">
@@ -227,7 +225,7 @@ Sano y Rico — panel de administración`,
           </table>
         </div>
         <div style="background:#f0e6d3;padding:12px 32px;border-radius:0 0 16px 16px;text-align:center">
-          <p style="margin:0;font-size:12px;color:#8a7060">Sano y Rico — panel de administración</p>
+          <p style="margin:0;font-size:12px;color:#8a7060">Sano y Rico · panel de administración</p>
         </div>
       </div>
     `
@@ -268,14 +266,13 @@ export async function notificarClienteEstado(pedido: {
 
   await enviarMail({
     to: pedido.email,
-    subject: `${config.emoji} Pedido #${pedido.numero} — ${config.titulo}`,
-    text: `${config.emoji} Pedido #${pedido.numero} — ${config.titulo}
+    subject: `${config.emoji} Pedido #${pedido.numero}: ${config.titulo}`,
+    text: `${config.emoji} Pedido #${pedido.numero}: ${config.titulo}
 
 Hola ${pedido.nombre},
 
 ${config.cuerpoTexto}
 
-—
 Sano y Rico · snacks naturales`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">
@@ -316,7 +313,7 @@ export async function notificarClienteConfirmacion(pedido: {
 
   await enviarMail({
     to: pedido.email,
-    subject: `✅ Tu pedido #${pedido.numero} fue confirmado — Sano y Rico`,
+    subject: `✅ Tu pedido #${pedido.numero} fue confirmado | Sano y Rico`,
     text: `✅ Pedido #${pedido.numero} confirmado
 
 Hola ${pedido.nombre}, tu pedido está en preparación.
@@ -328,7 +325,6 @@ ${textoDescuento(pedido.descuento)}TOTAL: $${pedido.total}
 ${pedido.nroRastreo ? `\n📦 Número de rastreo: ${pedido.nroRastreo}\n` : ''}
 Nos comunicamos pronto para coordinar la entrega. ¡Gracias por elegirnos!
 
-—
 Sano y Rico · snacks naturales`,
     html: `
       <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#3d2b1f">

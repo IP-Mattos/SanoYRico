@@ -90,7 +90,7 @@ export default function PedidosPage() {
             Notification.permission === 'granted'
           ) {
             new Notification('🛒 Nuevo pedido recibido', {
-              body: `${payload.new.nombre ?? 'Cliente'} — $${payload.new.total ?? ''}`,
+              body: `${payload.new.nombre ?? 'Cliente'} · $${payload.new.total ?? ''}`,
               icon: '/favicon.ico'
             })
           }
