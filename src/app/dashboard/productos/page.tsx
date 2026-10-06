@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase'
 import { type Producto, type CategoriaDB } from '@/lib/types'
 import { promoProductoActiva } from '@/lib/pedidos/descuentos'
 import { isoALocal, localAIso } from '@/lib/fechas-local'
+import { fotosDe } from '@/lib/productos/fotos'
+import FotosReales from './FotosReales'
 import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle, Sparkles, Trash } from 'lucide-react'
 
 const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
@@ -364,6 +366,19 @@ export default function ProductosPage() {
                   }}
                 />
               </div>
+
+              {/* Fotos reales: se guardan al instante, por eso necesitan un producto ya creado */}
+              {editando ? (
+                <FotosReales
+                  productoId={editando.id}
+                  fotos={fotosDe(productos.find((p) => p.id === editando.id)?.fotos)}
+                  onChange={(fotos) => setProductos((ps) => ps.map((p) => (p.id === editando.id ? { ...p, fotos } : p)))}
+                />
+              ) : (
+                <p className='text-[11px] text-[#8a7060] rounded-xl border border-dashed border-[#f0e6d3] px-3 py-2.5'>
+                  Guardá el producto para poder agregarle fotos reales.
+                </p>
+              )}
 
               {/* Nombre */}
               <div>

@@ -22,6 +22,8 @@ export interface Producto {
   stock_minimo: number
   emoji: string | null
   imagen_url: string | null
+  /** Fotos reales (máx. 4, la primera es la portada). Puede faltar si la migración no corrió. */
+  fotos?: string[] | null
   badge: string | null
   activo: boolean
   descuento_pct?: number | null

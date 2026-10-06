@@ -9,6 +9,7 @@ import { parsearParamsFlyer, ordenarPorIds } from '@/lib/flyers/params'
 import { hostnameDe } from '@/lib/flyers/layout'
 import { cargarFuentes, cargarImagenProducto, cargarLogo } from '@/lib/flyers/assets'
 import { renderFlyer, type ProductoFlyer } from '@/lib/flyers/render'
+import { fotosDe } from '@/lib/productos/fotos'
 import type { Producto } from '@/lib/types'
 
 export const runtime = 'nodejs'
@@ -27,12 +28,13 @@ export async function GET(req: NextRequest) {
 
   const parsed = parsearParamsFlyer(req.nextUrl.searchParams)
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400, headers: SIN_CACHE })
-  const { ids, formato, titulo, cupon } = parsed.params
+  const { ids, formato, titulo, cupon, fotos: usarFotos } = parsed.params
 
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   const { data, error } = await supabase
     .from('productos')
-    .select('id, nombre, emoji, imagen_url, precio, descuento_pct, descuento_desde, descuento_hasta')
+    // La columna fotos solo se pide si se usa, para no romper los flyers si la migración aún no corrió
+    .select(`id, nombre, emoji, imagen_url, precio, descuento_pct, descuento_desde, descuento_hasta${usarFotos ? ', fotos' : ''}`)
     .in('id', ids)
     .eq('activo', true)
   if (error) {
@@ -40,8 +42,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Error al leer los productos' }, { status: 500, headers: SIN_CACHE })
   }
 
-  type Fila = Pick<Producto, 'id' | 'nombre' | 'emoji' | 'imagen_url' | 'precio' | 'descuento_pct' | 'descuento_desde' | 'descuento_hasta'>
-  const filas = ordenarPorIds(ids, (data ?? []) as Fila[])
+  type Fila = Pick<Producto, 'id' | 'nombre' | 'emoji' | 'imagen_url' | 'precio' | 'descuento_pct' | 'descuento_desde' | 'descuento_hasta' | 'fotos'>
+  const filas = ordenarPorIds(ids, (data ?? []) as unknown as Fila[])
   if (filas.length === 0) {
     return NextResponse.json({ error: 'No se encontraron productos activos' }, { status: 404, headers: SIN_CACHE })
   }
@@ -52,7 +54,13 @@ export async function GET(req: NextRequest) {
     const [fuentes, logo, imagenes] = await Promise.all([
       cargarFuentes(origin),
       cargarLogo(origin),
-      Promise.all(filas.map((f) => cargarImagenProducto(f.imagen_url)))
+      Promise.all(
+        filas.map(async (f) => {
+          // Con fotos reales: la portada; si no hay o no carga, vale la ilustración (y después el emoji)
+          const portada = usarFotos ? fotosDe(f.fotos)[0] : undefined
+          return (portada ? await cargarImagenProducto(portada) : null) ?? cargarImagenProducto(f.imagen_url)
+        })
+      )
     ])
     const productos: ProductoFlyer[] = filas.map((f, i) => {
       const { lista, precio, pct } = precioConPromo(f, ahora)

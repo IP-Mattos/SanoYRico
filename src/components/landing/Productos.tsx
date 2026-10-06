@@ -3,12 +3,14 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Image from 'next/image'
-import { Search, X, Plus, Minus, LayoutGrid } from 'lucide-react'
+import { Search, X, Plus, Minus, LayoutGrid, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { type Producto, type CategoriaDB } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
 import { precioConPromo } from '@/lib/pedidos/descuentos'
+import { fotosDe } from '@/lib/productos/fotos'
 import { iconNode } from './icons'
+import { FotosLightbox } from './FotosLightbox'
 
 type SortKey = 'nombre' | 'precio-asc' | 'precio-desc' | 'nuevos'
 
@@ -66,6 +68,8 @@ function ProductCard({ p, idx }: { p: Producto; idx: number }) {
   const descripcion = p.descripcion ?? ''
   const esLarga = descripcion.length > DESCRIPCION_LARGA
   const [expanded, setExpanded] = useState(false)
+  const [verFotos, setVerFotos] = useState(false)
+  const fotos = fotosDe(p.fotos)
   // Mismo helper que usa el servidor para decidir si la promo está activa
   const [ahora] = useState(() => new Date())
   const { lista, precio, pct } = precioConPromo(p, ahora)
@@ -112,6 +116,20 @@ function ProductCard({ p, idx }: { p: Producto; idx: number }) {
             Agotado
           </span>
         )}
+        {fotos.length > 0 && (
+          <button
+            type='button'
+            onClick={() => setVerFotos(true)}
+            aria-haspopup='dialog'
+            aria-label={`Ver fotos reales de ${p.nombre}`}
+            className='absolute bottom-2 right-2 min-h-11 min-w-11 px-3 inline-flex items-center justify-center gap-1.5 rounded-full bg-white/95 text-[#3d2b1f] text-xs font-semibold border border-[#eadfce] shadow-sm hover:bg-white hover:border-[#c47c2b] active:scale-95 transition motion-reduce:transition-none motion-reduce:active:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c47c2b]'
+          >
+            <Camera className='h-4 w-4 shrink-0' strokeWidth={2} aria-hidden='true' />
+            <span className='sm:hidden tabular-nums' aria-hidden='true'>{fotos.length}</span>
+            <span className='hidden sm:inline' aria-hidden='true'>Ver fotos reales</span>
+          </button>
+        )}
+        {verFotos && <FotosLightbox titulo={p.nombre} fotos={fotos} onClose={() => setVerFotos(false)} />}
       </div>
 
       {/* Contenido */}
