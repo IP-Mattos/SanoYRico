@@ -1,38 +1,9 @@
 // src/app/api/mp/webhook/route.ts
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 import { decidirTransicionPago } from '@/lib/mp/decidir-transicion'
 import { firmaValida } from '@/lib/mp/firma'
-
-// Descuenta stock con update condicional (compara el stock leído) y registra el movimiento.
-// Best-effort: un fallo se loguea pero no revierte la confirmación ya aplicada.
-async function descontarStock(supabase: SupabaseClient, pedidoId: string) {
-  const { data: items } = await supabase
-    .from('pedido_items')
-    .select('producto_id, cantidad')
-    .eq('pedido_id', pedidoId)
-
-  for (const it of items ?? []) {
-    if (!it.producto_id) continue
-    for (let intento = 0; intento < 3; intento++) {
-      const { data: prod } = await supabase.from('productos').select('stock').eq('id', it.producto_id).maybeSingle()
-      if (!prod) break
-      const { data: ok } = await supabase
-        .from('productos')
-        .update({ stock: Math.max(0, prod.stock - it.cantidad) })
-        .eq('id', it.producto_id)
-        .eq('stock', prod.stock)
-        .select('id')
-      if (ok && ok.length > 0) {
-        await supabase
-          .from('movimientos_stock')
-          .insert({ producto_id: it.producto_id, tipo: 'salida', cantidad: it.cantidad, motivo: `pedido ${pedidoId} (Mercado Pago)` })
-        break
-      }
-      if (intento === 2) console.error('MP webhook: no se pudo descontar stock', it.producto_id)
-    }
-  }
-}
+import { descontarStockPedido } from '@/lib/pedidos/stock'
 
 export async function POST(req: NextRequest) {
   let body: { type?: string; data?: { id?: string } }
@@ -126,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
   if (!confirmado || confirmado.length === 0) return NextResponse.json({ ok: true })
 
-  await descontarStock(supabase, pedido.id)
+  await descontarStockPedido(supabase, pedido.id, `pedido ${pedido.id} (Mercado Pago)`)
 
   return NextResponse.json({ ok: true })
 }
