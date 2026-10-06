@@ -1,7 +1,7 @@
 // src/app/dashboard/descuentos/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { type Cupon, type CuponTipo } from '@/lib/types'
 import { DEFAULT_CONFIG, type PromoMontoConfig } from '@/lib/site-config'
@@ -60,6 +60,8 @@ export default function DescuentosPage() {
   const [cupones, setCupones] = useState<Cupon[]>([])
   const [form, setForm] = useState(FORM_INICIAL)
   const [cliente, setCliente] = useState('')
+  const [aviso, setAviso] = useState('')
+  const telefonoRef = useRef<HTMLInputElement>(null)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [copiado, setCopiado] = useState<string | null>(null)
@@ -87,17 +89,18 @@ export default function DescuentosPage() {
   }, [])
 
   const generarPersonal = () => {
-    setForm((f) => ({
-      ...f,
-      codigo: `${prefijoDeNombre(cliente)}-${sufijoAleatorio()}`,
-      usos_max: '1',
-      personal: true
-    }))
+    const codigo = `${prefijoDeNombre(cliente)}-${sufijoAleatorio()}`
+    setForm((f) => ({ ...f, codigo, usos_max: '1', personal: true }))
     setError('')
+    // El botón solo prepara el formulario: se avisa y se lleva el foco al dato que falta
+    setAviso(`Código ${codigo} listo (1 uso). Completá el teléfono del cliente y el descuento, y tocá Crear cupón.`)
+    telefonoRef.current?.focus()
+    telefonoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
   const crear = async () => {
     setError('')
+    setAviso('')
     const codigo = normalizarCodigoCupon(form.codigo)
     if (!codigo) return setError('El código solo puede tener letras, números, guiones y guiones bajos (máx. 40).')
     const valor = Number(form.valor)
@@ -285,10 +288,16 @@ export default function DescuentosPage() {
           </div>
           <div>
             <label className={lbl}>Teléfono del cliente {form.personal ? '*' : '(opcional)'}</label>
-            <input type='tel' className={inp} value={form.telefono} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} placeholder='099 123 456' />
+            <input ref={telefonoRef} type='tel' className={inp} value={form.telefono} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} placeholder='099 123 456' />
           </div>
         </div>
 
+        {aviso && !error && (
+          <p role='status' className='flex items-center gap-2 text-sm text-green-800 bg-green-50 px-4 py-2.5 rounded-xl'>
+            <Sparkles className='h-4 w-4 shrink-0' />
+            {aviso}
+          </p>
+        )}
         {error && (
           <p role='alert' className='flex items-center gap-2 text-sm text-red-500 bg-red-50 px-4 py-2.5 rounded-xl'>
             <AlertCircle className='h-4 w-4 shrink-0' />
