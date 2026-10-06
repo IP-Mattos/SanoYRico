@@ -93,6 +93,15 @@ export interface PagosConfig {
   mercadopago: PagoMetodo
 }
 
+// Promo por monto total del pedido. `desde`/`hasta` son fechas ISO; '' = sin límite.
+export interface PromoMontoConfig {
+  activo: boolean
+  minimo: number
+  pct: number
+  desde: string
+  hasta: string
+}
+
 export interface SiteConfig {
   general: GeneralConfig
   hero: HeroConfig
@@ -103,6 +112,7 @@ export interface SiteConfig {
   faqs: FaqsConfig
   footer: FooterConfig
   pagos: PagosConfig
+  promoMonto: PromoMontoConfig
 }
 
 export const DEFAULT_CONFIG: SiteConfig = {
@@ -176,7 +186,8 @@ export const DEFAULT_CONFIG: SiteConfig = {
     transferencia: { activo: false, banco: '', tipoCuenta: '', sucursal: '', numeroCuenta: '', titular: '', documento: '' },
     deposito: { activo: false, banco: '', tipoCuenta: '', sucursal: '', numeroCuenta: '', titular: '', documento: '' },
     mercadopago: { activo: false, link: '' }
-  }
+  },
+  promoMonto: { activo: false, minimo: 5000, pct: 10, desde: '', hasta: '' }
 }
 
 // Opciones comunes para los selects del admin (exportadas para reutilizar en UI)
