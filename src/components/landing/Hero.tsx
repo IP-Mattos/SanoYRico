@@ -115,9 +115,13 @@ export function Hero({
 
       {/* Fila de confianza */}
       <div className='border-y border-[#eadfce] bg-white/60'>
-        <ul className='container-x grid grid-cols-1 sm:grid-cols-3 gap-y-3 py-4 list-none'>
+        {/* Flex centrado con divisores: queda parejo con 2 o 3 ítems (Mercado Pago es opcional) */}
+        <ul className='container-x flex flex-col sm:flex-row sm:justify-center sm:items-center gap-3 sm:gap-0 py-4 list-none'>
           {CONFIANZA.map(({ icon: Icon, texto }) => (
-            <li key={texto} className='flex items-center sm:justify-center gap-2.5 text-sm font-medium text-[#5c4033]'>
+            <li
+              key={texto}
+              className='flex items-center gap-2.5 text-sm font-medium text-[#5c4033] sm:px-10 sm:not-first:border-l sm:border-[#eadfce]'
+            >
               <Icon className='h-[18px] w-[18px] text-[#8a5a1a]' strokeWidth={1.75} aria-hidden='true' />
               {texto}
             </li>
