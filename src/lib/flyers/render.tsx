@@ -113,15 +113,21 @@ function Tile({
   reservarPromo: boolean
   dosLineas: boolean
 }) {
-  const { horizontal, nameFs, pad } = medidas(tileW, tileH)
-  const priceFs = Math.round(nameFs * (horizontal ? 2 : 1.65))
+  const { horizontal, nameFs: nameBase, pad } = medidas(tileW, tileH)
+  // En tarjetas horizontales la imagen no puede comerse el ancho del texto
+  const imgBox = horizontal ? Math.min(tileH - pad * 2, Math.round(tileW * 0.4)) : tileW - pad * 2
+  const textW = horizontal ? tileW - imgBox - pad * 3 - 8 : tileW - pad * 2 - 4
+  // Ajuste al ancho disponible (ancho medio de glifo ≈ 0,6 em): sin palabras cortadas ni precios desbordados
+  const palabraMasLarga = Math.max(...p.nombre.split(/\s+/).map((w) => w.length), 1)
+  const nameFs = Math.round(Math.min(nameBase, textW / (palabraMasLarga * 0.6)))
+  const precioTexto = formatearPrecio(p.precio)
+  const priceFs = Math.round(Math.min(nameFs * (horizontal ? 2 : 1.65), textW / (precioTexto.length * 0.62)))
   const pillFs = Math.round(nameFs * 0.72)
   const promoH = reservarPromo && horizontal ? Math.round(pillFs * 1.7) + 6 : 0
   const nameH = Math.round(nameFs * 1.15) * (dosLineas ? 2 : 1)
   const priceH = Math.round(priceFs * 1.12)
   const infoH = pad * 2 + nameH + 8 + promoH + priceH
 
-  const imgBox = horizontal ? tileH - pad * 2 : tileW - pad * 2
   const imgH = horizontal ? imgBox : Math.max(80, tileH - infoH - pad)
   const imgW = horizontal ? imgBox : tileW - pad * 2
 
@@ -174,7 +180,8 @@ function Tile({
         justifyContent: horizontal ? 'center' : 'flex-start',
         ...(horizontal ? { flex: 1 } : { width: tileW - pad * 2 }),
         paddingTop: horizontal ? 0 : 14,
-        paddingLeft: horizontal ? 8 : 4
+        paddingLeft: horizontal ? 8 : 4,
+        paddingRight: horizontal ? pad : 0
       }}
     >
       <div
@@ -187,7 +194,7 @@ function Tile({
           lineHeight: 1.15,
           color: C.cafe,
           overflow: 'hidden',
-          lineClamp: dosLineas ? 2 : 1
+          lineClamp: horizontal ? 3 : dosLineas ? 2 : 1
         }}
       >
         {p.nombre}
@@ -245,7 +252,7 @@ function Tile({
             color: C.ambar
           }}
         >
-          {formatearPrecio(p.precio)}
+          {precioTexto}
         </div>
         {!horizontal && p.pct !== null && (
           <div

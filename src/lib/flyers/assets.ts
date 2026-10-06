@@ -68,6 +68,19 @@ export async function cargarImagenProducto(url: string | null): Promise<string |
     if (!res.ok) return null
     const buf = Buffer.from(await res.arrayBuffer())
     if (buf.length === 0 || buf.length > MAX_BYTES) return null
+    // Recorta el margen vacío (muchas ilustraciones traen mucho aire alrededor) y normaliza a PNG,
+    // que Satori renderiza de forma confiable; de paso acepta WebP.
+    try {
+      const sharp = (await import('sharp')).default
+      const png = await sharp(buf)
+        .trim({ threshold: 10 })
+        .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+        .png()
+        .toBuffer()
+      return `data:image/png;base64,${png.toString('base64')}`
+    } catch {
+      // Si sharp falla, se usa la imagen tal cual cuando es PNG/JPEG
+    }
     const esPng = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47
     const esJpg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff
     if (!esPng && !esJpg) return null // WebP/AVIF/etc.: Satori no los renderiza de forma confiable
