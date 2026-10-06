@@ -1,15 +1,32 @@
 // src/components/landing/Cart.tsx
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCart } from '@/context/CartContext'
-import { X, Plus, Minus, ShoppingBag, Loader2, CheckCircle, MessageCircle, Copy, Check } from 'lucide-react'
+import { X, Plus, Minus, ShoppingBag, Loader2, CheckCircle, MessageCircle, Copy, Check, Tag } from 'lucide-react'
 import { PAISES } from '@/lib/localidades'
 import { type PagosConfig, type PagoMetodo } from '@/lib/site-config'
 import { type MetodoPago } from '@/lib/types'
+import { redondear } from '@/lib/pedidos/descuentos'
 import { linkWhatsApp, mensajeComprobante, normalizarTelefonoUY } from '@/lib/whatsapp'
 
 type Paso = 'carrito' | 'checkout' | 'confirmado'
+
+// Respuesta de POST /api/cupones/validar (el servidor es la autoridad; acá solo se muestra)
+type ValidarRespuesta =
+  | {
+      ok: true
+      subtotal: number
+      descuento: number
+      descuento_tipo: 'cupon' | 'monto' | null
+      cupon_aplicado: boolean
+      total: number
+      mensaje: string
+    }
+  | { ok: false; mensaje: string }
+
+type Vista = Extract<ValidarRespuesta, { ok: true }> & { key: string }
+type MensajeCupon = { tipo: 'ok' | 'error' | 'info'; texto: string }
 
 const FORM_INICIAL = {
   nombre: '',
@@ -40,6 +57,91 @@ export function Cart({
   const [mpInitPoint, setMpInitPoint] = useState<string | null>(null)
   const [form, setForm] = useState(FORM_INICIAL)
   const [errores, setErrores] = useState<Record<string, string>>({})
+
+  // ── Descuentos: vista previa calculada por el servidor ─────────────────────
+  const [cuponInput, setCuponInput] = useState('')
+  const [cuponActivo, setCuponActivo] = useState<string | null>(null)
+  const [cuponMsg, setCuponMsg] = useState<MensajeCupon | null>(null)
+  const [aplicando, setAplicando] = useState(false)
+  const [preview, setPreview] = useState<Vista | null>(null)
+
+  const itemsKey = items.map((i) => `${i.producto_id}:${i.cantidad}`).join(',')
+  // El teléfono solo importa para cupones personales: no se refetchea por cada tecla sin cupón.
+  const claveDe = (codigo: string | null) => `${itemsKey}|${codigo ? `${codigo}|${form.telefono.trim()}` : ''}`
+  const previewKey = claveDe(cuponActivo)
+
+  const pedirPreview = async (codigo: string | null): Promise<ValidarRespuesta | null> => {
+    try {
+      const res = await fetch('/api/cupones/validar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigo: codigo ?? undefined,
+          telefono: form.telefono.trim() || undefined,
+          items: items.map((i) => ({ producto_id: i.producto_id, cantidad: i.cantidad }))
+        })
+      })
+      if (!res.ok) return null
+      return (await res.json()) as ValidarRespuesta
+    } catch {
+      return null
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen || paso === 'confirmado' || items.length === 0) return
+    let cancelado = false
+    const t = setTimeout(async () => {
+      const r = await pedirPreview(cuponActivo)
+      if (cancelado || !r) return
+      if (r.ok) setPreview({ ...r, key: previewKey })
+      else if (cuponActivo) {
+        // El cupón dejó de valer (p. ej. cambió el teléfono): se saca y se avisa.
+        setCuponActivo(null)
+        setCuponMsg({ tipo: 'error', texto: r.mensaje })
+      }
+    }, 700)
+    return () => {
+      cancelado = true
+      clearTimeout(t)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, paso, previewKey])
+
+  const vista = preview && preview.key === previewKey ? preview : null
+  const descuento = vista?.descuento ?? 0
+  const subtotalMostrar = vista ? vista.subtotal : redondear(total)
+  const totalFinal = vista ? vista.total : redondear(total)
+
+  const aplicarCupon = async () => {
+    const codigo = cuponInput.trim().toUpperCase()
+    if (!codigo) return
+    setAplicando(true)
+    setCuponMsg(null)
+    const r = await pedirPreview(codigo)
+    setAplicando(false)
+    if (!r) {
+      setCuponMsg({ tipo: 'error', texto: 'No pudimos validar el cupón. Intentá de nuevo en un minuto.' })
+      return
+    }
+    if (!r.ok) {
+      setCuponMsg({ tipo: 'error', texto: r.mensaje })
+      return
+    }
+    if (r.cupon_aplicado) {
+      setCuponActivo(codigo)
+      setPreview({ ...r, key: claveDe(codigo) })
+      setCuponMsg({ tipo: 'ok', texto: r.mensaje })
+    } else {
+      setCuponMsg({ tipo: 'info', texto: r.mensaje || 'Este cupón no mejora el descuento que ya tenés.' })
+    }
+  }
+
+  const quitarCupon = () => {
+    setCuponActivo(null)
+    setCuponInput('')
+    setCuponMsg(null)
+  }
 
   // Métodos de pago activos
   const metodosActivos = [
@@ -87,7 +189,7 @@ export function Cart({
         calle: form.calle,
         notas: form.notas || undefined,
         metodo_pago: form.metodo_pago || undefined,
-        total,
+        cupon: cuponActivo ?? undefined,
         items: items.map((i) => ({
           producto_id: i.producto_id,
           nombre: i.nombre,
@@ -108,7 +210,7 @@ export function Cart({
     const pedido = await res.json()
 
     // Capturar el total antes de vaciar() — el carrito queda en $0 después
-    setTotalPedido(total)
+    setTotalPedido(totalFinal)
 
     // ── Mercado Pago Checkout Pro ────────────────────────────────────────────
     if (form.metodo_pago === 'mercadopago') {
@@ -143,6 +245,9 @@ export function Cart({
       setForm(FORM_INICIAL)
       setErrores({})
       setMpInitPoint(null)
+      setCuponInput('')
+      setCuponActivo(null)
+      setCuponMsg(null)
     }, 300)
   }
 
@@ -157,6 +262,63 @@ export function Cart({
     telefono && esPagoManual && numeroPedido
       ? linkWhatsApp(telefono, mensajeComprobante(numeroPedido, totalPedido, form.metodo_pago))
       : null
+
+  const cuponBox = (
+    <div className='space-y-1.5'>
+      {cuponActivo ? (
+        <div className='flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2 text-xs'>
+          <span className='flex items-center gap-1.5 text-green-800 font-medium min-w-0'>
+            <Tag className='h-3.5 w-3.5 shrink-0' />
+            <span className='truncate'>Cupón {cuponActivo}</span>
+          </span>
+          <button type='button' onClick={quitarCupon} className='text-green-800 underline shrink-0'>
+            Quitar
+          </button>
+        </div>
+      ) : (
+        <>
+          <label htmlFor='cupon' className='block text-xs font-medium text-[#3d2b1f]'>
+            ¿Tenés un cupón?
+          </label>
+          <div className='flex gap-2'>
+            <input
+              id='cupon'
+              type='text'
+              value={cuponInput}
+              onChange={(e) => setCuponInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  aplicarCupon()
+                }
+              }}
+              placeholder='Ingresá tu código'
+              autoComplete='off'
+              maxLength={40}
+              className='flex-1 min-w-0 px-3 py-2 rounded-xl border border-[#f0e6d3] text-sm uppercase focus:outline-none focus:ring-2 focus:ring-[#c47c2b]'
+            />
+            <button
+              type='button'
+              onClick={aplicarCupon}
+              disabled={aplicando || !cuponInput.trim()}
+              className='shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#f0e6d3] text-[#3d2b1f] text-sm font-medium hover:bg-[#c47c2b] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {aplicando && <Loader2 className='h-3.5 w-3.5 animate-spin' />}
+              Aplicar
+            </button>
+          </div>
+        </>
+      )}
+      {cuponMsg && (
+        <p
+          role={cuponMsg.tipo === 'error' ? 'alert' : 'status'}
+          className={`text-xs ${cuponMsg.tipo === 'error' ? 'text-red-500' : cuponMsg.tipo === 'ok' ? 'text-green-700' : 'text-[#8a7060]'}`}
+        >
+          {cuponMsg.texto}
+        </p>
+      )}
+    </div>
+  )
 
   return (
     <>
@@ -215,7 +377,7 @@ export function Cart({
                       </button>
                     </div>
                     <div className='text-right min-w-[50px]'>
-                      <p className='text-sm font-bold text-[#3d2b1f]'>${item.precio * item.cantidad}</p>
+                      <p className='text-sm font-bold text-[#3d2b1f]'>${redondear(item.precio * item.cantidad)}</p>
                       <button
                         onClick={() => quitar(item.producto_id)}
                         aria-label={`Quitar ${item.nombre} del carrito`}
@@ -232,15 +394,15 @@ export function Cart({
               <div className='p-5 border-t border-[#f0e6d3] space-y-3'>
                 {/* Progress hacia el mínimo de pedido */}
                 {(() => {
-                  const alcanzado = total >= MINIMO_PEDIDO
-                  const pct = Math.min(100, Math.round((total / MINIMO_PEDIDO) * 100))
+                  const alcanzado = totalFinal >= MINIMO_PEDIDO
+                  const pct = Math.min(100, Math.round((totalFinal / MINIMO_PEDIDO) * 100))
                   return (
                     <div className='space-y-1.5' aria-live='polite'>
                       <div className='flex justify-between text-xs font-medium'>
                         <span className={alcanzado ? 'text-green-600' : 'text-[#c47c2b]'}>
-                          {alcanzado ? '✓ Listo para confirmar' : `Faltan $${MINIMO_PEDIDO - total} para el mínimo`}
+                          {alcanzado ? '✓ Listo para confirmar' : `Faltan $${redondear(MINIMO_PEDIDO - totalFinal)} para el mínimo`}
                         </span>
-                        <span className='text-[#8a7060]'>${total} / ${MINIMO_PEDIDO}</span>
+                        <span className='text-[#8a7060]'>${totalFinal} / ${MINIMO_PEDIDO}</span>
                       </div>
                       <div className='h-2 bg-[#f0e6d3] rounded-full overflow-hidden'>
                         <div
@@ -252,20 +414,33 @@ export function Cart({
                   )
                 })()}
 
+                {cuponBox}
+                {descuento > 0 && (
+                  <div className='space-y-1 text-sm'>
+                    <div className='flex justify-between text-[#8a7060]'>
+                      <span>Subtotal</span>
+                      <span>${subtotalMostrar}</span>
+                    </div>
+                    <div className='flex justify-between text-green-700 font-medium'>
+                      <span>{vista?.descuento_tipo === 'cupon' ? `Cupón ${cuponActivo}` : 'Descuento por monto'}</span>
+                      <span>-${descuento}</span>
+                    </div>
+                  </div>
+                )}
                 <div className='flex justify-between items-center'>
                   <span className='text-[#8a7060] text-sm'>Total</span>
                   <span className='text-2xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'Georgia, serif' }}>
-                    ${total}
+                    ${totalFinal}
                   </span>
                 </div>
                 <button
                   onClick={() => setPaso('checkout')}
-                  disabled={total < MINIMO_PEDIDO}
+                  disabled={totalFinal < MINIMO_PEDIDO}
                   className='w-full bg-[#3d2b1f] text-white py-3 rounded-xl text-sm font-medium hover:bg-[#c47c2b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   Continuar con el pedido →
                 </button>
-                {total >= MINIMO_PEDIDO && (
+                {totalFinal >= MINIMO_PEDIDO && (
                   <p className='text-xs text-[#8a7060] text-center'>Envío incluido en todos los pedidos</p>
                 )}
               </div>
@@ -285,14 +460,28 @@ export function Cart({
                     <span className='text-[#3d2b1f]'>
                       {i.emoji} {i.nombre} x{i.cantidad}
                     </span>
-                    <span className='font-medium text-[#3d2b1f]'>${i.precio * i.cantidad}</span>
+                    <span className='font-medium text-[#3d2b1f]'>${redondear(i.precio * i.cantidad)}</span>
                   </div>
                 ))}
-                <div className='flex justify-between text-sm font-bold pt-2 border-t border-[#f0e6d3] mt-2'>
+                {descuento > 0 && (
+                  <>
+                    <div className='flex justify-between text-sm pt-2 border-t border-[#f0e6d3] mt-2 text-[#8a7060]'>
+                      <span>Subtotal</span>
+                      <span>${subtotalMostrar}</span>
+                    </div>
+                    <div className='flex justify-between text-sm py-1 text-green-700 font-medium'>
+                      <span>{vista?.descuento_tipo === 'cupon' ? `Cupón ${cuponActivo}` : 'Descuento por monto'}</span>
+                      <span>-${descuento}</span>
+                    </div>
+                  </>
+                )}
+                <div className={`flex justify-between text-sm font-bold pt-2 border-t border-[#f0e6d3] ${descuento > 0 ? '' : 'mt-2'}`}>
                   <span className='text-[#3d2b1f]'>Total</span>
-                  <span className='text-[#c47c2b]'>${total}</span>
+                  <span className='text-[#c47c2b]'>${totalFinal}</span>
                 </div>
               </div>
+
+              {cuponBox}
 
               {/* Nombre */}
               <div>

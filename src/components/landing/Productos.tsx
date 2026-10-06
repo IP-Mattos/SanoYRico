@@ -7,6 +7,7 @@ import { Search, X, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { type Producto, type CategoriaDB } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
+import { precioConPromo } from '@/lib/pedidos/descuentos'
 
 type SortKey = 'nombre' | 'precio-asc' | 'precio-desc' | 'nuevos'
 
@@ -80,6 +81,9 @@ function ProductCard({ p }: { p: Producto }) {
   const descripcion = p.descripcion ?? ''
   const esLarga = descripcion.length > DESCRIPCION_LARGA
   const [expanded, setExpanded] = useState(false)
+  // Mismo helper que usa el servidor para decidir si la promo está activa
+  const [ahora] = useState(() => new Date())
+  const { lista, precio, pct } = precioConPromo(p, ahora)
 
   return (
     <div className='group flex flex-col bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(61,43,31,0.25)] hover:border-[#c47c2b]/40 transition-all duration-300'>
@@ -100,6 +104,14 @@ function ProductCard({ p }: { p: Producto }) {
         {p.badge && (
           <span className='absolute top-3 left-3 bg-[#4a6741] text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm'>
             {p.badge}
+          </span>
+        )}
+        {pct !== null && (
+          <span
+            className='absolute top-3 right-3 bg-[#c0392b] text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm'
+            aria-label={`${pct}% de descuento`}
+          >
+            -{pct}%
           </span>
         )}
         {sinStock && (
@@ -141,14 +153,19 @@ function ProductCard({ p }: { p: Producto }) {
         )}
 
         <div className='mt-auto flex items-center justify-between gap-2 pt-2'>
-          <div className='flex items-baseline gap-1'>
+          <div className='flex items-baseline gap-1 flex-wrap'>
+            {pct !== null && (
+              <span className='text-sm text-[#8a7060] line-through' aria-label={`Precio anterior $${lista}`}>
+                ${lista}
+              </span>
+            )}
             <span className='text-xl font-bold text-[#8a5a1a]' style={{ fontFamily: 'Georgia, serif' }}>
-              ${p.precio}
+              ${precio}
             </span>
             <span className='text-[10px] text-[#8a7060] font-medium uppercase tracking-wider'>/unidad</span>
           </div>
           <button
-            onClick={() => agregar({ producto_id: p.id, nombre: p.nombre, emoji: p.emoji ?? '', precio: p.precio })}
+            onClick={() => agregar({ producto_id: p.id, nombre: p.nombre, emoji: p.emoji ?? '', precio })}
             disabled={sinStock}
             aria-label={`Agregar ${p.nombre} al carrito`}
             className='shrink-0 inline-flex items-center justify-center gap-1.5 h-10 bg-[#3d2b1f] text-white font-semibold text-sm leading-none rounded-full hover:bg-[#c47c2b] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#3d2b1f] px-4'
