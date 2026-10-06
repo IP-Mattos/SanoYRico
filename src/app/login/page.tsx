@@ -115,19 +115,32 @@ export default function LoginPage() {
       </aside>
 
       {/* Formulario */}
-      <main className='flex min-h-screen lg:min-h-0 items-center justify-center px-5 py-10'>
-        <div className='w-full max-w-sm'>
-          {/* Logo (mobile/tablet) */}
-          <div className='lg:hidden flex flex-col items-center mb-8'>
+      <main className='flex flex-col min-h-screen lg:min-h-0 lg:items-center lg:justify-center lg:px-5 lg:py-10'>
+        {/* Cabecera de marca (mobile/tablet): misma identidad que el panel de desktop */}
+        <header className='lg:hidden relative overflow-hidden bg-[#3d2b1f] text-white px-6 pt-10 pb-16 flex flex-col items-center text-center'>
+          <div
+            className='absolute -top-24 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-[#c47c2b]/25 blur-3xl pointer-events-none'
+            aria-hidden='true'
+          />
+          <div className='relative flex items-center justify-center'>
+            <div className='absolute w-56 h-56 rounded-full border border-white/10 animate-breathe' aria-hidden='true' />
+            <div className='absolute w-72 h-72 rounded-full border border-white/5 animate-breathe [animation-delay:-3.5s]' aria-hidden='true' />
             <Image
               src='/logo-sano-y-rico-v2.png'
               alt='Sano y Rico'
               width={1178}
               height={1178}
               priority
-              className='w-28 h-auto filter-[drop-shadow(0_14px_18px_rgba(61,43,31,0.25))]'
+              className='relative w-36 h-auto animate-float-soft filter-[drop-shadow(0_18px_24px_rgba(0,0,0,0.35))]'
             />
           </div>
+          <p className='relative mt-6 text-2xl font-bold' style={{ fontFamily: 'var(--display)' }}>
+            Tu tienda, <span className='italic text-[#e8a832]'>en orden</span>
+          </p>
+        </header>
+
+        <div className='relative -mt-8 lg:mt-0 flex-1 lg:flex-none w-full lg:max-w-sm bg-[#faf6ef] rounded-t-3xl lg:rounded-none px-6 pt-8 pb-10 lg:p-0 sm:px-10 shadow-[0_-12px_30px_-18px_rgba(61,43,31,0.5)] lg:shadow-none'>
+          <div className='w-full max-w-sm mx-auto'>
 
           <p className='text-xs font-semibold uppercase tracking-[0.18em] text-[#a8661f]'>Panel de administración</p>
           <h1 className='mt-2 text-3xl sm:text-4xl font-bold text-[#3d2b1f]' style={{ fontFamily: 'var(--display)' }}>
@@ -219,6 +232,7 @@ export default function LoginPage() {
           >
             <ArrowLeft className='h-4 w-4' aria-hidden='true' /> Volver a la tienda
           </Link>
+          </div>
         </div>
       </main>
     </div>
