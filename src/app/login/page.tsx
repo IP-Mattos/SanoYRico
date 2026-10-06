@@ -84,7 +84,7 @@ export default function LoginPage() {
           aria-hidden='true'
         />
         <div className='relative flex items-center gap-3'>
-          <Image src='/logo-sano-y-rico.png' alt='' width={40} height={40} className='h-10 w-10' />
+          <Image src='/logo-sano-y-rico-v2.png' alt='' width={40} height={40} className='h-10 w-10' />
           <span className='text-xl font-bold' style={{ fontFamily: 'var(--display)' }}>
             Sano y <span className='italic text-[#e8a832]'>Rico</span>
           </span>
@@ -95,7 +95,7 @@ export default function LoginPage() {
             <div className='absolute w-[26rem] h-[26rem] rounded-full border border-white/10 animate-breathe' aria-hidden='true' />
             <div className='absolute w-[34rem] h-[34rem] rounded-full border border-white/5 animate-breathe [animation-delay:-3.5s]' aria-hidden='true' />
             <Image
-              src='/logo-sano-y-rico.png'
+              src='/logo-sano-y-rico-v2.png'
               alt='Sano y Rico'
               width={1178}
               height={1178}
@@ -126,7 +126,7 @@ export default function LoginPage() {
             <div className='absolute w-56 h-56 rounded-full border border-white/10 animate-breathe' aria-hidden='true' />
             <div className='absolute w-72 h-72 rounded-full border border-white/5 animate-breathe [animation-delay:-3.5s]' aria-hidden='true' />
             <Image
-              src='/logo-sano-y-rico.png'
+              src='/logo-sano-y-rico-v2.png'
               alt='Sano y Rico'
               width={1178}
               height={1178}
