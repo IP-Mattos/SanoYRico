@@ -42,6 +42,14 @@ export async function proxy(req: NextRequest) {
         { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } }
       )
     }
+    if (pathname === '/api/seguimiento') {
+      if (!allow(`seguimiento:${ip}`, 10, 60_000)) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Demasiadas consultas. Intentá de nuevo en un minuto.' }),
+          { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } }
+        )
+      }
+    }
     if (pathname === '/api/pedidos') {
       if (!allow(`pedidos:${ip}`, 5, 3_600_000)) {
         return new NextResponse(
