@@ -1,4 +1,5 @@
 import { type TestimonioItem, DEFAULT_CONFIG } from '@/lib/site-config'
+import { iniciales } from './icons'
 
 function Estrellas({ cantidad = 5 }: { cantidad?: number }) {
   const n = Math.min(5, Math.max(0, Math.round(cantidad)))
@@ -31,8 +32,8 @@ export function Testimonios({
     : 'Personas como vos ya cambiaron sus snacks por algo mejor.'
 
   return (
-    <section id='opiniones' className='py-20 sm:py-28 px-6 sm:px-10 lg:px-16 bg-[#f0e6d3] scroll-mt-16'>
-      <div className='max-w-7xl mx-auto'>
+    <section id='opiniones' className='section-y bg-[#f0e6d3] scroll-mt-16'>
+      <div className='container-x'>
         <div className='reveal'>
           <p className='eyebrow'>Opiniones</p>
           <h2 className='section-title'>
@@ -48,7 +49,7 @@ export function Testimonios({
           {visibles.map((t, i) => (
             <figure
               key={i}
-              className='break-inside-avoid mb-4 bg-[#faf6ef] rounded-2xl p-5 sm:p-6 border border-[#e6d6bb] shadow-[0_14px_28px_-24px_rgba(61,43,31,0.45)]'
+              className='card break-inside-avoid mb-4 p-6 bg-[#faf6ef]!'
             >
               <Estrellas cantidad={t.estrellas} />
               <blockquote
@@ -58,8 +59,11 @@ export function Testimonios({
                 &ldquo;{t.texto}&rdquo;
               </blockquote>
               <figcaption className='flex items-center gap-3 pt-4 border-t border-[#3d2b1f]/10'>
-                <div className='w-10 h-10 rounded-full bg-[#f0e6d3] flex items-center justify-center text-xl shrink-0'>
-                  {t.avatar}
+                <div
+                  className='w-10 h-10 rounded-full bg-[#3d2b1f] text-[#faf6ef] flex items-center justify-center text-sm font-semibold tracking-wide shrink-0'
+                  aria-hidden='true'
+                >
+                  {iniciales(t.nombre)}
                 </div>
                 <div>
                   <div className='text-sm font-semibold text-[#3d2b1f]'>{t.nombre}</div>

@@ -4,8 +4,8 @@ export function Faqs({ config = DEFAULT_CONFIG.faqs }: { config?: FaqsConfig }) 
   const items = config.items ?? []
 
   return (
-    <section className='py-20 sm:py-28 px-6 sm:px-10 lg:px-16'>
-      <div className='max-w-3xl mx-auto'>
+    <section className='section-y'>
+      <div className='container-x max-w-4xl!'>
         <div className='reveal'>
           <p className='eyebrow'>Preguntas frecuentes</p>
           <h2 className='section-title mb-10!'>
@@ -23,7 +23,7 @@ export function Faqs({ config = DEFAULT_CONFIG.faqs }: { config?: FaqsConfig }) 
           {items.map((f, i) => (
             <details
               key={i}
-              className='group bg-white rounded-2xl border border-[#efe3d0] overflow-hidden open:border-[#c47c2b]/40 open:shadow-[0_14px_30px_-22px_rgba(61,43,31,0.4)] transition-[border-color,box-shadow] [&_summary::-webkit-details-marker]:hidden'
+              className='group card overflow-hidden open:border-[#c47c2b]/45 transition-[border-color,box-shadow] [&_summary::-webkit-details-marker]:hidden'
             >
               <summary className='flex items-center justify-between gap-4 px-5 min-h-16 py-4 cursor-pointer list-none hover:bg-[#faf6ef] focus-visible:bg-[#faf6ef] transition-colors'>
                 <span className='text-[15px] sm:text-base font-semibold text-[#3d2b1f] leading-snug'>{f.pregunta}</span>

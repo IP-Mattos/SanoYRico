@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase'
 import { type Producto, type CategoriaDB } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
 import { precioConPromo } from '@/lib/pedidos/descuentos'
+import { iconNode } from './icons'
 
 type SortKey = 'nombre' | 'precio-asc' | 'precio-desc' | 'nuevos'
 
@@ -36,11 +37,15 @@ function normalizar(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
+// Layout flex centrado: la última fila (o una categoría de 3 productos) queda centrada, sin celdas vacías.
+const GRID = 'flex flex-wrap justify-center gap-4'
+const CARD_W = 'basis-[calc(50%-0.5rem)] md:basis-[calc(33.333%-0.667rem)] xl:basis-[calc(25%-0.75rem)] min-w-0'
+
 const CARD_BG = 'bg-[radial-gradient(ellipse_at_50%_55%,#fff6e0_0%,#f6e9cf_70%,#f0e1c3_100%)]'
 
 function SkeletonCard() {
   return (
-    <div className='bg-white rounded-2xl border border-[#f0e6d3] overflow-hidden'>
+    <div className={`card overflow-hidden ${CARD_W}`}>
       <div className='h-40 bg-linear-to-br from-[#f0e6d3] to-[#fef3d0] animate-pulse' />
       <div className='p-4 space-y-3'>
         <div className='h-4 bg-[#f0e6d3] rounded animate-pulse w-3/4' />
@@ -72,29 +77,29 @@ function ProductCard({ p }: { p: Producto }) {
   const { lista, precio, pct } = precioConPromo(p, ahora)
 
   return (
-    <div className='group flex flex-col bg-white rounded-2xl border border-[#eadfce] overflow-hidden shadow-[0_10px_26px_-22px_rgba(61,43,31,0.5)] hover:-translate-y-1 hover:shadow-[0_22px_40px_-18px_rgba(61,43,31,0.32)] hover:border-[#c47c2b]/50 transition-all duration-300'>
+    <div className={`group card card-hover flex flex-col overflow-hidden ${CARD_W}`}>
       {/* Imagen / emoji */}
-      <div className={`relative h-44 sm:h-52 ${CARD_BG} flex items-center justify-center`}>
+      <div className={`relative m-2 rounded-xl h-44 sm:h-52 ${CARD_BG} flex items-center justify-center`}>
         {p.imagen_url ? (
           <Image
             src={p.imagen_url}
             alt={p.nombre}
             width={200}
             height={200}
-            className='h-32 sm:h-40 w-auto object-contain drop-shadow-[0_14px_14px_rgba(61,43,31,0.25)] group-hover:scale-105 group-hover:-rotate-2 transition-transform duration-500'
+            className='h-32 sm:h-40 w-auto object-contain drop-shadow-[0_14px_14px_rgba(61,43,31,0.25)] group-hover:scale-105 transition-transform duration-500'
           />
         ) : (
-          <span className='text-7xl group-hover:scale-110 transition-transform duration-500'>{p.emoji}</span>
+          <span className='text-7xl group-hover:scale-105 transition-transform duration-500'>{p.emoji}</span>
         )}
 
         {p.badge && (
-          <span className='absolute top-3 left-3 max-w-[60%] bg-[#4a6741] text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm leading-tight'>
+          <span className='absolute top-2.5 left-2.5 max-w-[60%] bg-[#4a6741] text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm leading-tight'>
             {p.badge}
           </span>
         )}
         {pct !== null && (
           <span
-            className='absolute top-3 right-3 bg-[#c0392b] text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm'
+            className='absolute top-2.5 right-2.5 bg-[#c0392b] text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm'
             aria-label={`${pct}% de descuento`}
           >
             -{pct}%
@@ -110,7 +115,7 @@ function ProductCard({ p }: { p: Producto }) {
       </div>
 
       {/* Contenido: flex-col + price/CTA al bottom con mt-auto */}
-      <div className='flex-1 flex flex-col p-4 sm:p-5'>
+      <div className='flex-1 flex flex-col px-4 pb-4 pt-2 sm:px-5 sm:pb-5'>
         <h3
           className='font-bold text-[#3d2b1f] text-base sm:text-lg leading-snug mb-1.5 line-clamp-2'
           style={{ fontFamily: 'var(--display)' }}
@@ -138,7 +143,7 @@ function ProductCard({ p }: { p: Producto }) {
           </div>
         )}
 
-        <div className='mt-auto flex items-end justify-between gap-2 pt-3 border-t border-[#f0e6d3]'>
+        <div className='mt-auto flex items-end justify-between gap-2 pt-4'>
           <div className='flex items-baseline gap-x-1.5 gap-y-0 flex-wrap pt-1'>
             {pct !== null && (
               <span className='text-sm text-[#6e5746] line-through' aria-label={`Precio anterior $${lista}`}>
@@ -163,6 +168,10 @@ function ProductCard({ p }: { p: Producto }) {
       </div>
     </div>
   )
+}
+
+function TabIcon({ cat }: { cat: CategoriaDB }) {
+  return iconNode(`${cat.nombre} ${cat.slug}`, 0, 'h-4 w-4 shrink-0')
 }
 
 export function Productos() {
@@ -202,8 +211,8 @@ export function Productos() {
   }, [productos, tab, busqueda, orden, buscando])
 
   return (
-    <section id='productos' className='py-20 sm:py-28 px-6 sm:px-10 lg:px-16 scroll-mt-12'>
-      <div className='max-w-7xl mx-auto'>
+    <section id='productos' className='section-y scroll-mt-12'>
+      <div className='container-x'>
         <div className='reveal'>
           <p className='eyebrow'>Nuestros productos</p>
           <h2 className='section-title'>
@@ -270,7 +279,7 @@ export function Productos() {
                       : 'bg-white text-[#5c4033] border border-[#dccbb0] hover:border-[#c47c2b]'
                   }`}
                 >
-                  <span>{cat.icono}</span>
+                  <TabIcon cat={cat} />
                   {cat.nombre}
                   <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === cat.slug ? 'bg-white/20' : 'bg-[#f0e6d3]'}`}>
                     {count}
@@ -292,7 +301,7 @@ export function Productos() {
 
         {/* Contenido */}
         {loading ? (
-          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5'>
+          <div className={GRID}>
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtrados.length === 0 ? (
@@ -302,7 +311,7 @@ export function Productos() {
               : 'No hay productos disponibles en esta categoría.'}
           </div>
         ) : (
-          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5'>
+          <div className={GRID}>
             {filtrados.map((p) => (
               <ProductCard key={p.id} p={p} />
             ))}
