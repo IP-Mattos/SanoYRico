@@ -34,7 +34,8 @@ export async function proxy(req: NextRequest) {
   maybeClean()
 
   // ── Rate limiting en API routes ──────────────────────────────────────────
-  if (pathname.startsWith('/api/')) {
+  // El webhook de MP llega desde las IPs de MP: no se limita para no perder notificaciones
+  if (pathname.startsWith('/api/') && pathname !== '/api/mp/webhook') {
     if (!allow(`api:${ip}`, 20, 60_000)) {
       return new NextResponse(
         JSON.stringify({ error: 'Demasiadas solicitudes. Intentá de nuevo en un minuto.' }),
