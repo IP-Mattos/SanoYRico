@@ -1,9 +1,9 @@
 // src/lib/productos/replicate.ts
-// Quitar el fondo de una foto con Replicate (mismo modelo que /api/remove-bg).
+// Llamadas a Replicate: foto de estudio para las fotos reales y modelo de quitar fondo (lo usa /api/remove-bg).
 // El token viene solo de REPLICATE_API_TOKEN; la red y el reloj son inyectables para testear.
 
-// Modelo oficial de Replicate (sin versión fija). lucataco/remove-bg, el comunitario que se usaba,
-// empezó a responder 503 de forma persistente en nov-2026.
+// Quitar fondo: modelo oficial de Replicate (sin versión fija). lucataco/remove-bg, el comunitario que se
+// usaba, empezó a responder 503 de forma persistente en nov-2026.
 export const REMOVE_BG_URL = 'https://api.replicate.com/v1/models/bria/remove-background/predictions'
 export const PRESUPUESTO_MS = 90_000
 const POLL_MS = 2000
@@ -70,15 +70,30 @@ export async function waitForPrediction(
   throw new Error('Timeout esperando el resultado')
 }
 
-/** Devuelve un PNG con fondo transparente. Lanza si Replicate falla o se agota el tiempo. */
-export async function quitarFondo(imagen: Buffer, mime: string, deps: Deps = depsReales): Promise<Buffer> {
+export const FOTO_ESTUDIO_URL = 'https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions'
+
+// Kontext redibuja la imagen entera: el prompt insiste en no tocar el producto (las fotos son "reales")
+export const FOTO_ESTUDIO_PROMPT =
+  'Replace only the background and lighting. Place this exact product, in the same position, on a seamless warm cream ' +
+  'studio backdrop with bright soft diffused light and a gentle natural shadow under it, like a high-end e-commerce ' +
+  'catalog photo. Do not modify the product in any way: keep every ingredient, seed, flake, grain, label and printed ' +
+  'text in exactly the same position, size, shape and color, keep the packaging shape, wrinkles and reflections ' +
+  'identical. Do not redraw, rearrange, add or remove anything on or inside the product. Same framing, same camera ' +
+  'angle, same product scale.'
+
+/** Convierte la foto en foto de estudio (fondo crema, luz suave). Devuelve un JPG. Lanza si Replicate falla. */
+export async function fotoEstudio(imagen: Buffer, mime: string, deps: Deps = depsReales): Promise<Buffer> {
   const dataUri = `data:${mime};base64,${imagen.toString('base64')}`
-  const res = await replicatePost(REMOVE_BG_URL, { input: { image: dataUri } }, deps)
+  const res = await replicatePost(
+    FOTO_ESTUDIO_URL,
+    { input: { input_image: dataUri, prompt: FOTO_ESTUDIO_PROMPT, output_format: 'jpg', aspect_ratio: 'match_input_image' } },
+    deps
+  )
   if (!res.ok) throw new Error(`Replicate respondió ${res.status}`)
   const salida = await waitForPrediction(await res.json(), deps)
   const url = Array.isArray(salida) ? (salida[0] as string) : (salida as string)
   if (typeof url !== 'string' || !url.startsWith('https://')) throw new Error('Respuesta inesperada de Replicate')
-  const png = await deps.fetch(url)
-  if (!png.ok) throw new Error('No se pudo descargar el resultado')
-  return Buffer.from(await png.arrayBuffer())
+  const foto = await deps.fetch(url)
+  if (!foto.ok) throw new Error('No se pudo descargar el resultado')
+  return Buffer.from(await foto.arrayBuffer())
 }

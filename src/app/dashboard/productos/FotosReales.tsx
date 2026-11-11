@@ -89,8 +89,8 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
     if (fallidas.length > 0) {
       setError(
         fallidas.length === 1
-          ? 'No pudimos quitar el fondo de una foto (puede haber tardado demasiado).'
-          : `No pudimos quitar el fondo de ${fallidas.length} fotos (puede haber tardado demasiado).`
+          ? 'No pudimos convertir una foto en foto de estudio (puede haber tardado demasiado).'
+          : `No pudimos convertir ${fallidas.length} fotos en foto de estudio (puede haber tardado demasiado).`
       )
       setFallida(fallidas)
     }
@@ -176,7 +176,7 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
         >
           {ocupado === 'subiendo' ? <Loader2 className='h-4 w-4 animate-spin' /> : <Camera className='h-4 w-4' />}
           {ocupado === 'subiendo'
-            ? `${quitarFondo ? 'Quitando fondo' : 'Subiendo'}${progreso ? ` ${progreso.actual} de ${progreso.total}` : ''}…`
+            ? `${quitarFondo ? 'Creando foto de estudio' : 'Subiendo'}${progreso ? ` ${progreso.actual} de ${progreso.total}` : ''}…`
             : lleno
               ? 'Máximo alcanzado'
               : 'Agregar fotos'}
@@ -192,7 +192,7 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
           disabled={!!ocupado}
           className='h-4 w-4 accent-[#c47c2b]'
         />
-        Quitar fondo (recomendado)
+        Foto de estudio con IA (recomendado)
       </label>
       {ocupado === 'subiendo' && quitarFondo && (
         <p className='text-[11px] text-[#8a7060]'>Puede tardar hasta un minuto y medio.</p>
@@ -222,7 +222,7 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
           onClick={() => void subir(fallida, false)}
           className='text-xs font-medium text-[#8a5a1a] underline underline-offset-4 hover:text-[#3d2b1f]'
         >
-          {fallida.length === 1 ? 'Subir esta foto sin quitar el fondo' : 'Subir estas fotos sin quitar el fondo'}
+          {fallida.length === 1 ? 'Subir esta foto tal cual' : 'Subir estas fotos tal cual'}
         </button>
       )}
     </div>

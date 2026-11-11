@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { quitarFondo, replicatePost, waitForPrediction, REMOVE_BG_URL, type Deps } from './replicate'
+import {
+  fotoEstudio,
+  replicatePost,
+  waitForPrediction,
+  FOTO_ESTUDIO_PROMPT,
+  FOTO_ESTUDIO_URL,
+  REMOVE_BG_URL,
+  type Deps
+} from './replicate'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 
@@ -71,35 +79,44 @@ describe('waitForPrediction', () => {
   })
 })
 
-describe('quitarFondo', () => {
-  it('usa el modelo oficial de bria y descarga el PNG resultante', async () => {
+describe('fotoEstudio', () => {
+  it('pide a flux-kontext-pro la foto de estudio sin tocar el producto y descarga el JPG', async () => {
     const calls: string[] = []
-    let body: { version?: string; input: { image: string } } | undefined
+    let body: { input: { input_image: string; prompt: string; output_format: string; aspect_ratio: string } } | undefined
     const d = deps(async (url, init) => {
       calls.push(url)
-      if (url === REMOVE_BG_URL) {
+      if (url === FOTO_ESTUDIO_URL) {
         body = JSON.parse(String(init?.body))
-        return json({ id: 'p', status: 'succeeded', output: 'https://replicate.delivery/out.png' })
+        return json({ id: 'p', status: 'succeeded', output: 'https://replicate.delivery/out.jpg' })
       }
       return new Response(new Uint8Array([1, 2, 3]))
     })
-    const out = await quitarFondo(Buffer.from('abc'), 'image/jpeg', d)
+    const out = await fotoEstudio(Buffer.from('abc'), 'image/jpeg', d)
     expect([...out]).toEqual([1, 2, 3])
-    expect(REMOVE_BG_URL).toBe('https://api.replicate.com/v1/models/bria/remove-background/predictions')
-    expect(body?.version).toBeUndefined()
-    expect(body?.input.image.startsWith('data:image/jpeg;base64,')).toBe(true)
-    expect(calls).toHaveLength(2)
+    expect(FOTO_ESTUDIO_URL).toBe('https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions')
+    expect(body?.input.input_image.startsWith('data:image/jpeg;base64,')).toBe(true)
+    expect(body?.input.prompt).toBe(FOTO_ESTUDIO_PROMPT)
+    expect(FOTO_ESTUDIO_PROMPT).toMatch(/Do not modify the product/)
+    expect(body?.input.output_format).toBe('jpg')
+    expect(body?.input.aspect_ratio).toBe('match_input_image')
+    expect(calls).toEqual([FOTO_ESTUDIO_URL, 'https://replicate.delivery/out.jpg'])
   })
   it('falla si Replicate responde error', async () => {
-    await expect(quitarFondo(Buffer.from('a'), 'image/jpeg', deps(async () => json({}, 422)))).rejects.toThrow(/422/)
+    await expect(fotoEstudio(Buffer.from('a'), 'image/jpeg', deps(async () => json({}, 422)))).rejects.toThrow(/422/)
   })
   it('falla con el 5xx después de agotar los reintentos', async () => {
     const d = deps(async () => json({}, 503))
-    await expect(quitarFondo(Buffer.from('a'), 'image/jpeg', d)).rejects.toThrow(/503/)
+    await expect(fotoEstudio(Buffer.from('a'), 'image/jpeg', d)).rejects.toThrow(/503/)
     expect(d.fetch).toHaveBeenCalledTimes(3)
   })
   it('rechaza salidas que no son https', async () => {
-    const d = deps(async () => json({ id: 'p', status: 'succeeded', output: 'http://x/y.png' }))
-    await expect(quitarFondo(Buffer.from('a'), 'image/jpeg', d)).rejects.toThrow(/inesperada/)
+    const d = deps(async () => json({ id: 'p', status: 'succeeded', output: 'http://x/y.jpg' }))
+    await expect(fotoEstudio(Buffer.from('a'), 'image/jpeg', d)).rejects.toThrow(/inesperada/)
+  })
+})
+
+describe('REMOVE_BG_URL', () => {
+  it('sigue apuntando al modelo oficial de bria (lo usa el emoji)', () => {
+    expect(REMOVE_BG_URL).toBe('https://api.replicate.com/v1/models/bria/remove-background/predictions')
   })
 })

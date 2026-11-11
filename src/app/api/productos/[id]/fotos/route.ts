@@ -4,8 +4,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
-import { fotoJpeg, normalizarFoto, recortePng } from '@/lib/productos/imagen'
-import { quitarFondo } from '@/lib/productos/replicate'
+import { fotoJpeg, normalizarFoto } from '@/lib/productos/imagen'
+import { fotoEstudio } from '@/lib/productos/replicate'
 import {
   BUCKET_PRODUCTOS,
   MAX_FOTOS,
@@ -18,7 +18,7 @@ import {
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120 // quitar el fondo puede tardar hasta ~90 s
+export const maxDuration = 120 // la foto de estudio puede tardar hasta ~90 s
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -76,8 +76,9 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   const chequeo = chequearSubida(actual.fotos.length, file.size, file.type)
   if (!chequeo.ok) return NextResponse.json({ error: chequeo.error }, { status: chequeo.status })
 
-  // Por defecto se quita el fondo; "0" sube la foto tal cual (normalizada)
-  const sinQuitarFondo = formData.get('quitarFondo') === '0'
+  // Por defecto se convierte en foto de estudio con IA; "0" sube la foto tal cual (normalizada).
+  // El campo conserva el nombre "quitarFondo" para no romper el contrato con el panel.
+  const sinFotoEstudio = formData.get('quitarFondo') === '0'
 
   let normalizada: Buffer
   try {
@@ -88,29 +89,26 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
 
   let contenido: Buffer
-  let extension: 'png' | 'jpg'
-  if (sinQuitarFondo) {
+  if (sinFotoEstudio) {
     contenido = await fotoJpeg(normalizada)
-    extension = 'jpg'
   } else {
     try {
-      contenido = await recortePng(await quitarFondo(normalizada, 'image/jpeg'))
-      extension = 'png'
+      contenido = await fotoJpeg(await fotoEstudio(normalizada, 'image/jpeg'))
     } catch (e) {
-      // Nunca se guarda el original en silencio: el cliente decide si reintenta sin quitar el fondo
-      console.error('Fotos: error quitando el fondo', e)
+      // Nunca se guarda el original en silencio: el cliente decide si la sube sin foto de estudio
+      console.error('Fotos: error generando la foto de estudio', e)
       return NextResponse.json(
-        { error: 'No pudimos quitar el fondo de la foto.', code: 'fondo_fallido' },
+        { error: 'No pudimos convertirla en foto de estudio.', code: 'fondo_fallido' },
         { status: 502 }
       )
     }
   }
 
-  const ruta = `${prefijoFotos(id)}${crypto.randomUUID()}.${extension}`
+  const ruta = `${prefijoFotos(id)}${crypto.randomUUID()}.jpg`
   const { error: errSubida } = await supabase.storage
     .from(BUCKET_PRODUCTOS)
     .upload(ruta, contenido, {
-      contentType: extension === 'png' ? 'image/png' : 'image/jpeg',
+      contentType: 'image/jpeg',
       upsert: false,
       cacheControl: '31536000'
     })
