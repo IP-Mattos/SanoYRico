@@ -42,8 +42,9 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
   const [ocupado, setOcupado] = useState<null | 'subiendo' | 'guardando'>(null)
   const [error, setError] = useState('')
   const [quitarFondo, setQuitarFondo] = useState(true)
-  // Foto cuyo fondo no se pudo quitar: se ofrece subirla igual, sin tocar el fondo
-  const [fallida, setFallida] = useState<File | null>(null)
+  // Fotos cuyo fondo no se pudo quitar: se ofrece subirlas igual, sin tocar el fondo
+  const [fallida, setFallida] = useState<File[]>([])
+  const [progreso, setProgreso] = useState<{ actual: number; total: number } | null>(null)
   const url = `/api/productos/${productoId}/fotos`
   const lleno = fotos.length >= MAX_FOTOS
 
@@ -63,21 +64,37 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
     }
   }
 
-  const subir = async (original: File, conFondo: boolean) => {
-    setError('')
-    setFallida(null)
-    setOcupado('subiendo')
-    const file = await reducirFoto(original)
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('quitarFondo', conFondo ? '1' : '0')
-    const res = await llamar({ method: 'POST', body: fd })
-    if (res === 'fondo_fallido') {
-      setError('No pudimos quitar el fondo de la foto (puede haber tardado demasiado).')
-      setFallida(original)
-    } else if (res) {
-      onChange(res)
+  // Sube las fotos de a una (cada una puede tardar por el quitado de fondo) hasta completar el máximo
+  const subir = async (originales: File[], conFondo: boolean) => {
+    const lote = originales.slice(0, Math.max(0, MAX_FOTOS - fotos.length))
+    if (lote.length === 0) return
+    if (lote.length < originales.length) {
+      setError(`Solo se pueden agregar ${lote.length} foto${lote.length === 1 ? '' : 's'} más (máximo ${MAX_FOTOS}).`)
+    } else {
+      setError('')
     }
+    setFallida([])
+    setOcupado('subiendo')
+    const fallidas: File[] = []
+    for (let i = 0; i < lote.length; i++) {
+      setProgreso(lote.length > 1 ? { actual: i + 1, total: lote.length } : null)
+      const fd = new FormData()
+      fd.append('file', await reducirFoto(lote[i]))
+      fd.append('quitarFondo', conFondo ? '1' : '0')
+      const res = await llamar({ method: 'POST', body: fd })
+      if (res === 'fondo_fallido') fallidas.push(lote[i])
+      else if (res) onChange(res)
+      else break // error ya mostrado (límite, sesión, etc.): no seguir con el resto
+    }
+    if (fallidas.length > 0) {
+      setError(
+        fallidas.length === 1
+          ? 'No pudimos quitar el fondo de una foto (puede haber tardado demasiado).'
+          : `No pudimos quitar el fondo de ${fallidas.length} fotos (puede haber tardado demasiado).`
+      )
+      setFallida(fallidas)
+    }
+    setProgreso(null)
     setOcupado(null)
   }
 
@@ -158,7 +175,11 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
           className='inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#dccbb0] bg-white text-sm font-medium text-[#3d2b1f] hover:border-[#c47c2b] transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c47c2b]'
         >
           {ocupado === 'subiendo' ? <Loader2 className='h-4 w-4 animate-spin' /> : <Camera className='h-4 w-4' />}
-          {ocupado === 'subiendo' ? (quitarFondo ? 'Quitando fondo…' : 'Subiendo…') : lleno ? 'Máximo alcanzado' : 'Agregar foto'}
+          {ocupado === 'subiendo'
+            ? `${quitarFondo ? 'Quitando fondo' : 'Subiendo'}${progreso ? ` ${progreso.actual} de ${progreso.total}` : ''}…`
+            : lleno
+              ? 'Máximo alcanzado'
+              : 'Agregar fotos'}
         </button>
         <span className='text-xs text-[#8a7060] tabular-nums'>{fotos.length} / {MAX_FOTOS}</span>
       </div>
@@ -181,10 +202,11 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
         ref={inputRef}
         type='file'
         accept='image/*'
+        multiple
         className='hidden'
         onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) void subir(file, quitarFondo)
+          const files = Array.from(e.target.files ?? [])
+          if (files.length > 0) void subir(files, quitarFondo)
           e.target.value = ''
         }}
       />
@@ -194,13 +216,13 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
           <AlertCircle className='h-3 w-3 shrink-0' /> {error}
         </p>
       )}
-      {fallida && !ocupado && (
+      {fallida.length > 0 && !ocupado && (
         <button
           type='button'
           onClick={() => void subir(fallida, false)}
           className='text-xs font-medium text-[#8a5a1a] underline underline-offset-4 hover:text-[#3d2b1f]'
         >
-          Subir esta foto sin quitar el fondo
+          {fallida.length === 1 ? 'Subir esta foto sin quitar el fondo' : 'Subir estas fotos sin quitar el fondo'}
         </button>
       )}
     </div>
