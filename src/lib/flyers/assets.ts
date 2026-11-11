@@ -43,8 +43,13 @@ export async function cargarFuentes(origin?: string): Promise<FuenteFlyer[]> {
   )
 }
 
+/** PNG del logo (con transparencia). Lo usan los flyers y el sello de las fotos reales. */
+export async function cargarLogoPng(origin?: string): Promise<Buffer> {
+  return leerPublico('logo-sano-y-rico-v2.png', origin)
+}
+
 export async function cargarLogo(origin?: string): Promise<string> {
-  const buf = await leerPublico('logo-sano-y-rico-v2.png', origin)
+  const buf = await cargarLogoPng(origin)
   return `data:image/png;base64,${buf.toString('base64')}`
 }
 
