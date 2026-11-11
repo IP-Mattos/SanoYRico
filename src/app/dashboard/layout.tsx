@@ -22,6 +22,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { DialogoProvider } from '@/components/dashboard/Dialogo'
 
 const navItems = [
   { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
@@ -200,7 +201,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Página */}
         <main className='flex-1 p-4 sm:p-6 overflow-y-auto'>
           <div className='max-w-5xl mx-auto'>
-            <ErrorBoundary>{children}</ErrorBoundary>
+            <ErrorBoundary>
+              <DialogoProvider>{children}</DialogoProvider>
+            </ErrorBoundary>
           </div>
         </main>
       </div>
