@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     '/api/imagenes/cupon': ['./public/fonts/**', './public/logo-sano-y-rico-v2.png', ...LIBVIPS_LINUX],
     '/api/imagenes/promo': ['./public/fonts/**', './public/logo-sano-y-rico-v2.png', ...LIBVIPS_LINUX],
     // Las claves son globs: "[id]" literal no matchea (sería una clase de caracteres), por eso el "*"
-    '/api/productos/*/fotos': LIBVIPS_LINUX
+    '/api/productos/*/fotos': ['./public/logo-sano-y-rico-v2.png', ...LIBVIPS_LINUX]
   },
   images: {
     remotePatterns: [

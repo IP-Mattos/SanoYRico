@@ -4,7 +4,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
-import { fotoJpeg, normalizarFoto } from '@/lib/productos/imagen'
+import { estamparLogo, fotoJpeg, normalizarFoto } from '@/lib/productos/imagen'
+import { cargarLogoPng } from '@/lib/flyers/assets'
 import { fotoEstudio } from '@/lib/productos/replicate'
 import {
   BUCKET_PRODUCTOS,
@@ -88,12 +89,12 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ error: 'No pudimos procesar esa imagen. Probá con un JPG o PNG.' }, { status: 415 })
   }
 
-  let contenido: Buffer
+  let base: Buffer
   if (sinFotoEstudio) {
-    contenido = await fotoJpeg(normalizada)
+    base = normalizada
   } else {
     try {
-      contenido = await fotoJpeg(await fotoEstudio(normalizada, 'image/jpeg'))
+      base = await fotoEstudio(normalizada, 'image/jpeg')
     } catch (e) {
       // Nunca se guarda el original en silencio: el cliente decide si la sube sin foto de estudio
       console.error('Fotos: error generando la foto de estudio', e)
@@ -102,6 +103,15 @@ export async function POST(req: NextRequest, { params }: Ctx) {
         { status: 502 }
       )
     }
+  }
+
+  // Todas las fotos llevan el logo de la marca. Si el logo no se pudiera cargar, se sube igual sin él.
+  let contenido: Buffer
+  try {
+    contenido = await estamparLogo(base, await cargarLogoPng(req.nextUrl.origin))
+  } catch (e) {
+    console.error('Fotos: no se pudo estampar el logo', e)
+    contenido = await fotoJpeg(base)
   }
 
   const ruta = `${prefijoFotos(id)}${crypto.randomUUID()}.jpg`

@@ -97,6 +97,10 @@ describe('fotoEstudio', () => {
     expect(body?.input.input_image.startsWith('data:image/jpeg;base64,')).toBe(true)
     expect(body?.input.prompt).toBe(FOTO_ESTUDIO_PROMPT)
     expect(FOTO_ESTUDIO_PROMPT).toMatch(/Do not modify the product/)
+    // fondo de marca (lino crema, madera, hojas verde salvia) y sin logos inventados: el logo lo pone sharp
+    expect(FOTO_ESTUDIO_PROMPT).toMatch(/cream linen cloth over a light wooden table/)
+    expect(FOTO_ESTUDIO_PROMPT).toMatch(/sage-green leaves/)
+    expect(FOTO_ESTUDIO_PROMPT).toMatch(/No text, no logos/)
     expect(body?.input.output_format).toBe('jpg')
     expect(body?.input.aspect_ratio).toBe('match_input_image')
     expect(calls).toEqual([FOTO_ESTUDIO_URL, 'https://replicate.delivery/out.jpg'])

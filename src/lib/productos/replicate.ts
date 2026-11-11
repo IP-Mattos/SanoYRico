@@ -72,14 +72,17 @@ export async function waitForPrediction(
 
 export const FOTO_ESTUDIO_URL = 'https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions'
 
-// Kontext redibuja la imagen entera: el prompt insiste en no tocar el producto (las fotos son "reales")
+// Kontext redibuja la imagen entera: el prompt insiste en no tocar el producto (las fotos son "reales").
+// El fondo sigue la marca (verde salvia, crema, amarillo cálido); el logo NO se pide a la IA, lo estampa sharp.
 export const FOTO_ESTUDIO_PROMPT =
-  'Replace only the background and lighting. Place this exact product, in the same position, on a seamless warm cream ' +
-  'studio backdrop with bright soft diffused light and a gentle natural shadow under it, like a high-end e-commerce ' +
-  'catalog photo. Do not modify the product in any way: keep every ingredient, seed, flake, grain, label and printed ' +
-  'text in exactly the same position, size, shape and color, keep the packaging shape, wrinkles and reflections ' +
-  'identical. Do not redraw, rearrange, add or remove anything on or inside the product. Same framing, same camera ' +
-  'angle, same product scale.'
+  'Replace only the background and lighting. Place this exact product, in the same position, on a natural cream ' +
+  'linen cloth over a light wooden table, with a few fresh sage-green leaves softly out of focus at the edges of the ' +
+  'frame (never touching or covering the product), warm soft natural daylight and a gentle natural shadow under the ' +
+  'product, like a cozy artisanal healthy-food brand photo in sage green, cream and warm yellow tones. Do not modify ' +
+  'the product in any way: keep every ingredient, seed, flake, grain, label and printed text in exactly the same ' +
+  'position, size, shape and color, keep the packaging shape, wrinkles and reflections identical. Do not redraw, ' +
+  'rearrange, add or remove anything on or inside the product. Same framing, same camera angle, same product scale. ' +
+  'No text, no logos.'
 
 /** Convierte la foto en foto de estudio (fondo crema, luz suave). Devuelve un JPG. Lanza si Replicate falla. */
 export async function fotoEstudio(imagen: Buffer, mime: string, deps: Deps = depsReales): Promise<Buffer> {
