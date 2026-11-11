@@ -1,6 +1,8 @@
 // src/app/api/remove-bg/route.ts
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
+// replicatePost reintenta 429 y 5xx (Replicate responde 503 transitorios con poco crédito)
+import { REMOVE_BG_URL, replicatePost } from '@/lib/productos/replicate'
 
 // Dos pasos de IA en serie; el primero puede tardar ~140 s en frío (Replicate descarga la LoRA)
 export const maxDuration = 300
@@ -9,32 +11,6 @@ const EMOJI_LORA = 'https://huggingface.co/starsfriday/Kontext-Emoji-LoRA/resolv
 
 const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const REPLICATE_HEADERS = {
-  Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
-  'Content-Type': 'application/json',
-  Prefer: 'wait'
-}
-
-// POST a Replicate con retry automático en 429
-async function replicatePost(url: string, body: unknown, retries = 3): Promise<Response> {
-  for (let i = 0; i < retries; i++) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: REPLICATE_HEADERS,
-      body: JSON.stringify(body)
-    })
-    if (res.status === 429) {
-      const data = await res.json()
-      const wait = ((data.retry_after as number) ?? 6) * 1000 + 500
-      console.log(`Rate limited, esperando ${wait}ms...`)
-      await new Promise((r) => setTimeout(r, wait))
-      continue
-    }
-    return res
-  }
-  throw new Error('Rate limit: demasiados reintentos')
-}
-
 // Espera hasta que una predicción de Replicate termine (polling si no resolvió en 60s)
 async function waitForPrediction(prediction: { id: string; status: string; output?: unknown }): Promise<unknown> {
   if (prediction.status === 'succeeded') return prediction.output
@@ -103,10 +79,7 @@ export async function POST(req: NextRequest) {
   // ── Paso 2: Eliminar fondo del emoji generado ──────────────────────────────
   let transparentUrl: string
   try {
-    const bgRes = await replicatePost(
-      'https://api.replicate.com/v1/predictions',
-      { version: '95fcc2a26d3899cd6c2691c900465aaeff466285a65c14638cc5f36f34befaf1', input: { image: emojiUrl } }
-    )
+    const bgRes = await replicatePost(REMOVE_BG_URL, { input: { image: emojiUrl } })
     if (!bgRes.ok) {
       const err = await bgRes.text()
       console.error('Remove-bg error:', err)
