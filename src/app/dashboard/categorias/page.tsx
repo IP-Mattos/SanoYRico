@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { type CategoriaDB } from '@/lib/types'
 import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle } from 'lucide-react'
+import { useDialogo } from '@/components/dashboard/Dialogo'
 
 function slugify(text: string): string {
   return text
@@ -26,6 +27,7 @@ const EMPTY_FORM = {
 type FormState = typeof EMPTY_FORM
 
 export default function CategoriasPage() {
+  const { confirmar } = useDialogo()
   const [categorias, setCategorias] = useState<CategoriaDB[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -118,7 +120,7 @@ export default function CategoriasPage() {
   }
 
   const eliminar = async (id: string) => {
-    if (!confirm('¿Eliminar esta categoría?')) return
+    if (!(await confirmar({ titulo: 'Eliminar categoría', mensaje: '¿Eliminar esta categoría? Esta acción no se puede deshacer.', confirmar: 'Eliminar', peligro: true }))) return
     await supabase.from('categorias').delete().eq('id', id)
     await cargar()
   }

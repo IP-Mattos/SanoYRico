@@ -5,6 +5,8 @@ import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { AlertCircle, Camera, ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { MAX_FOTOS } from '@/lib/productos/fotos'
+import { useDialogo } from '@/components/dashboard/Dialogo'
+import { FotosLightbox } from '@/components/landing/FotosLightbox'
 
 interface Props {
   productoId: string
@@ -38,6 +40,7 @@ async function reducirFoto(file: File): Promise<File> {
 }
 
 export default function FotosReales({ productoId, fotos, onChange }: Props) {
+  const { confirmar } = useDialogo()
   const inputRef = useRef<HTMLInputElement>(null)
   const [ocupado, setOcupado] = useState<null | 'subiendo' | 'guardando'>(null)
   const [error, setError] = useState('')
@@ -45,6 +48,8 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
   // Fotos cuyo fondo no se pudo quitar: se ofrece subirlas igual, sin tocar el fondo
   const [fallida, setFallida] = useState<File[]>([])
   const [progreso, setProgreso] = useState<{ actual: number; total: number } | null>(null)
+  // Índice de la foto abierta en grande (lightbox), o null
+  const [ampliada, setAmpliada] = useState<number | null>(null)
   const url = `/api/productos/${productoId}/fotos`
   const lleno = fotos.length >= MAX_FOTOS
 
@@ -115,7 +120,7 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
   }
 
   const borrar = async (foto: string) => {
-    if (!confirm('¿Eliminar esta foto?')) return
+    if (!(await confirmar({ titulo: 'Eliminar foto', mensaje: '¿Eliminar esta foto del producto?', confirmar: 'Eliminar', peligro: true }))) return
     setError('')
     setOcupado('guardando')
     const nuevas = await llamar({
@@ -143,9 +148,16 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
         <ul className='grid grid-cols-2 sm:grid-cols-4 gap-2'>
           {fotos.map((f, i) => (
             <li key={f} className='relative aspect-square rounded-xl overflow-hidden bg-white border border-[#f0e6d3]'>
-              <Image src={f} alt={`Foto ${i + 1}`} fill sizes='120px' className='object-cover' />
+              <button
+                type='button'
+                onClick={() => setAmpliada(i)}
+                aria-label={`Ver foto ${i + 1} en grande`}
+                className='absolute inset-0 cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c47c2b]'
+              >
+                <Image src={f} alt={`Foto ${i + 1}`} fill sizes='120px' className='object-cover' />
+              </button>
               {i === 0 && (
-                <span className='absolute top-1.5 left-1.5 bg-[#4a6741] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full'>
+                <span className='pointer-events-none absolute top-1.5 left-1.5 bg-[#4a6741] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full'>
                   Portada
                 </span>
               )}
@@ -224,6 +236,10 @@ export default function FotosReales({ productoId, fotos, onChange }: Props) {
         >
           {fallida.length === 1 ? 'Subir esta foto tal cual' : 'Subir estas fotos tal cual'}
         </button>
+      )}
+
+      {ampliada !== null && fotos.length > 0 && (
+        <FotosLightbox titulo='Fotos reales' fotos={fotos} inicial={ampliada} onClose={() => setAmpliada(null)} />
       )}
     </div>
   )

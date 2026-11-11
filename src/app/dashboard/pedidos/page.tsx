@@ -25,6 +25,7 @@ import {
   MessageCircle,
   type LucideIcon
 } from 'lucide-react'
+import { useDialogo } from '@/components/dashboard/Dialogo'
 
 const ESTADOS: { value: EstadoPedido; label: string; color: string; icon: LucideIcon }[] = [
   { value: 'pendiente', label: 'Pendiente', color: 'bg-yellow-50 text-yellow-600 border-yellow-200', icon: Clock },
@@ -36,6 +37,7 @@ const ESTADOS: { value: EstadoPedido; label: string; color: string; icon: Lucide
 const PER_PAGE = 15
 
 export default function PedidosPage() {
+  const { avisar } = useDialogo()
   const [pedidos, setPedidos] = useState<Pedido[]>([])
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState<EstadoPedido | 'todos'>('todos')
@@ -113,15 +115,15 @@ export default function PedidosPage() {
       })
       const data = await res.json().catch(() => null)
       if (!res.ok) {
-        alert(data?.error ?? 'No se pudo cambiar el estado del pedido')
+        await avisar({ titulo: 'No se pudo cambiar el estado', mensaje: data?.error ?? 'No se pudo cambiar el estado del pedido' })
         return false
       }
       if (data?.stockFallido?.length) {
-        alert('El estado cambió, pero no se pudo ajustar el stock de algunos productos. Revisalo en Stock.')
+        await avisar({ titulo: 'Revisá el stock', mensaje: 'El estado cambió, pero no se pudo ajustar el stock de algunos productos. Revisalo en Stock.' })
       }
       return true
     } catch {
-      alert('No se pudo cambiar el estado del pedido')
+      await avisar({ titulo: 'No se pudo cambiar el estado', mensaje: 'No se pudo cambiar el estado del pedido' })
       return false
     }
   }

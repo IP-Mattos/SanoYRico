@@ -10,6 +10,7 @@ import { isoALocal, localAIso } from '@/lib/fechas-local'
 import { fotosDe } from '@/lib/productos/fotos'
 import FotosReales from './FotosReales'
 import { Plus, Pencil, Trash2, Loader2, X, Check, AlertCircle, Sparkles, Trash } from 'lucide-react'
+import { useDialogo } from '@/components/dashboard/Dialogo'
 
 const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
   nombre: '',
@@ -29,6 +30,7 @@ const EMPTY: Omit<Producto, 'id' | 'created_at' | 'updated_at'> = {
 }
 
 export default function ProductosPage() {
+  const { confirmar } = useDialogo()
   const [productos, setProductos] = useState<Producto[]>([])
   const [categorias, setCategorias] = useState<CategoriaDB[]>([])
   const [loading, setLoading] = useState(true)
@@ -138,7 +140,7 @@ export default function ProductosPage() {
   }
 
   const eliminar = async (id: string) => {
-    if (!confirm('¿Eliminár este producto?')) return
+    if (!(await confirmar({ titulo: 'Eliminar producto', mensaje: '¿Eliminar este producto? Esta acción no se puede deshacer.', confirmar: 'Eliminar', peligro: true }))) return
     await supabase.from('productos').delete().eq('id', id)
     await cargar()
   }
