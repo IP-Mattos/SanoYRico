@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { quitarFondo, replicatePost, waitForPrediction, REMOVE_BG_VERSION, type Deps } from './replicate'
+import { quitarFondo, replicatePost, waitForPrediction, REMOVE_BG_URL, type Deps } from './replicate'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 
@@ -26,6 +26,30 @@ describe('replicatePost', () => {
     expect(res.status).toBe(200)
     expect(d.sleeps).toEqual([2500])
   })
+  it('reintenta en 503 esperando ratelimit-reset', async () => {
+    let n = 0
+    const d = deps(async () =>
+      n++ === 0
+        ? new Response(JSON.stringify({ detail: 'Internal server error', status: 503 }), { status: 503, headers: { 'ratelimit-reset': '10' } })
+        : json({ ok: 1 }, 201)
+    )
+    const res = await replicatePost('https://x', {}, d)
+    expect(res.status).toBe(201)
+    expect(d.fetch).toHaveBeenCalledTimes(2)
+    expect(d.sleeps).toEqual([10500])
+  })
+  it('devuelve la última respuesta si el 5xx persiste', async () => {
+    const d = deps(async () => json({ detail: 'Internal server error' }, 503))
+    const res = await replicatePost('https://x', {}, d)
+    expect(res.status).toBe(503)
+    expect(d.fetch).toHaveBeenCalledTimes(3)
+  })
+  it('no reintenta errores 4xx que no son 429', async () => {
+    const d = deps(async () => json({ detail: 'invalid' }, 422))
+    const res = await replicatePost('https://x', {}, d)
+    expect(res.status).toBe(422)
+    expect(d.fetch).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('waitForPrediction', () => {
@@ -48,12 +72,12 @@ describe('waitForPrediction', () => {
 })
 
 describe('quitarFondo', () => {
-  it('usa la versión fijada y descarga el PNG resultante', async () => {
+  it('usa el modelo oficial de bria y descarga el PNG resultante', async () => {
     const calls: string[] = []
-    let body: { version: string; input: { image: string } } | undefined
+    let body: { version?: string; input: { image: string } } | undefined
     const d = deps(async (url, init) => {
       calls.push(url)
-      if (url.endsWith('/v1/predictions')) {
+      if (url === REMOVE_BG_URL) {
         body = JSON.parse(String(init?.body))
         return json({ id: 'p', status: 'succeeded', output: 'https://replicate.delivery/out.png' })
       }
@@ -61,12 +85,18 @@ describe('quitarFondo', () => {
     })
     const out = await quitarFondo(Buffer.from('abc'), 'image/jpeg', d)
     expect([...out]).toEqual([1, 2, 3])
-    expect(body?.version).toBe(REMOVE_BG_VERSION)
+    expect(REMOVE_BG_URL).toBe('https://api.replicate.com/v1/models/bria/remove-background/predictions')
+    expect(body?.version).toBeUndefined()
     expect(body?.input.image.startsWith('data:image/jpeg;base64,')).toBe(true)
     expect(calls).toHaveLength(2)
   })
   it('falla si Replicate responde error', async () => {
-    await expect(quitarFondo(Buffer.from('a'), 'image/jpeg', deps(async () => json({}, 500)))).rejects.toThrow(/500/)
+    await expect(quitarFondo(Buffer.from('a'), 'image/jpeg', deps(async () => json({}, 422)))).rejects.toThrow(/422/)
+  })
+  it('falla con el 5xx después de agotar los reintentos', async () => {
+    const d = deps(async () => json({}, 503))
+    await expect(quitarFondo(Buffer.from('a'), 'image/jpeg', d)).rejects.toThrow(/503/)
+    expect(d.fetch).toHaveBeenCalledTimes(3)
   })
   it('rechaza salidas que no son https', async () => {
     const d = deps(async () => json({ id: 'p', status: 'succeeded', output: 'http://x/y.png' }))
