@@ -2,6 +2,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Dos pasos de IA en serie; el primero puede tardar ~140 s en frío (Replicate descarga la LoRA)
+export const maxDuration = 300
+
+const EMOJI_LORA = 'https://huggingface.co/starsfriday/Kontext-Emoji-LoRA/resolve/main/kontext_emoji.safetensors'
+
 const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const REPLICATE_HEADERS = {
@@ -36,8 +41,8 @@ async function waitForPrediction(prediction: { id: string; status: string; outpu
   if (prediction.status === 'failed' || prediction.status === 'canceled') {
     throw new Error(`Prediction ${prediction.status}`)
   }
-  // Polling cada 2s hasta 90s total
-  for (let i = 0; i < 45; i++) {
+  // Polling cada 2s hasta 180s total (cabe en maxDuration junto con el resto de la ruta)
+  for (let i = 0; i < 90; i++) {
     await new Promise((r) => setTimeout(r, 2000))
     const res = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
       headers: { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` }
@@ -65,12 +70,22 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer())
   const base64 = `data:${file.type};base64,${buffer.toString('base64')}`
 
-  // ── Paso 1: Convertir a estilo emoji con flux-kontext ──────────────────────
+  // ── Paso 1: Convertir a estilo emoji (Kontext dev + LoRA de emojis iOS) ────
+  // Es la misma LoRA que usaba flux-kontext-apps/kontext-emoji-maker, que dejó de arrancar en
+  // Replicate en nov-2026. El prompt es la frase de activación de la LoRA.
   let emojiUrl: string
   try {
     const emojiRes = await replicatePost(
-      'https://api.replicate.com/v1/models/flux-kontext-apps/kontext-emoji-maker/predictions',
-      { input: { input_image: base64, prompt: 'Create a high-quality vector illustration in a clean official emoji style (inspired by Apple, Google or Samsung emojis) of the object shown in the image. The subject must be perfectly centered and isolated on a transparent background. Simplify the shape and texture of the object using sharp lines, defined edges and soft smooth gradients to give it a clean friendly 3D look, not photorealistic. Use a vibrant color palette faithful to the reference image but slightly more saturated for the emoji style. The final image must look like a professional emoji icon, clear and polished, ready to use in a messaging interface.' } }
+      'https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-dev-lora/predictions',
+      {
+        input: {
+          input_image: base64,
+          output_format: 'png',
+          lora_weights: EMOJI_LORA,
+          lora_strength: 1,
+          prompt: 'Turn this image into the emoji style of Apple iOS system'
+        }
+      }
     )
     if (!emojiRes.ok) {
       const err = await emojiRes.text()
